@@ -1,0 +1,27 @@
+# EdSight FastAPI Backend Dependencies
+
+# Core FastAPI dependencies
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
+pydantic>=2.0.0
+
+# HTTP and async dependencies
+httpx>=0.25.0
+asgiref>=3.7.0
+
+# Authentication and security
+PyJWT>=2.8.0
+python-multipart>=0.0.6
+
+# Redis for caching
+aioredis>=2.0.0
+
+# Django integration
+django>=4.2.0
+django-cors-headers>=4.3.0
+
+# Database
+mysql-connector-python>=8.0.0
+
+# Additional utilities
+python-dotenv>=1.0.0

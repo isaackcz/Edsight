@@ -1,0 +1,151 @@
+[
+  {
+    "model": "api.category",
+    "pk": 1,
+    "fields": {
+      "name": "Infrastructure",
+      "display_order": 1
+    }
+  },
+  {
+    "model": "api.category",
+    "pk": 2,
+    "fields": {
+      "name": "Teaching Staff",
+      "display_order": 2
+    }
+  },
+  {
+    "model": "api.category",
+    "pk": 3,
+    "fields": {
+      "name": "Student Performance",
+      "display_order": 3
+    }
+  },
+  {
+    "model": "api.category",
+    "pk": 4,
+    "fields": {
+      "name": "Resources",
+      "display_order": 4
+    }
+  },
+  {
+    "model": "api.subsection",
+    "pk": 1,
+    "fields": {
+      "category": 1,
+      "name": "Classrooms",
+      "display_order": 1
+    }
+  },
+  {
+    "model": "api.subsection",
+    "pk": 2,
+    "fields": {
+      "category": 1,
+      "name": "Labs",
+      "display_order": 2
+    }
+  },
+  {
+    "model": "api.subsection",
+    "pk": 3,
+    "fields": {
+      "category": 1,
+      "name": "Sports Facilities",
+      "display_order": 3
+    }
+  },
+  {
+    "model": "api.subsection",
+    "pk": 4,
+    "fields": {
+      "category": 1,
+      "name": "Restrooms",
+      "display_order": 4
+    }
+  },
+  {
+    "model": "api.subsection",
+    "pk": 5,
+    "fields": {
+      "category": 2,
+      "name": "Permanent Teachers",
+      "display_order": 1
+    }
+  },
+  {
+    "model": "api.subsection",
+    "pk": 6,
+    "fields": {
+      "category": 2,
+      "name": "Substitute Teachers",
+      "display_order": 2
+    }
+  },
+  {
+    "model": "api.subsection",
+    "pk": 7,
+    "fields": {
+      "category": 2,
+      "name": "Teacher Training",
+      "display_order": 3
+    }
+  },
+  {
+    "model": "api.subsection",
+    "pk": 8,
+    "fields": {
+      "category": 3,
+      "name": "Test Scores",
+      "display_order": 1
+    }
+  },
+  {
+    "model": "api.subsection",
+    "pk": 9,
+    "fields": {
+      "category": 3,
+      "name": "Attendance",
+      "display_order": 2
+    }
+  },
+  {
+    "model": "api.subsection",
+    "pk": 10,
+    "fields": {
+      "category": 3,
+      "name": "Extracurricular Activities",
+      "display_order": 3
+    }
+  },
+  {
+    "model": "api.subsection",
+    "pk": 11,
+    "fields": {
+      "category": 4,
+      "name": "Books",
+      "display_order": 1
+    }
+  },
+  {
+    "model": "api.subsection",
+    "pk": 12,
+    "fields": {
+      "category": 4,
+      "name": "Computers",
+      "display_order": 2
+    }
+  },
+  {
+    "model": "api.subsection",
+    "pk": 13,
+    "fields": {
+      "category": 4,
+      "name": "Laboratory Equipment",
+      "display_order": 3
+    }
+  }
+] 

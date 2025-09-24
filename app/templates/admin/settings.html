@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Settings | Frosted Admin</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'admin/settings/settings.css' %}">
+    <link rel="stylesheet" href="{% static 'admin/settings/settings_responsive.css' %}">
+    <link rel="stylesheet" href="{% static 'admin/admin_dark_theme.css' %}">
+    <link rel="icon" type="image/png" href="{% static 'auth/img/logo_big.png' %}">
+</head>
+<body class="dark-theme">
+    <div class="admin-container">
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar">
+            <div class="logo-container">
+                <i class="fas fa-shield-alt logo"></i>
+                <span class="logo-text">Frosted Admin</span>
+            </div>
+            
+            <div class="sidebar-menu">
+                <div class="menu-title">MAIN</div>
+                <a href="{% url 'admin-page' %}" class="menu-item">
+                    <i class="fas fa-home"></i>
+                    <span>Dashboard</span>
+                </a>
+                
+                <div class="menu-title">MANAGEMENT</div>
+                <a href="{% url 'user-management-page' %}" class="menu-item">
+                    <i class="fas fa-users"></i>
+                    <span>User Management</span>
+                </a>
+                <a href="{% url 'role-page' %}" class="menu-item">
+                    <i class="fas fa-user-shield"></i>
+                    <span>Role & Access</span>
+                </a>
+                <a href="{% url 'logs-page' %}" class="menu-item">
+                    <i class="fas fa-history"></i>
+                    <span>Logs & Auditing</span>
+                </a>
+                <a href="#" class="menu-item">
+                    <i class="fas fa-user-clock"></i>
+                    <span>Session Controls</span>
+                </a>
+                
+                <div class="menu-title">TOOLS</div>
+                <a href="#" class="menu-item">
+                    <i class="fas fa-tools"></i>
+                    <span>System Tools</span>
+                </a>
+                <a href="#" class="menu-item">
+                    <i class="fas fa-comment-alt"></i>
+                    <span>Communication</span>
+                </a>
+                <a href="{% url 'settings-page' %}" class="menu-item active">
+                    <i class="fas fa-cog"></i>
+                    <span>Admin Controls</span>
+                </a>
+            </div>
+            
+            <!-- Logout Section -->
+            <div class="sidebar-footer">
+                <a href="{% url 'logout' %}" class="menu-item logout-btn">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Sign Out</span>
+                </a>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="header">
+                <div class="header-title">
+                    <h1>Admin Settings</h1>
+                    <p>Configure system settings and preferences</p>
+                </div>
+                
+                <div class="header-actions">
+                    <button class="btn btn-outline">
+                        <i class="fas fa-bell"></i>
+                        <span class="badge">1</span>
+                    </button>
+                    <div class="user-profile">
+                        <div class="user-avatar">AD</div>
+                        <div class="user-info">
+                            <div class="user-name">Admin User</div>
+                            <div class="user-role">Super Admin</div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+            
+            <!-- Settings Navigation Tabs -->
+            <div class="settings-tabs">
+                <button class="tab-btn active" data-tab="general">
+                    <i class="fas fa-cog"></i>
+                    General
+                </button>
+                <button class="tab-btn" data-tab="security">
+                    <i class="fas fa-shield-alt"></i>
+                    Security
+                </button>
+                <button class="tab-btn" data-tab="notifications">
+                    <i class="fas fa-bell"></i>
+                    Notifications
+                </button>
+                <button class="tab-btn" data-tab="integrations">
+                    <i class="fas fa-plug"></i>
+                    Integrations
+                </button>
+                <button class="tab-btn" data-tab="backup">
+                    <i class="fas fa-database"></i>
+                    Backup
+                </button>
+                <button class="tab-btn" data-tab="maintenance">
+                    <i class="fas fa-tools"></i>
+                    Maintenance
+                </button>
+            </div>
+
+            <!-- General Settings Tab -->
+            <div class="settings-tab-content active" id="general">
+                <div class="settings-section">
+                    <div class="section-header">
+                        <h2>System Information</h2>
+                        <p>Basic system configuration and information</p>
+                    </div>
+                    
+                    <div class="settings-grid">
+                        <div class="setting-card">
+                            <div class="setting-header">
+                                <h3>Application Name</h3>
+                                <div class="setting-actions">
+                                    <button class="btn btn-outline btn-sm">Edit</button>
+                                </div>
+                            </div>
+                            <div class="setting-content">
+                                <input type="text" value="EdSight Admin Panel" class="form-input" readonly>
+                                <small>The name displayed in the application header</small>
+                            </div>
+                        </div>
+                        
+                        <div class="setting-card">
+                            <div class="setting-header">
+                                <h3>System Version</h3>
+                            </div>
+                            <div class="setting-content">
+                                <div class="version-info">
+                                    <span class="version">v2.1.4</span>
+                                    <span class="status-badge success">Latest</span>
+                                </div>
+                                <small>Current system version</small>
+                            </div>
+                        </div>
+                        
+                        <div class="setting-card">
+                            <div class="setting-header">
+                                <h3>Timezone</h3>
+                                <div class="setting-actions">
+                                    <button class="btn btn-outline btn-sm">Change</button>
+                                </div>
+                            </div>
+                            <div class="setting-content">
+                                <select class="form-input" disabled>
+                                    <option>UTC+08:00 (Asia/Manila)</option>
+                                    <option>UTC+00:00 (GMT)</option>
+                                    <option>UTC-05:00 (EST)</option>
+                                </select>
+                                <small>System default timezone</small>
+                            </div>
+                        </div>
+                        
+                        <div class="setting-card">
+                            <div class="setting-header">
+                                <h3>Language</h3>
+                                <div class="setting-actions">
+                                    <button class="btn btn-outline btn-sm">Change</button>
+                                </div>
+                            </div>
+                            <div class="setting-content">
+                                <select class="form-input" disabled>
+                                    <option>English (US)</option>
+                                    <option>Filipino</option>
+                                    <option>Spanish</option>
+                                </select>
+                                <small>Default system language</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="settings-section">
+                    <div class="section-header">
+                        <h2>Performance Settings</h2>
+                        <p>Configure system performance and resource usage</p>
+                    </div>
+                    
+                    <div class="settings-grid">
+                        <div class="setting-card">
+                            <div class="setting-header">
+                                <h3>Cache Settings</h3>
+                                <div class="setting-actions">
+                                    <button class="btn btn-primary btn-sm">Clear Cache</button>
+                                </div>
+                            </div>
+                            <div class="setting-content">
+                                <div class="cache-info">
+                                    <div class="cache-item">
+                                        <span>Application Cache:</span>
+                                        <span class="cache-size">245 MB</span>
+                                    </div>
+                                    <div class="cache-item">
+                                        <span>Database Cache:</span>
+                                        <span class="cache-size">89 MB</span>
+                                    </div>
+                                    <div class="cache-item">
+                                        <span>Static Files:</span>
+                                        <span class="cache-size">156 MB</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="setting-card">
+                            <div class="setting-header">
+                                <h3>Session Timeout</h3>
+                                <div class="setting-actions">
+                                    <button class="btn btn-outline btn-sm">Update</button>
+                                </div>
+                            </div>
+                            <div class="setting-content">
+                                <div class="input-group">
+                                    <input type="number" value="30" class="form-input" style="width: 80px;" readonly>
+                                    <span>minutes</span>
+                                </div>
+                                <small>Automatic logout after inactivity</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Security Settings Tab -->
+            <div class="settings-tab-content" id="security">
+                <div class="settings-section">
+                    <div class="section-header">
+                        <h2>Authentication Settings</h2>
+                        <p>Configure login security and authentication methods</p>
+                    </div>
+                    
+                    <div class="settings-grid">
+                        <div class="setting-card">
+                            <div class="setting-header">
+                                <h3>Password Policy</h3>
+                                <div class="setting-actions">
+                                    <button class="btn btn-outline btn-sm">Edit Policy</button>
+                                </div>
+                            </div>
+                            <div class="setting-content">
+                                <div class="policy-rules">
+                                    <div class="policy-rule">
+                                        <i class="fas fa-check-circle success"></i>
+                                        <span>Minimum 8 characters</span>
+                                    </div>
+                                    <div class="policy-rule">
+                                        <i class="fas fa-check-circle success"></i>
+                                        <span>Require uppercase letters</span>
+                                    </div>
+                                    <div class="policy-rule">
+                                        <i class="fas fa-check-circle success"></i>
+                                        <span>Require special characters</span>
+                                    </div>
+                                    <div class="policy-rule">
+                                        <i class="fas fa-times-circle danger"></i>
+                                        <span>Two-factor authentication</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="setting-card">
+                            <div class="setting-header">
+                                <h3>Login Attempts</h3>
+                                <div class="setting-actions">
+                                    <button class="btn btn-outline btn-sm">Configure</button>
+                                </div>
+                            </div>
+                            <div class="setting-content">
+                                <div class="login-settings">
+                                    <div class="setting-row">
+                                        <span>Max attempts:</span>
+                                        <span class="value">5 attempts</span>
+                                    </div>
+                                    <div class="setting-row">
+                                        <span>Lockout duration:</span>
+                                        <span class="value">15 minutes</span>
+                                    </div>
+                                    <div class="setting-row">
+                                        <span>Reset period:</span>
+                                        <span class="value">1 hour</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="setting-card">
+                            <div class="setting-header">
+                                <h3>IP Restrictions</h3>
+                                <div class="setting-actions">
+                                    <button class="btn btn-outline btn-sm">Manage IPs</button>
+                                </div>
+                            </div>
+                            <div class="setting-content">
+                                <div class="ip-status">
+                                    <div class="status-item">
+                                        <span class="status-badge warning">Enabled</span>
+                                        <span>IP Whitelist Active</span>
+                                    </div>
+                                    <div class="ip-count">
+                                        <span>12 allowed IPs</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="settings-section">
+                    <div class="section-header">
+                        <h2>Security Monitoring</h2>
+                        <p>Real-time security alerts and monitoring</p>
+                    </div>
+                    
+                    <div class="security-alerts">
+                        <div class="alert-item">
+                            <div class="alert-icon warning">
+                                <i class="fas fa-exclamation-triangle"></i>
+                            </div>
+                            <div class="alert-content">
+                                <div class="alert-title">Unusual Login Activity</div>
+                                <div class="alert-description">Multiple login attempts from new location detected</div>
+                                <div class="alert-time">2 hours ago</div>
+                            </div>
+                            <div class="alert-actions">
+                                <button class="btn btn-outline btn-sm">Investigate</button>
+                            </div>
+                        </div>
+                        
+                        <div class="alert-item">
+                            <div class="alert-icon success">
+                                <i class="fas fa-shield-alt"></i>
+                            </div>
+                            <div class="alert-content">
+                                <div class="alert-title">Security Scan Complete</div>
+                                <div class="alert-description">System security scan completed successfully</div>
+                                <div class="alert-time">6 hours ago</div>
+                            </div>
+                            <div class="alert-actions">
+                                <button class="btn btn-outline btn-sm">View Report</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Notifications Settings Tab -->
+            <div class="settings-tab-content" id="notifications">
+                <div class="settings-section">
+                    <div class="section-header">
+                        <h2>Notification Preferences</h2>
+                        <p>Configure how and when you receive notifications</p>
+                    </div>
+                    
+                    <div class="notification-categories">
+                        <div class="notification-category">
+                            <div class="category-header">
+                                <h3>System Notifications</h3>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" checked>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            <div class="notification-options">
+                                <div class="notification-option">
+                                    <div class="option-info">
+                                        <span class="option-title">System Updates</span>
+                                        <span class="option-desc">Notifications about system updates and maintenance</span>
+                                    </div>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" checked>
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                                <div class="notification-option">
+                                    <div class="option-info">
+                                        <span class="option-title">Error Alerts</span>
+                                        <span class="option-desc">Critical system errors and failures</span>
+                                    </div>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" checked>
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                                <div class="notification-option">
+                                    <div class="option-info">
+                                        <span class="option-title">Performance Warnings</span>
+                                        <span class="option-desc">High resource usage and performance issues</span>
+                                    </div>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox">
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="notification-category">
+                            <div class="category-header">
+                                <h3>User Activity</h3>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" checked>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            <div class="notification-options">
+                                <div class="notification-option">
+                                    <div class="option-info">
+                                        <span class="option-title">New User Registrations</span>
+                                        <span class="option-desc">When new users register on the system</span>
+                                    </div>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" checked>
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                                <div class="notification-option">
+                                    <div class="option-info">
+                                        <span class="option-title">Failed Login Attempts</span>
+                                        <span class="option-desc">Multiple failed login attempts</span>
+                                    </div>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" checked>
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                                <div class="notification-option">
+                                    <div class="option-info">
+                                        <span class="option-title">Role Changes</span>
+                                        <span class="option-desc">When user roles are modified</span>
+                                    </div>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox">
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Integrations Settings Tab -->
+            <div class="settings-tab-content" id="integrations">
+                <div class="settings-section">
+                    <div class="section-header">
+                        <h2>Third-Party Integrations</h2>
+                        <p>Manage external service connections and APIs</p>
+                    </div>
+                    
+                    <div class="integrations-grid">
+                        <div class="integration-card">
+                            <div class="integration-header">
+                                <div class="integration-logo">
+                                    <i class="fab fa-google"></i>
+                                </div>
+                                <div class="integration-info">
+                                    <h3>Google Analytics</h3>
+                                    <span class="integration-status connected">Connected</span>
+                                </div>
+                                <div class="integration-actions">
+                                    <button class="btn btn-outline btn-sm">Configure</button>
+                                </div>
+                            </div>
+                            <div class="integration-details">
+                                <p>Track user behavior and system usage analytics</p>
+                                <div class="integration-stats">
+                                    <span>Last sync: 2 hours ago</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="integration-card">
+                            <div class="integration-header">
+                                <div class="integration-logo">
+                                    <i class="fas fa-envelope"></i>
+                                </div>
+                                <div class="integration-info">
+                                    <h3>Email Service</h3>
+                                    <span class="integration-status connected">Connected</span>
+                                </div>
+                                <div class="integration-actions">
+                                    <button class="btn btn-outline btn-sm">Test</button>
+                                </div>
+                            </div>
+                            <div class="integration-details">
+                                <p>SMTP configuration for system notifications</p>
+                                <div class="integration-stats">
+                                    <span>Provider: Gmail SMTP</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="integration-card">
+                            <div class="integration-header">
+                                <div class="integration-logo">
+                                    <i class="fab fa-slack"></i>
+                                </div>
+                                <div class="integration-info">
+                                    <h3>Slack</h3>
+                                    <span class="integration-status disconnected">Disconnected</span>
+                                </div>
+                                <div class="integration-actions">
+                                    <button class="btn btn-primary btn-sm">Connect</button>
+                                </div>
+                            </div>
+                            <div class="integration-details">
+                                <p>Send alerts and notifications to Slack channels</p>
+                                <div class="integration-stats">
+                                    <span>Not configured</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="integration-card">
+                            <div class="integration-header">
+                                <div class="integration-logo">
+                                    <i class="fas fa-database"></i>
+                                </div>
+                                <div class="integration-info">
+                                    <h3>External Database</h3>
+                                    <span class="integration-status warning">Limited</span>
+                                </div>
+                                <div class="integration-actions">
+                                    <button class="btn btn-outline btn-sm">Setup</button>
+                                </div>
+                            </div>
+                            <div class="integration-details">
+                                <p>Connect to external data sources</p>
+                                <div class="integration-stats">
+                                    <span>Read-only access</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Backup Settings Tab -->
+            <div class="settings-tab-content" id="backup">
+                <div class="settings-section">
+                    <div class="section-header">
+                        <h2>Backup & Recovery</h2>
+                        <p>Manage system backups and data recovery options</p>
+                    </div>
+                    
+                    <div class="backup-overview">
+                        <div class="backup-status">
+                            <div class="status-card">
+                                <div class="status-icon success">
+                                    <i class="fas fa-check-circle"></i>
+                                </div>
+                                <div class="status-info">
+                                    <h3>Last Backup</h3>
+                                    <span>Today, 02:00 AM</span>
+                                    <small>Automatic backup completed successfully</small>
+                                </div>
+                            </div>
+                            
+                            <div class="status-card">
+                                <div class="status-icon info">
+                                    <i class="fas fa-clock"></i>
+                                </div>
+                                <div class="status-info">
+                                    <h3>Next Backup</h3>
+                                    <span>Tomorrow, 02:00 AM</span>
+                                    <small>Scheduled automatic backup</small>
+                                </div>
+                            </div>
+                            
+                            <div class="status-card">
+                                <div class="status-icon">
+                                    <i class="fas fa-hdd"></i>
+                                </div>
+                                <div class="status-info">
+                                    <h3>Storage Used</h3>
+                                    <span>2.4 GB / 10 GB</span>
+                                    <small>24% of backup storage used</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="backup-actions">
+                        <div class="action-group">
+                            <h3>Manual Backup</h3>
+                            <p>Create an immediate backup of the current system state</p>
+                            <button class="btn btn-primary">
+                                <i class="fas fa-download"></i>
+                                Create Backup Now
+                            </button>
+                        </div>
+                        
+                        <div class="action-group">
+                            <h3>Restore System</h3>
+                            <p>Restore system from a previous backup point</p>
+                            <button class="btn btn-outline">
+                                <i class="fas fa-upload"></i>
+                                Restore from Backup
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="backup-history">
+                        <h3>Recent Backups</h3>
+                        <div class="backup-list">
+                            <div class="backup-item">
+                                <div class="backup-info">
+                                    <span class="backup-date">Today, 02:00 AM</span>
+                                    <span class="backup-type">Automatic</span>
+                                    <span class="backup-size">1.2 GB</span>
+                                </div>
+                                <div class="backup-actions">
+                                    <button class="btn btn-outline btn-sm">Download</button>
+                                    <button class="btn btn-outline btn-sm">Restore</button>
+                                </div>
+                            </div>
+                            
+                            <div class="backup-item">
+                                <div class="backup-info">
+                                    <span class="backup-date">Yesterday, 02:00 AM</span>
+                                    <span class="backup-type">Automatic</span>
+                                    <span class="backup-size">1.1 GB</span>
+                                </div>
+                                <div class="backup-actions">
+                                    <button class="btn btn-outline btn-sm">Download</button>
+                                    <button class="btn btn-outline btn-sm">Restore</button>
+                                </div>
+                            </div>
+                            
+                            <div class="backup-item">
+                                <div class="backup-info">
+                                    <span class="backup-date">3 days ago, 10:30 AM</span>
+                                    <span class="backup-type">Manual</span>
+                                    <span class="backup-size">1.3 GB</span>
+                                </div>
+                                <div class="backup-actions">
+                                    <button class="btn btn-outline btn-sm">Download</button>
+                                    <button class="btn btn-outline btn-sm">Restore</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Maintenance Settings Tab -->
+            <div class="settings-tab-content" id="maintenance">
+                <div class="settings-section">
+                    <div class="section-header">
+                        <h2>System Maintenance</h2>
+                        <p>System health monitoring and maintenance tools</p>
+                    </div>
+                    
+                    <div class="maintenance-dashboard">
+                        <div class="system-health">
+                            <h3>System Health</h3>
+                            <div class="health-metrics">
+                                <div class="metric-card">
+                                    <div class="metric-header">
+                                        <span>CPU Usage</span>
+                                        <span class="metric-value">45%</span>
+                                    </div>
+                                    <div class="metric-bar">
+                                        <div class="metric-progress" style="width: 45%"></div>
+                                    </div>
+                                </div>
+                                
+                                <div class="metric-card">
+                                    <div class="metric-header">
+                                        <span>Memory Usage</span>
+                                        <span class="metric-value">67%</span>
+                                    </div>
+                                    <div class="metric-bar">
+                                        <div class="metric-progress warning" style="width: 67%"></div>
+                                    </div>
+                                </div>
+                                
+                                <div class="metric-card">
+                                    <div class="metric-header">
+                                        <span>Disk Space</span>
+                                        <span class="metric-value">23%</span>
+                                    </div>
+                                    <div class="metric-bar">
+                                        <div class="metric-progress" style="width: 23%"></div>
+                                    </div>
+                                </div>
+                                
+                                <div class="metric-card">
+                                    <div class="metric-header">
+                                        <span>Network I/O</span>
+                                        <span class="metric-value">12%</span>
+                                    </div>
+                                    <div class="metric-bar">
+                                        <div class="metric-progress" style="width: 12%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="maintenance-tools">
+                            <h3>Maintenance Tools</h3>
+                            <div class="tool-grid">
+                                <div class="tool-card">
+                                    <div class="tool-icon">
+                                        <i class="fas fa-broom"></i>
+                                    </div>
+                                    <div class="tool-info">
+                                        <h4>Clean Temporary Files</h4>
+                                        <p>Remove temporary files and logs</p>
+                                        <button class="btn btn-outline">Clean Now</button>
+                                    </div>
+                                </div>
+                                
+                                <div class="tool-card">
+                                    <div class="tool-icon">
+                                        <i class="fas fa-wrench"></i>
+                                    </div>
+                                    <div class="tool-info">
+                                        <h4>Database Optimization</h4>
+                                        <p>Optimize database performance</p>
+                                        <button class="btn btn-outline">Optimize</button>
+                                    </div>
+                                </div>
+                                
+                                <div class="tool-card">
+                                    <div class="tool-icon">
+                                        <i class="fas fa-sync-alt"></i>
+                                    </div>
+                                    <div class="tool-info">
+                                        <h4>Restart Services</h4>
+                                        <p>Restart system services</p>
+                                        <button class="btn btn-outline">Restart</button>
+                                    </div>
+                                </div>
+                                
+                                <div class="tool-card">
+                                    <div class="tool-icon">
+                                        <i class="fas fa-chart-line"></i>
+                                    </div>
+                                    <div class="tool-info">
+                                        <h4>Generate Report</h4>
+                                        <p>System performance report</p>
+                                        <button class="btn btn-outline">Generate</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Save Changes Button -->
+            <div class="settings-footer">
+                <button class="btn btn-outline">Reset to Defaults</button>
+                <button class="btn btn-primary">Save All Changes</button>
+            </div>
+        </main>
+    </div>
+    
+    <script src="{% static 'admin/settings/settings.js' %}"></script>
+</body>
+</html>

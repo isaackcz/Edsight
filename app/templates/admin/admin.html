@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard | Frosted Theme</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'admin/admin/admin.css' %}">
+    <link rel="stylesheet" href="{% static 'admin/admin/admin_responsive.css' %}">
+    <link rel="stylesheet" href="{% static 'admin/admin_dark_theme.css' %}">
+    <link rel="icon" type="image/png" href="{% static 'auth/img/logo_big.png' %}">
+</head>
+<body class="dark-theme">
+    <div class="admin-container">
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar">
+            <div class="logo-container">
+                <i class="fas fa-shield-alt logo"></i>
+                <span class="logo-text">Frosted Admin</span>
+            </div>
+            
+            <div class="sidebar-menu">
+                <div class="menu-title">MAIN</div>
+                <a href="{% url 'admin-page' %}" class="menu-item active">
+                    <i class="fas fa-home"></i>
+                    <span>Dashboard</span>
+                </a>
+                
+                <div class="menu-title">MANAGEMENT</div>
+                <a href="{% url 'user-management-page' %}" class="menu-item">
+                    <i class="fas fa-users"></i>
+                    <span>User Management</span>
+                </a>
+                <a href="{% url 'role-page' %}" class="menu-item">
+                    <i class="fas fa-user-shield"></i>
+                    <span>Role & Access</span>
+                </a>
+                <a href="{% url 'logs-page' %}" class="menu-item">
+                    <i class="fas fa-history"></i>
+                    <span>Logs & Auditing</span>
+                </a>
+                <a href="#" class="menu-item">
+                    <i class="fas fa-user-clock"></i>
+                    <span>Session Controls</span>
+                </a>
+                
+                <div class="menu-title">TOOLS</div>
+                <a href="#" class="menu-item">
+                    <i class="fas fa-tools"></i>
+                    <span>System Tools</span>
+                </a>
+                <a href="#" class="menu-item">
+                    <i class="fas fa-comment-alt"></i>
+                    <span>Communication</span>
+                </a>
+                <a href="{% url 'settings-page' %}" class="menu-item">
+                    <i class="fas fa-cog"></i>
+                    <span>Admin Controls</span>
+                </a>
+            </div>
+            
+            <!-- Logout Section -->
+            <div class="sidebar-footer">
+                <a href="{% url 'logout' %}" class="menu-item logout-btn">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Sign Out</span>
+                </a>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="header">
+                <div class="header-title">
+                    <h1>Dashboard</h1>
+                    <p>Welcome back, Administrator</p>
+                </div>
+                
+                <div class="header-actions">
+                    <button class="btn btn-outline">
+                        <i class="fas fa-bell"></i>
+                        <span class="badge">3</span>
+                    </button>
+                    <button class="btn btn-outline">
+                        <i class="fas fa-cog"></i>
+                    </button>
+                    <div class="user-profile">
+                        <div class="user-avatar">AD</div>
+                        <div class="user-info">
+                            <div class="user-name">Admin User</div>
+                            <div class="user-role">Super Admin</div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+            
+            <!-- Analytics Cards -->
+            <section class="cards-container">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">Total Users</div>
+                        <div class="card-icon bg-blue">
+                            <i class="fas fa-users"></i>
+                        </div>
+                    </div>
+                    <div class="card-value">1,248</div>
+                    <div class="card-footer">
+                        <i class="fas fa-arrow-up positive"></i>
+                        <span>12.5% from last month</span>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">Active Sessions</div>
+                        <div class="card-icon bg-green">
+                            <i class="fas fa-user-check"></i>
+                        </div>
+                    </div>
+                    <div class="card-value">86</div>
+                    <div class="card-footer">
+                        <i class="fas fa-arrow-down negative"></i>
+                        <span>3.2% from yesterday</span>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">Audit Logs</div>
+                        <div class="card-icon bg-orange">
+                            <i class="fas fa-clipboard-list"></i>
+                        </div>
+                    </div>
+                    <div class="card-value">24,862</div>
+                    <div class="card-footer">
+                        <i class="fas fa-arrow-up positive"></i>
+                        <span>42 today</span>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">Pending Actions</div>
+                        <div class="card-icon bg-red">
+                            <i class="fas fa-exclamation-circle"></i>
+                        </div>
+                    </div>
+                    <div class="card-value">14</div>
+                    <div class="card-footer">
+                        <i class="fas fa-arrow-up negative"></i>
+                        <span>3 new today</span>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- User Management Section -->
+            <section class="table-container">
+                <div class="table-header">
+                    <h2 class="section-title">User Management</h2>
+                    <div class="actions">
+                        <button class="btn btn-outline">
+                            <i class="fas fa-plus"></i>
+                            Add User
+                        </button>
+                        <button class="btn btn-primary">
+                            <i class="fas fa-download"></i>
+                            Export
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="table-filters">
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" placeholder="Search users...">
+                    </div>
+                    <div class="filter-group">
+                        <select>
+                            <option>All Roles</option>
+                            <option>Admin</option>
+                            <option>Editor</option>
+                            <option>Viewer</option>
+                        </select>
+                        <select>
+                            <option>All Status</option>
+                            <option>Active</option>
+                            <option>Inactive</option>
+                            <option>Suspended</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th><input type="checkbox"></th>
+                                <th>User</th>
+                                <th>Role</th>
+                                <th>Status</th>
+                                <th>Last Login</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><input type="checkbox"></td>
+                                <td>
+                                    <div class="user-cell">
+                                        <div class="avatar">JD</div>
+                                        <div class="user-info">
+                                            <div class="name">John Doe</div>
+                                            <div class="email">john.doe@example.com</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>Super Admin</td>
+                                <td><span class="status-badge active">Active</span></td>
+                                <td>Today, 09:24 AM</td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <button class="icon-btn"><i class="fas fa-edit"></i></button>
+                                        <button class="icon-btn"><i class="fas fa-key"></i></button>
+                                        <button class="icon-btn"><i class="fas fa-trash"></i></button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><input type="checkbox"></td>
+                                <td>
+                                    <div class="user-cell">
+                                        <div class="avatar">AS</div>
+                                        <div class="user-info">
+                                            <div class="name">Alice Smith</div>
+                                            <div class="email">alice.s@example.com</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>Admin</td>
+                                <td><span class="status-badge active">Active</span></td>
+                                <td>Yesterday, 03:45 PM</td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <button class="icon-btn"><i class="fas fa-edit"></i></button>
+                                        <button class="icon-btn"><i class="fas fa-key"></i></button>
+                                        <button class="icon-btn"><i class="fas fa-trash"></i></button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><input type="checkbox"></td>
+                                <td>
+                                    <div class="user-cell">
+                                        <div class="avatar">RJ</div>
+                                        <div class="user-info">
+                                            <div class="name">Robert Johnson</div>
+                                            <div class="email">rob.j@example.com</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>Editor</td>
+                                <td><span class="status-badge inactive">Inactive</span></td>
+                                <td>5 days ago</td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <button class="icon-btn"><i class="fas fa-edit"></i></button>
+                                        <button class="icon-btn"><i class="fas fa-key"></i></button>
+                                        <button class="icon-btn"><i class="fas fa-trash"></i></button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><input type="checkbox"></td>
+                                <td>
+                                    <div class="user-cell">
+                                        <div class="avatar">MB</div>
+                                        <div class="user-info">
+                                            <div class="name">Maria Brown</div>
+                                            <div class="email">maria.b@example.com</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>Viewer</td>
+                                <td><span class="status-badge suspended">Suspended</span></td>
+                                <td>2 weeks ago</td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <button class="icon-btn"><i class="fas fa-edit"></i></button>
+                                        <button class="icon-btn"><i class="fas fa-key"></i></button>
+                                        <button class="icon-btn"><i class="fas fa-trash"></i></button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><input type="checkbox"></td>
+                                <td>
+                                    <div class="user-cell">
+                                        <div class="avatar">TW</div>
+                                        <div class="user-info">
+                                            <div class="name">Thomas Wilson</div>
+                                            <div class="email">tom.w@example.com</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>Admin</td>
+                                <td><span class="status-badge active">Active</span></td>
+                                <td>Today, 11:30 AM</td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <button class="icon-btn"><i class="fas fa-edit"></i></button>
+                                        <button class="icon-btn"><i class="fas fa-key"></i></button>
+                                        <button class="icon-btn"><i class="fas fa-trash"></i></button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="table-footer">
+                    <div class="table-info">
+                        Showing 1 to 5 of 1248 entries
+                    </div>
+                    <div class="pagination">
+                        <button class="page-btn disabled"><i class="fas fa-chevron-left"></i></button>
+                        <button class="page-btn active">1</button>
+                        <button class="page-btn">2</button>
+                        <button class="page-btn">3</button>
+                        <span>...</span>
+                        <button class="page-btn">25</button>
+                        <button class="page-btn"><i class="fas fa-chevron-right"></i></button>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Recent Activity Section -->
+            <section class="activity-container">
+                <div class="activity-header">
+                    <h2 class="section-title">Recent Activity</h2>
+                    <button class="btn btn-outline">
+                        View All
+                    </button>
+                </div>
+                
+                <div class="activity-list">
+                    <div class="activity-item">
+                        <div class="activity-icon">
+                            <i class="fas fa-user-plus"></i>
+                        </div>
+                        <div class="activity-details">
+                            <div class="activity-title">New user registered</div>
+                            <div class="activity-description">John Smith created a new account</div>
+                            <div class="activity-meta">
+                                <span><i class="fas fa-user"></i> System</span>
+                                <span><i class="fas fa-clock"></i> 5 minutes ago</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="activity-item">
+                        <div class="activity-icon">
+                            <i class="fas fa-key"></i>
+                        </div>
+                        <div class="activity-details">
+                            <div class="activity-title">Password reset</div>
+                            <div class="activity-description">Maria Brown reset her password</div>
+                            <div class="activity-meta">
+                                <span><i class="fas fa-user"></i> Maria Brown</span>
+                                <span><i class="fas fa-clock"></i> 1 hour ago</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="activity-item">
+                        <div class="activity-icon">
+                            <i class="fas fa-ban"></i>
+                        </div>
+                        <div class="activity-details">
+                            <div class="activity-title">User suspended</div>
+                            <div class="activity-description">Robert Johnson was suspended by Admin</div>
+                            <div class="activity-meta">
+                                <span><i class="fas fa-user"></i> Admin User</span>
+                                <span><i class="fas fa-clock"></i> 3 hours ago</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="activity-item">
+                        <div class="activity-icon">
+                            <i class="fas fa-file-export"></i>
+                        </div>
+                        <div class="activity-details">
+                            <div class="activity-title">Data exported</div>
+                            <div class="activity-description">User data exported to CSV</div>
+                            <div class="activity-meta">
+                                <span><i class="fas fa-user"></i> Admin User</span>
+                                <span><i class="fas fa-clock"></i> Yesterday</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+    <script src="{% static 'admin/admin/admin.js' %}"></script>
+</body>
+</html>

@@ -1,0 +1,108 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up | Modern Interface</title>
+    <link rel="stylesheet" href="{% static 'auth/signin/signin.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="icon" type="image/png" href="{% static 'auth/img/logo_big.png' %}">
+</head>
+<body>
+    <div class="blob-container">
+        <div class="blob"></div>
+        <div class="blob"></div>
+    </div>
+    <main class="login-container">
+        <section class="login-card">
+            <header class="login-header">
+                <div class="logo-container">
+                    <img src="{% static 'auth/img/logo_big.png' %}" alt="Logo" class="logo">
+                </div>
+                <h1>Create Account</h1>
+                <p class="subtitle">Sign up for EdSight</p>
+            </header>
+            <form id="signupForm" class="login-form" autocomplete="off">
+                <nav class="horizontal-stepper" aria-label="Signup Steps">
+                    <div class="h-step-block">
+                        <div class="h-step-circle" id="stepCircle1" aria-current="step">1</div>
+                        <div class="h-step-label" id="stepLabel1">School Info</div>
+                        <div class="h-step-line" id="stepLine1"></div>
+                    </div>
+                    <div class="h-step-block">
+                        <div class="h-step-circle" id="stepCircle2">2</div>
+                        <div class="h-step-label" id="stepLabel2">Account Info</div>
+                    </div>
+                </nav>
+                <section class="form-pages-container">
+                <section id="page1" class="form-page">
+                    <div class="form-group floating" style="position:relative;">
+                        <input type="text" id="schoolName" name="schoolName" required placeholder=" ">
+                        <label for="schoolName">School Name</label>
+                        <i class="fas fa-school icon"></i>
+                        <span id="schoolIdBox" class="school-id-box" style="position:absolute; right:10px; top:50%; transform:translateY(-50%); background:#f5f5f5; color:#333; border-radius:4px; padding:2px 8px; font-size:0.95em; display:none;"></span>
+                    </div>
+                    <div id="districtField" class="form-group floating">
+                        <input type="text" id="district" name="district" required placeholder=" ">
+                        <label for="district">District</label>
+                        <i class="fas fa-map-pin icon"></i>
+                    </div>
+                    <div id="divisionField" class="form-group floating">
+                        <input type="text" id="division" name="division" required placeholder=" ">
+                        <label for="division">Division</label>
+                        <i class="fas fa-building icon"></i>
+                    </div>
+                    <div id="regionField" class="form-group floating">
+                        <input type="text" id="region" name="region" required placeholder=" ">
+                        <label for="region">Region</label>
+                        <i class="fas fa-map icon"></i>
+                    </div>
+                    <button type="button" id="nextPageBtn" class="login-button">
+                        <span class="button-text">Next</span>
+                        <i class="fas fa-arrow-right button-icon"></i>
+                    </button>
+                </section>
+                <section id="page2" class="form-page" style="display:none;">
+                    <div class="form-group floating" style="position:relative;">
+                        <input type="text" id="username" name="username" required placeholder=" ">
+                        <label for="username">Username</label>
+                        <i class="fas fa-user icon"></i>
+                        <div id="usernameTooltip" class="custom-tooltip" style="display:none;"></div>
+                    </div>
+                    <div class="form-group floating email-group" style="position:relative;">
+                        <i class="fas fa-envelope icon"></i>
+                        <input type="text" id="emailUser" name="emailUser" required placeholder=" ">
+                        <label for="emailUser">School Email</label>
+                        <span class="email-domain">@deped.gov.ph</span>
+                        <div id="emailTooltip" class="custom-tooltip" style="display:none;"></div>
+                    </div>
+                    <div class="form-group floating">
+                        <input type="password" id="password" name="password" required placeholder=" ">
+                        <label for="password">Password</label>
+                        <i class="fas fa-lock icon"></i>
+                        <i class="fas fa-eye toggle-password" id="togglePassword" style="cursor:pointer; position:absolute; right:40px; top:50%; transform:translateY(-50%);"></i>
+                        <div id="passwordTooltip" class="custom-tooltip" style="display:none;"></div>
+                    </div>
+                    <div class="error-message" id="passwordError"></div>
+                    <div class="page2-actions">
+                        <button type="button" id="backPageBtn" class="login-button" style="margin-right:10px;">
+                            <span class="button-text">Back</span>
+                            <i class="fas fa-arrow-left button-icon"></i>
+                        </button>
+                        <button type="submit" class="login-button">
+                            <span class="button-text">Create Account</span>
+                            <i class="fas fa-user-plus button-icon"></i>
+                        </button>
+                    </div>
+                </section>
+                </section>
+                <footer class="login-footer">
+                    <p>Already have an account?<a href="/auth/login/" class="signup-link">Sign In</a></p>
+                </footer>
+            </form>
+        </section>
+    </main>
+    <script src="{% static 'auth/signin/signin.js' %}"></script>
+</body>
+</html>

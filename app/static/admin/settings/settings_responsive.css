@@ -1,0 +1,455 @@
+/* Settings Page Responsive Styles */
+
+/* Tablet Styles */
+@media (max-width: 1024px) {
+    .settings-grid {
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    }
+    
+    .integrations-grid {
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    }
+    
+    .backup-status {
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    }
+    
+    .health-metrics {
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    }
+    
+    .tool-grid {
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    }
+}
+
+/* Mobile Styles */
+@media (max-width: 768px) {
+    .main-content {
+        margin-left: 0;
+        padding: 1rem;
+    }
+    
+    .sidebar {
+        position: fixed;
+        left: -260px;
+        transition: left 0.3s ease;
+        z-index: 1000;
+    }
+    
+    .sidebar.active {
+        left: 0;
+    }
+    
+    /* Header adjustments */
+    .header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .header-title h1 {
+        font-size: 1.5rem;
+    }
+    
+    .header-actions {
+        width: 100%;
+        justify-content: space-between;
+    }
+    
+    /* Settings tabs mobile */
+    .settings-tabs {
+        flex-wrap: wrap;
+        gap: 0.25rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .tab-btn {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.8rem;
+        flex: 1;
+        min-width: calc(50% - 0.125rem);
+        justify-content: center;
+    }
+    
+    .tab-btn i {
+        display: none;
+    }
+    
+    /* Single column layouts */
+    .settings-grid,
+    .integrations-grid,
+    .backup-status,
+    .backup-actions,
+    .health-metrics,
+    .tool-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    /* Setting card adjustments */
+    .setting-card {
+        padding: 1rem;
+    }
+    
+    .setting-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .setting-actions {
+        width: 100%;
+        justify-content: flex-end;
+    }
+    
+    /* Cache info mobile */
+    .cache-item {
+        flex-direction: column;
+        gap: 0.25rem;
+        text-align: left;
+    }
+    
+    /* Input group mobile */
+    .input-group {
+        flex-wrap: wrap;
+        gap: 0.25rem;
+    }
+    
+    /* Notification options mobile */
+    .notification-option {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+        padding: 1rem 0;
+    }
+    
+    .option-info {
+        width: 100%;
+    }
+    
+    /* Integration card mobile */
+    .integration-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .integration-info {
+        width: 100%;
+        text-align: center;
+    }
+    
+    .integration-actions {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+    }
+    
+    /* Backup item mobile */
+    .backup-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+    
+    .backup-info {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.25rem;
+        width: 100%;
+    }
+    
+    .backup-actions {
+        width: 100%;
+        justify-content: flex-start;
+    }
+    
+    /* Tool card mobile */
+    .tool-card {
+        flex-direction: column;
+        text-align: center;
+        gap: 0.5rem;
+    }
+    
+    .tool-info {
+        width: 100%;
+    }
+    
+    /* Alert item mobile */
+    .alert-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .alert-content {
+        width: 100%;
+    }
+    
+    .alert-actions {
+        width: 100%;
+        justify-content: flex-start;
+    }
+    
+    /* Settings footer mobile */
+    .settings-footer {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .settings-footer .btn {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    /* Status card mobile */
+    .status-card {
+        flex-direction: column;
+        text-align: center;
+        gap: 0.5rem;
+    }
+    
+    .status-info {
+        width: 100%;
+    }
+    
+    /* Action group mobile */
+    .action-group {
+        padding: 1rem;
+        text-align: center;
+    }
+    
+    .action-group .btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+/* Small mobile styles */
+@media (max-width: 480px) {
+    .main-content {
+        padding: 0.5rem;
+    }
+    
+    .header-title h1 {
+        font-size: 1.25rem;
+    }
+    
+    .header-title p {
+        font-size: 0.875rem;
+    }
+    
+    .settings-section {
+        margin-bottom: 2rem;
+    }
+    
+    .section-header h2 {
+        font-size: 1.25rem;
+    }
+    
+    .tab-btn {
+        padding: 0.375rem 0.5rem;
+        font-size: 0.75rem;
+        min-width: calc(33.333% - 0.167rem);
+    }
+    
+    .setting-card,
+    .integration-card,
+    .notification-category,
+    .action-group,
+    .tool-card {
+        padding: 0.75rem;
+    }
+    
+    .btn {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.8rem;
+    }
+    
+    .btn-sm {
+        padding: 0.375rem 0.5rem;
+        font-size: 0.75rem;
+    }
+    
+    /* Reduce spacing */
+    .settings-grid,
+    .integrations-grid,
+    .backup-status,
+    .backup-actions,
+    .health-metrics,
+    .tool-grid {
+        gap: 0.75rem;
+    }
+    
+    .notification-categories {
+        gap: 1rem;
+    }
+    
+    .notification-options {
+        gap: 0.75rem;
+    }
+    
+    .backup-list {
+        gap: 0.75rem;
+    }
+    
+    /* Smaller metric cards */
+    .metric-card {
+        padding: 0.75rem;
+    }
+    
+    .metric-header {
+        font-size: 0.8rem;
+    }
+    
+    /* Smaller user profile */
+    .user-avatar {
+        width: 32px;
+        height: 32px;
+        font-size: 0.75rem;
+    }
+    
+    .user-name {
+        font-size: 0.8rem;
+    }
+    
+    .user-role {
+        font-size: 0.7rem;
+    }
+    
+    /* Smaller badges */
+    .badge {
+        font-size: 0.65rem;
+        padding: 0.15rem 0.3rem;
+        min-width: 16px;
+    }
+    
+    /* Adjust form inputs */
+    .form-input {
+        padding: 0.375rem;
+        font-size: 0.8rem;
+    }
+    
+    /* Smaller toggle switches */
+    .toggle-switch {
+        width: 40px;
+        height: 20px;
+    }
+    
+    .slider:before {
+        height: 14px;
+        width: 14px;
+        left: 3px;
+        bottom: 3px;
+    }
+    
+    input:checked + .slider:before {
+        transform: translateX(20px);
+    }
+}
+
+/* Landscape mobile styles */
+@media (max-width: 768px) and (orientation: landscape) {
+    .settings-tabs {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+    }
+    
+    .settings-tabs::-webkit-scrollbar {
+        display: none;
+    }
+    
+    .tab-btn {
+        flex-shrink: 0;
+        min-width: auto;
+        white-space: nowrap;
+    }
+    
+    .tab-btn i {
+        display: inline-block;
+    }
+    
+    .backup-status,
+    .health-metrics {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .tool-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* High DPI displays */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+    .logo,
+    .menu-item i,
+    .tool-icon i,
+    .status-icon i,
+    .alert-icon i {
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+    }
+}
+
+/* Reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+    .btn,
+    .menu-item,
+    .tab-btn,
+    .setting-card,
+    .integration-card,
+    .tool-card,
+    .slider,
+    .metric-progress {
+        transition: none;
+    }
+    
+    .sidebar {
+        transition: none;
+    }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --white: #1a202c;
+        --dark-text: #f7fafc;
+        --gray: #2d3748;
+        --light-gray: #4a5568;
+        --accent: #a0aec0;
+    }
+    
+    body {
+        background-color: var(--white);
+        color: var(--dark-text);
+    }
+    
+    .setting-card,
+    .integration-card,
+    .notification-category,
+    .status-card,
+    .action-group,
+    .tool-card,
+    .backup-item,
+    .alert-item,
+    .metric-card {
+        background: #2d3748;
+        border-color: #4a5568;
+    }
+    
+    .form-input {
+        background: #4a5568;
+        border-color: #718096;
+        color: var(--dark-text);
+    }
+    
+    .form-input:disabled,
+    .form-input[readonly] {
+        background: #2d3748;
+        color: var(--accent);
+    }
+}

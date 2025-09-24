@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Logs & Auditing | Frosted Admin</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'admin/logs/logs.css' %}">
+    <link rel="stylesheet" href="{% static 'admin/logs/logs_responsive.css' %}">
+    <link rel="stylesheet" href="{% static 'admin/admin_dark_theme.css' %}">
+    <link rel="icon" type="image/png" href="{% static 'auth/img/logo_big.png' %}">
+</head>
+<body class="dark-theme">
+    <div class="admin-container">
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar">
+            <div class="logo-container">
+                <i class="fas fa-shield-alt logo"></i>
+                <span class="logo-text">Frosted Admin</span>
+            </div>
+            
+            <div class="sidebar-menu">
+                <div class="menu-title">MAIN</div>
+                <a href="{% url 'admin-page' %}" class="menu-item">
+                    <i class="fas fa-home"></i>
+                    <span>Dashboard</span>
+                </a>
+                
+                <div class="menu-title">MANAGEMENT</div>
+                <a href="{% url 'user-management-page' %}" class="menu-item">
+                    <i class="fas fa-users"></i>
+                    <span>User Management</span>
+                </a>
+                <a href="{% url 'role-page' %}" class="menu-item">
+                    <i class="fas fa-user-shield"></i>
+                    <span>Role & Access</span>
+                </a>
+                <a href="{% url 'logs-page' %}" class="menu-item active">
+                    <i class="fas fa-history"></i>
+                    <span>Logs & Auditing</span>
+                </a>
+                <a href="#" class="menu-item">
+                    <i class="fas fa-user-clock"></i>
+                    <span>Session Controls</span>
+                </a>
+                
+                <div class="menu-title">TOOLS</div>
+                <a href="#" class="menu-item">
+                    <i class="fas fa-tools"></i>
+                    <span>System Tools</span>
+                </a>
+                <a href="#" class="menu-item">
+                    <i class="fas fa-comment-alt"></i>
+                    <span>Communication</span>
+                </a>
+                <a href="{% url 'settings-page' %}" class="menu-item">
+                    <i class="fas fa-cog"></i>
+                    <span>Admin Controls</span>
+                </a>
+            </div>
+            
+            <!-- Logout Section -->
+            <div class="sidebar-footer">
+                <a href="{% url 'logout' %}" class="menu-item logout-btn">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Sign Out</span>
+                </a>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="header">
+                <div class="header-title">
+                    <h1>Logs & Auditing</h1>
+                    <p>Monitor system activities and user actions</p>
+                </div>
+                
+                <div class="header-actions">
+                    <div class="user-profile">
+                        <div class="user-avatar">AD</div>
+                        <div class="user-info">
+                            <div class="user-name">Admin User</div>
+                            <div class="user-role">Super Admin</div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+            
+            <!-- Log Type Tabs -->
+            <div class="log-tabs">
+                <button class="tab-btn active" data-tab="login-history">Login History</button>
+                <button class="tab-btn" data-tab="activity-logs">Activity Logs</button>
+                <button class="tab-btn" data-tab="audit-logs">Audit Logs</button>
+                <button class="tab-btn" data-tab="failed-logins">Failed Logins</button>
+            </div>
+            
+            <!-- Filters and Controls -->
+            <div class="log-controls">
+                <div class="controls-left">
+                    <div class="date-range">
+                        <label>Date Range:</label>
+                        <select id="dateRange">
+                            <option value="today">Today</option>
+                            <option value="yesterday">Yesterday</option>
+                            <option value="week">This Week</option>
+                            <option value="month" selected>This Month</option>
+                            <option value="custom">Custom</option>
+                        </select>
+                    </div>
+                    
+                    <div class="custom-dates" id="customDates" style="display: none;">
+                        <input type="date" id="startDate">
+                        <span>to</span>
+                        <input type="date" id="endDate">
+                    </div>
+                </div>
+                
+                <div class="controls-right">
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="logSearch" placeholder="Search logs...">
+                    </div>
+                    
+                    <div class="export-actions">
+                        <button class="btn btn-outline" onclick="exportCurrentTab('csv')">
+                            <i class="fas fa-file-csv"></i>
+                            CSV
+                        </button>
+                        <button class="btn btn-outline" onclick="exportCurrentTab('pdf')" disabled title="PDF export coming soon">
+                            <i class="fas fa-file-pdf"></i>
+                            PDF
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Login History Tab -->
+            <div class="log-tab-content active" id="login-history">
+                <div class="log-table-container">
+                    <table class="log-table">
+                        <thead>
+                            <tr>
+                                <th>User</th>
+                                <th>Event</th>
+                                <th>Time</th>
+                                <th>IP Address</th>
+                                <th>Location</th>
+                                <th>Device</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for attempt in login_history %}
+                            <tr>
+                                <td>
+                                    <div class="user-cell">
+                                        <div class="avatar">{{ attempt.username|slice:":2"|upper }}</div>
+                                        <div class="user-info">
+                                            <div class="name">{{ attempt.username }}</div>
+                                            <div class="email">{{ attempt.username }}@deped.gov.ph</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>{% if attempt.success %}Login{% else %}Failed Login{% endif %}</td>
+                                <td>{{ attempt.timestamp|date:"M d, Y H:i" }}</td>
+                                <td>{{ attempt.ip_address }}</td>
+                                <td>{{ attempt.location|default:"Unknown" }}</td>
+                                <td>{{ attempt.user_agent|truncatechars:30 }}</td>
+                                <td>
+                                    {% if attempt.success %}
+                                        <span class="status-badge success">Success</span>
+                                    {% else %}
+                                        <span class="status-badge error">Failed</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="7" class="text-center">No login history found for the selected period.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="log-stats">
+                    <div class="stat-card">
+                        <div class="stat-value">{{ successful_logins }}</div>
+                        <div class="stat-label">Successful Logins</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">{{ failed_login_count }}</div>
+                        <div class="stat-label">Failed Attempts</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">{{ total_users }}</div>
+                        <div class="stat-label">Total Users</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Activity Logs Tab -->
+            <div class="log-tab-content" id="activity-logs">
+                <div class="log-table-container">
+                    <table class="log-table">
+                        <thead>
+                            <tr>
+                                <th>User</th>
+                                <th>Action</th>
+                                <th>Object</th>
+                                <th>Details</th>
+                                <th>Time</th>
+                                <th>IP Address</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for log in activity_logs %}
+                            <tr>
+                                <td>
+                                    <div class="user-cell">
+                                        <div class="avatar">{% if log.user %}{{ log.user.username|slice:":2"|upper }}{% else %}SY{% endif %}</div>
+                                        <div class="user-info">
+                                            <div class="name">{% if log.user %}{{ log.user.username }}{% else %}System{% endif %}</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>{{ log.action_type|title }}</td>
+                                <td>{{ log.resource_type|title }}</td>
+                                <td>{{ log.description|truncatechars:50 }}</td>
+                                <td>{{ log.timestamp|date:"M d, Y H:i" }}</td>
+                                <td>{{ log.ip_address|default:"N/A" }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="text-center">No activity logs found for the selected period.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="activity-summary">
+                    <h3>Activity Summary</h3>
+                    <div class="summary-cards">
+                        <div class="summary-card">
+                            <div class="summary-icon create">
+                                <i class="fas fa-plus"></i>
+                            </div>
+                            <div class="summary-info">
+                                <div class="summary-value">{{ activity_summary.create_actions }}</div>
+                                <div class="summary-label">Create Actions</div>
+                            </div>
+                        </div>
+                        <div class="summary-card">
+                            <div class="summary-icon update">
+                                <i class="fas fa-edit"></i>
+                            </div>
+                            <div class="summary-info">
+                                <div class="summary-value">{{ activity_summary.update_actions }}</div>
+                                <div class="summary-label">Update Actions</div>
+                            </div>
+                        </div>
+                        <div class="summary-card">
+                            <div class="summary-icon delete">
+                                <i class="fas fa-trash"></i>
+                            </div>
+                            <div class="summary-info">
+                                <div class="summary-value">{{ activity_summary.delete_actions }}</div>
+                                <div class="summary-label">Delete Actions</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Audit Logs Tab -->
+            <div class="log-tab-content" id="audit-logs">
+                <div class="log-table-container">
+                    <table class="log-table">
+                        <thead>
+                            <tr>
+                                <th>Timestamp</th>
+                                <th>User</th>
+                                <th>Event</th>
+                                <th>Target</th>
+                                <th>Details</th>
+                                <th>IP Address</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Today, 10:15 AM</td>
+                                <td>
+                                    <div class="user-cell">
+                                        <div class="avatar">JD</div>
+                                        <div class="user-info">
+                                            <div class="name">John Doe</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>Permission Change</td>
+                                <td>Role: Editor</td>
+                                <td>Added "Export Data" permission</td>
+                                <td>192.168.1.45</td>
+                            </tr>
+                            <tr>
+                                <td>Today, 09:30 AM</td>
+                                <td>
+                                    <div class="user-cell">
+                                        <div class="avatar">AS</div>
+                                        <div class="user-info">
+                                            <div class="name">Alice Smith</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>Configuration Update</td>
+                                <td>System Settings</td>
+                                <td>Changed session timeout to 30 mins</td>
+                                <td>203.113.45.12</td>
+                            </tr>
+                            <tr>
+                                <td>Yesterday, 05:45 PM</td>
+                                <td>
+                                    <div class="user-cell">
+                                        <div class="avatar">RJ</div>
+                                        <div class="user-info">
+                                            <div class="name">Robert Johnson</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>Data Access</td>
+                                <td>User Records</td>
+                                <td>Viewed sensitive user data</td>
+                                <td>172.56.23.89</td>
+                            </tr>
+                            <tr>
+                                <td>Yesterday, 03:20 PM</td>
+                                <td>
+                                    <div class="user-cell">
+                                        <div class="avatar">MB</div>
+                                        <div class="user-info">
+                                            <div class="name">Maria Brown</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>Role Assignment</td>
+                                <td>User: Thomas Wilson</td>
+                                <td>Assigned "Admin" role</td>
+                                <td>89.203.145.67</td>
+                            </tr>
+                            <tr>
+                                <td>Yesterday, 11:45 AM</td>
+                                <td>
+                                    <div class="user-cell">
+                                        <div class="avatar">TW</div>
+                                        <div class="user-info">
+                                            <div class="name">Thomas Wilson</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>Security Change</td>
+                                <td>Password Policy</td>
+                                <td>Updated password complexity rules</td>
+                                <td>45.78.123.90</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="audit-insights">
+                    <h3>Audit Insights</h3>
+                    <div class="insight-card">
+                        <div class="insight-icon">
+                            <i class="fas fa-user-secret"></i>
+                        </div>
+                        <div class="insight-content">
+                            <div class="insight-title">Sensitive Data Access</div>
+                            <div class="insight-value">12 accesses in the last 7 days</div>
+                        </div>
+                    </div>
+                    <div class="insight-card">
+                        <div class="insight-icon">
+                            <i class="fas fa-shield-alt"></i>
+                        </div>
+                        <div class="insight-content">
+                            <div class="insight-title">Security Changes</div>
+                            <div class="insight-value">8 changes in the last month</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Failed Logins Tab -->
+            <div class="log-tab-content" id="failed-logins">
+                <div class="log-table-container">
+                    <table class="log-table">
+                        <thead>
+                            <tr>
+                                <th>Timestamp</th>
+                                <th>Username</th>
+                                <th>IP Address</th>
+                                <th>Location</th>
+                                <th>Reason</th>
+                                <th>Attempts</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for attempt in failed_logins %}
+                            <tr>
+                                <td>{{ attempt.timestamp|date:"M d, Y H:i" }}</td>
+                                <td>{{ attempt.username }}</td>
+                                <td>{{ attempt.ip_address }}</td>
+                                <td>{{ attempt.location|default:"Unknown" }}</td>
+                                <td>{{ attempt.failure_reason|default:"Authentication failed" }}</td>
+                                <td>
+                                    {% if attempt.is_suspicious %}
+                                        <span class="status-badge error">High</span>
+                                    {% else %}
+                                        <span class="status-badge warning">Normal</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="text-center">No failed login attempts found for the selected period.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="security-alerts">
+                    <h3>Security Alerts</h3>
+                    {% for alert in security_alerts %}
+                    <div class="alert-card {{ alert.type }}">
+                        <div class="alert-icon">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                        <div class="alert-content">
+                            <div class="alert-title">{{ alert.title }}</div>
+                            <div class="alert-details">{{ alert.details }}</div>
+                        </div>
+                        <div class="alert-time">{{ alert.time }}</div>
+                    </div>
+                    {% empty %}
+                    <div class="alert-card info">
+                        <div class="alert-icon">
+                            <i class="fas fa-info-circle"></i>
+                        </div>
+                        <div class="alert-content">
+                            <div class="alert-title">No Security Alerts</div>
+                            <div class="alert-details">No security alerts for the selected period.</div>
+                        </div>
+                        <div class="alert-time">Current</div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <script src="{% static 'admin/logs/logs.js' %}"></script>
+</body>
+</html>

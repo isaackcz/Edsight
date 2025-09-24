@@ -1,0 +1,1047 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Role Management | Frosted Admin</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'admin/role/role.css' %}">
+    <link rel="stylesheet" href="{% static 'admin/role/role_responsive.css' %}">
+    <link rel="stylesheet" href="{% static 'admin/role/role_redesigned.css' %}">
+    <link rel="stylesheet" href="{% static 'admin/admin_dark_theme.css' %}">
+    <link rel="icon" type="image/png" href="{% static 'auth/img/logo_big.png' %}">
+</head>
+<body class="dark-theme">
+    <div class="admin-container">
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar">
+            <div class="logo-container">
+                <i class="fas fa-shield-alt logo"></i>
+                <span class="logo-text">Frosted Admin</span>
+            </div>
+            
+            <div class="sidebar-menu">
+                <div class="menu-title">MAIN</div>
+                <a href="{% url 'admin-page' %}" class="menu-item">
+                    <i class="fas fa-home"></i>
+                    <span>Dashboard</span>
+                </a>
+                
+                <div class="menu-title">MANAGEMENT</div>
+                <a href="{% url 'user-management-page' %}" class="menu-item">
+                    <i class="fas fa-users"></i>
+                    <span>User Management</span>
+                </a>
+                <a href="{% url 'role-page' %}" class="menu-item active">
+                    <i class="fas fa-user-shield"></i>
+                    <span>Role & Access</span>
+                </a>
+                <a href="{% url 'logs-page' %}" class="menu-item">
+                    <i class="fas fa-history"></i>
+                    <span>Logs & Auditing</span>
+                </a>
+                <a href="#" class="menu-item">
+                    <i class="fas fa-user-clock"></i>
+                    <span>Session Controls</span>
+                </a>
+                
+                <div class="menu-title">TOOLS</div>
+                <a href="#" class="menu-item">
+                    <i class="fas fa-tools"></i>
+                    <span>System Tools</span>
+                </a>
+                <a href="#" class="menu-item">
+                    <i class="fas fa-comment-alt"></i>
+                    <span>Communication</span>
+                </a>
+                <a href="{% url 'settings-page' %}" class="menu-item">
+                    <i class="fas fa-cog"></i>
+                    <span>Admin Controls</span>
+                </a>
+            </div>
+            
+            <!-- Logout Section -->
+            <div class="sidebar-footer">
+                <a href="{% url 'logout' %}" class="menu-item logout-btn">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Sign Out</span>
+                </a>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="header">
+                <div class="header-title">
+                    <h1>Role Management</h1>
+                    <p>Create and manage roles with granular permissions</p>
+                </div>
+                
+                <div class="header-actions">
+                    <button class="btn btn-outline">
+                        <i class="fas fa-bell"></i>
+                        <span class="badge">1</span>
+                    </button>
+                    <div class="user-profile">
+                        <div class="user-avatar">AD</div>
+                        <div class="user-info">
+                            <div class="user-name">Admin User</div>
+                            <div class="user-role">Super Admin</div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+            
+            <!-- Role Management Grid -->
+            <div class="role-management-grid">
+                
+                <!-- Role Overview Section -->
+                <section class="role-overview-section">
+                    <div class="section-header">
+                        <div class="section-title-group">
+                            <h2 class="section-title">
+                                <i class="fas fa-shield-alt"></i>
+                                Administrative Hierarchy
+                            </h2>
+                            <p class="section-subtitle">Manage role permissions and user assignments across organizational levels</p>
+                        </div>
+                        <div class="section-actions">
+                            <button class="btn btn-outline">
+                                <i class="fas fa-download"></i>
+                                Export Roles
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Role Cards Grid -->
+                    <div class="roles-grid-container">
+                <div class="role-card central-office">
+                    <div class="role-header">
+                                <div class="role-level-badge level-5">5</div>
+                                <div class="role-icon">
+                                    <i class="fas fa-crown"></i>
+                    </div>
+                                <div class="role-info">
+                                    <h3 class="role-title">Central Office</h3>
+                                    <span class="role-description">Nationwide control</span>
+                        </div>
+                        </div>
+                            
+                            <div class="role-stats">
+                                <div class="stat-item">
+                                    <span class="stat-value">{{ permission_stats.central.count|default:0 }}</span>
+                                    <span class="stat-label">Users</span>
+                    </div>
+                                <div class="stat-item">
+                                    <span class="stat-value">Full</span>
+                                    <span class="stat-label">Access</span>
+                        </div>
+                    </div>
+
+                            <div class="permissions-summary">
+                                <div class="permission-item">
+                                    <i class="fas fa-user-plus"></i>
+                                    <span>Create all user accounts</span>
+                                </div>
+                                <div class="permission-item">
+                                    <i class="fas fa-eye"></i>
+                                    <span>View all schools nationwide</span>
+                                </div>
+                                <div class="permission-item">
+                                    <i class="fas fa-check-double"></i>
+                                    <span>Final form submission</span>
+                                </div>
+                                <div class="permission-item">
+                                    <i class="fas fa-cogs"></i>
+                                    <span>Full system control</span>
+                                </div>
+                            </div>
+
+                    <div class="role-actions">
+                        <button class="btn btn-primary btn-sm view-details-btn" data-role="central-office">
+                            <i class="fas fa-info-circle"></i>
+                            View Details
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="role-card region-office">
+                    <div class="role-header">
+                                <div class="role-level-badge level-4">4</div>
+                                <div class="role-icon">
+                                    <i class="fas fa-map-marked-alt"></i>
+                    </div>
+                                <div class="role-info">
+                                    <h3 class="role-title">Region Office</h3>
+                                    <span class="role-description">Regional oversight</span>
+                        </div>
+                        </div>
+                            
+                            <div class="role-stats">
+                                <div class="stat-item">
+                                    <span class="stat-value">{{ permission_stats.region.count|default:0 }}</span>
+                                    <span class="stat-label">Users</span>
+                    </div>
+                                <div class="stat-item">
+                                    <span class="stat-value">Regional</span>
+                                    <span class="stat-label">Scope</span>
+                        </div>
+                    </div>
+
+                            <div class="permissions-summary">
+                                <div class="permission-item">
+                                    <i class="fas fa-map-marker-alt"></i>
+                                    <span>View schools in region only</span>
+                                </div>
+                                <div class="permission-item">
+                                    <i class="fas fa-calendar-plus"></i>
+                                    <span>Set deadlines</span>
+                                </div>
+                                <div class="permission-item">
+                                    <i class="fas fa-check-circle"></i>
+                                    <span>Verify forms to central</span>
+                                </div>
+                                <div class="permission-item">
+                                    <i class="fas fa-chart-line"></i>
+                                    <span>Regional oversight</span>
+                                </div>
+                            </div>
+
+                    <div class="role-actions">
+                        <button class="btn btn-primary btn-sm view-details-btn" data-role="region-office">
+                            <i class="fas fa-info-circle"></i>
+                            View Details
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="role-card division-office">
+                    <div class="role-header">
+                                <div class="role-level-badge level-3">3</div>
+                                <div class="role-icon">
+                                    <i class="fas fa-building"></i>
+                    </div>
+                                <div class="role-info">
+                                    <h3 class="role-title">Division Office</h3>
+                                    <span class="role-description">Division administration</span>
+                        </div>
+                        </div>
+                            
+                            <div class="role-stats">
+                                <div class="stat-item">
+                                    <span class="stat-value">{{ permission_stats.division.count|default:0 }}</span>
+                                    <span class="stat-label">Users</span>
+                    </div>
+                                <div class="stat-item">
+                                    <span class="stat-value">Division</span>
+                                    <span class="stat-label">Scope</span>
+                        </div>
+                    </div>
+
+                            <div class="permissions-summary">
+                                <div class="permission-item">
+                                    <i class="fas fa-users"></i>
+                                    <span>Create division/district/school accounts</span>
+                                </div>
+                                <div class="permission-item">
+                                    <i class="fas fa-key"></i>
+                                    <span>Password reset</span>
+                                </div>
+                                <div class="permission-item">
+                                    <i class="fas fa-user-edit"></i>
+                                    <span>Profile update</span>
+                                </div>
+                                <div class="permission-item">
+                                    <i class="fas fa-upload"></i>
+                                    <span>Submit forms to region</span>
+                                </div>
+                            </div>
+
+                    <div class="role-actions">
+                        <button class="btn btn-primary btn-sm view-details-btn" data-role="division-office">
+                            <i class="fas fa-info-circle"></i>
+                            View Details
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="role-card district-office">
+                    <div class="role-header">
+                                <div class="role-level-badge level-2">2</div>
+                                <div class="role-icon">
+                                    <i class="fas fa-school"></i>
+                    </div>
+                                <div class="role-info">
+                                    <h3 class="role-title">District Office</h3>
+                                    <span class="role-description">District coordination</span>
+                        </div>
+                        </div>
+                            
+                            <div class="role-stats">
+                                <div class="stat-item">
+                                    <span class="stat-value">{{ permission_stats.district.count|default:0 }}</span>
+                                    <span class="stat-label">Users</span>
+                    </div>
+                                <div class="stat-item">
+                                    <span class="stat-value">District</span>
+                                    <span class="stat-label">Scope</span>
+                        </div>
+                    </div>
+
+                            <div class="permissions-summary">
+                                <div class="permission-item">
+                                    <i class="fas fa-school"></i>
+                                    <span>View schools in district only</span>
+                                </div>
+                                <div class="permission-item">
+                                    <i class="fas fa-check-square"></i>
+                                    <span>Verify forms to division</span>
+                                </div>
+                                <div class="permission-item">
+                                    <i class="fas fa-tasks"></i>
+                                    <span>District oversight</span>
+                                </div>
+                                <div class="permission-item">
+                                    <i class="fas fa-clipboard-list"></i>
+                                    <span>Monitor school submissions</span>
+                                </div>
+                            </div>
+
+                    <div class="role-actions">
+                        <button class="btn btn-primary btn-sm view-details-btn" data-role="district-office">
+                            <i class="fas fa-info-circle"></i>
+                            View Details
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="role-card school">
+                    <div class="role-header">
+                                <div class="role-level-badge level-1">1</div>
+                                <div class="role-icon">
+                                    <i class="fas fa-graduation-cap"></i>
+                    </div>
+                                <div class="role-info">
+                                    <h3 class="role-title">School</h3>
+                                    <span class="role-description">School-level data</span>
+                        </div>
+                        </div>
+                            
+                            <div class="role-stats">
+                                <div class="stat-item">
+                                    <span class="stat-value">{{ permission_stats.school.count|default:0 }}</span>
+                                    <span class="stat-label">Users</span>
+                    </div>
+                                <div class="stat-item">
+                                    <span class="stat-value">School</span>
+                                    <span class="stat-label">Scope</span>
+                        </div>
+                    </div>
+
+                            <div class="permissions-summary">
+                                <div class="permission-item">
+                                    <i class="fas fa-eye"></i>
+                                    <span>View own school only</span>
+                                </div>
+                                <div class="permission-item">
+                                    <i class="fas fa-edit"></i>
+                                    <span>Fill forms</span>
+                                </div>
+                                <div class="permission-item">
+                                    <i class="fas fa-paper-plane"></i>
+                                    <span>Submit to district</span>
+                                </div>
+                                <div class="permission-item">
+                                    <i class="fas fa-database"></i>
+                                    <span>Manage school data</span>
+                                </div>
+                            </div>
+
+                    <div class="role-actions">
+                        <button class="btn btn-primary btn-sm view-details-btn" data-role="school">
+                            <i class="fas fa-info-circle"></i>
+                            View Details
+                        </button>
+                    </div>
+                </div>
+            </section>
+            
+            
+            <!-- Role Permissions Table -->
+            <section class="table-container">
+                <div class="table-header">
+                    <h2 class="section-title">Role Permissions</h2>
+                    <div class="actions">
+                        <div class="search-box">
+                            <i class="fas fa-search"></i>
+                            <input type="text" id="permissionSearch" placeholder="Search permissions...">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="permissions-table">
+                        <thead>
+                            <tr>
+                                <th>Permission</th>
+                                <th>Central Office</th>
+                                <th>Region Office</th>
+                                <th>Division Office</th>
+                                <th>District Office</th>
+                                <th>School</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Create region/division user accounts</td>
+                                <td><i class="fas fa-check-circle success"></i></td>
+                                <td><i class="fas fa-times-circle danger"></i></td>
+                                <td><i class="fas fa-times-circle danger"></i></td>
+                                <td><i class="fas fa-times-circle danger"></i></td>
+                                <td><i class="fas fa-times-circle danger"></i></td>
+                                <td>
+                                    <button class="icon-btn"><i class="fas fa-edit"></i></button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>View all schools without restriction</td>
+                                <td><i class="fas fa-check-circle success"></i></td>
+                                <td><i class="fas fa-times-circle danger"></i></td>
+                                <td><i class="fas fa-times-circle danger"></i></td>
+                                <td><i class="fas fa-times-circle danger"></i></td>
+                                <td><i class="fas fa-times-circle danger"></i></td>
+                                <td>
+                                    <button class="icon-btn"><i class="fas fa-edit"></i></button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Final submission of forms</td>
+                                <td><i class="fas fa-check-circle success"></i></td>
+                                <td><i class="fas fa-times-circle danger"></i></td>
+                                <td><i class="fas fa-times-circle danger"></i></td>
+                                <td><i class="fas fa-times-circle danger"></i></td>
+                                <td><i class="fas fa-times-circle danger"></i></td>
+                                <td>
+                                    <button class="icon-btn"><i class="fas fa-edit"></i></button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Set deadlines</td>
+                                <td><i class="fas fa-check-circle success"></i></td>
+                                <td><i class="fas fa-check-circle success"></i></td>
+                                <td><i class="fas fa-times-circle danger"></i></td>
+                                <td><i class="fas fa-times-circle danger"></i></td>
+                                <td><i class="fas fa-times-circle danger"></i></td>
+                                <td>
+                                    <button class="icon-btn"><i class="fas fa-edit"></i></button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>View schools within region only</td>
+                                <td><i class="fas fa-check-circle success"></i></td>
+                                <td><i class="fas fa-check-circle success"></i></td>
+                                <td><i class="fas fa-times-circle danger"></i></td>
+                                <td><i class="fas fa-times-circle danger"></i></td>
+                                <td><i class="fas fa-times-circle danger"></i></td>
+                                <td>
+                                    <button class="icon-btn"><i class="fas fa-edit"></i></button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Create division/district/school accounts</td>
+                                <td><i class="fas fa-check-circle success"></i></td>
+                                <td><i class="fas fa-times-circle danger"></i></td>
+                                <td><i class="fas fa-check-circle success"></i></td>
+                                <td><i class="fas fa-times-circle danger"></i></td>
+                                <td><i class="fas fa-times-circle danger"></i></td>
+                                <td>
+                                    <button class="icon-btn"><i class="fas fa-edit"></i></button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Password reset</td>
+                                <td><i class="fas fa-check-circle success"></i></td>
+                                <td><i class="fas fa-minus-circle warning"></i></td>
+                                <td><i class="fas fa-check-circle success"></i></td>
+                                <td><i class="fas fa-times-circle danger"></i></td>
+                                <td><i class="fas fa-times-circle danger"></i></td>
+                                <td>
+                                    <button class="icon-btn"><i class="fas fa-edit"></i></button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>View schools within district only</td>
+                                <td><i class="fas fa-check-circle success"></i></td>
+                                <td><i class="fas fa-check-circle success"></i></td>
+                                <td><i class="fas fa-check-circle success"></i></td>
+                                <td><i class="fas fa-check-circle success"></i></td>
+                                <td><i class="fas fa-times-circle danger"></i></td>
+                                <td>
+                                    <button class="icon-btn"><i class="fas fa-edit"></i></button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Fill and submit forms</td>
+                                <td><i class="fas fa-check-circle success"></i></td>
+                                <td><i class="fas fa-check-circle success"></i></td>
+                                <td><i class="fas fa-check-circle success"></i></td>
+                                <td><i class="fas fa-check-circle success"></i></td>
+                                <td><i class="fas fa-check-circle success"></i></td>
+                                <td>
+                                    <button class="icon-btn"><i class="fas fa-edit"></i></button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Verify forms before submission</td>
+                                <td><i class="fas fa-check-circle success"></i></td>
+                                <td><i class="fas fa-check-circle success"></i></td>
+                                <td><i class="fas fa-check-circle success"></i></td>
+                                <td><i class="fas fa-check-circle success"></i></td>
+                                <td><i class="fas fa-times-circle danger"></i></td>
+                                <td>
+                                    <button class="icon-btn"><i class="fas fa-edit"></i></button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+            
+                <!-- User Management Section -->
+                <section class="user-management-section">
+                <div class="section-header">
+                        <div class="section-title-group">
+                            <h2 class="section-title">
+                                <i class="fas fa-users-cog"></i>
+                                User Role Management
+                            </h2>
+                            <p class="section-subtitle">Assign and manage user roles across the organizational hierarchy</p>
+                        </div>
+                        <div class="section-actions">
+                            <button class="btn btn-outline" onclick="location.reload()">
+                                <i class="fas fa-sync-alt"></i>
+                                Refresh
+                            </button>
+                        </div>
+                </div>
+                
+                    <div class="user-management-grid">
+                        <!-- User Search & Filter -->
+                        <div class="user-search-panel">
+                            <div class="search-controls">
+                                <div class="search-input-group">
+                        <div class="search-box">
+                            <i class="fas fa-search"></i>
+                                        <input type="text" placeholder="Search users by name, email, or role...">
+                        </div>
+                                    <button class="btn btn-outline search-btn">
+                                        <i class="fas fa-filter"></i>
+                                        Filters
+                                    </button>
+                                    </div>
+                                
+                                <div class="filter-tags">
+                                    <div class="filter-tag active">
+                                        <span>All Users</span>
+                                        <span class="count">{{ total_users }}</span>
+                                    </div>
+                                    <div class="filter-tag">
+                                        <span>Central Office</span>
+                                        <span class="count">{{ permission_stats.central.count|default:0 }}</span>
+                                    </div>
+                                    <div class="filter-tag">
+                                        <span>Regional</span>
+                                        <span class="count">{{ permission_stats.region.count|default:0 }}</span>
+                                    </div>
+                                    <div class="filter-tag">
+                                        <span>Division</span>
+                                        <span class="count">{{ permission_stats.division.count|default:0 }}</span>
+                                    </div>
+                                    <div class="filter-tag">
+                                        <span>District</span>
+                                        <span class="count">{{ permission_stats.district.count|default:0 }}</span>
+                                    </div>
+                                    <div class="filter-tag">
+                                        <span>School</span>
+                                        <span class="count">{{ permission_stats.school.count|default:0 }}</span>
+                                    </div>
+                                </div>
+                                    </div>
+                                </div>
+
+                        <!-- User List -->
+                        <div class="user-list-container">
+                            <div class="user-list-header">
+                                <div class="list-controls">
+                                    <div class="view-toggle">
+                                        <button class="toggle-btn active" data-view="card">
+                                            <i class="fas fa-th-large"></i>
+                                        </button>
+                                        <button class="toggle-btn" data-view="table">
+                                            <i class="fas fa-list"></i>
+                                        </button>
+                                </div>
+                                    <div class="sort-dropdown">
+                                        <select class="form-control">
+                                            <option>Sort by Name</option>
+                                            <option>Sort by Role</option>
+                                            <option>Sort by Date Added</option>
+                                            <option>Sort by Last Active</option>
+                                        </select>
+                            </div>
+                                    </div>
+                                </div>
+
+                            <!-- Card View -->
+                            <div class="user-cards-grid" id="userCardsView">
+                                {% for user in users %}
+                                <div class="user-card" data-admin-level="{{ user.admin_level }}" data-user-name="{{ user.full_name|default:user.username }}" data-user-email="{{ user.email }}" data-user-role="{{ user.admin_level_display }}" data-user-created="{{ user.created_at|date:'c' }}">
+                                    <div class="user-card-header">
+                                        <div class="user-avatar-large">
+                                            <div class="avatar-circle">
+                                                {% if user.full_name %}
+                                                    {% for name in user.full_name.split %}{{ name.0 }}{% endfor %}
+                                                {% else %}
+                                                    {{ user.username.0|upper }}{{ user.username.1|upper }}
+                                                {% endif %}
+                                            </div>
+                                            <div class="status-indicator {% if user.last_active != 'Never' %}online{% else %}offline{% endif %}"></div>
+                                        </div>
+                                        <div class="user-actions">
+                                            <button class="action-btn" title="View User Details">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="user-card-body">
+                                        <h4 class="user-name">{{ user.full_name|default:user.username }}</h4>
+                                        <p class="user-email">{{ user.email }}</p>
+                                        
+                                        <div class="user-role-info">
+                                            <div class="current-role-badge {{ user.admin_level }}-office">
+                                                {% if user.admin_level == 'central' %}
+                                                    <i class="fas fa-crown"></i>
+                                                {% elif user.admin_level == 'region' %}
+                                                    <i class="fas fa-map-marked-alt"></i>
+                                                {% elif user.admin_level == 'division' %}
+                                                    <i class="fas fa-building"></i>
+                                                {% elif user.admin_level == 'district' %}
+                                                    <i class="fas fa-school"></i>
+                                                {% elif user.admin_level == 'school' %}
+                                                    <i class="fas fa-graduation-cap"></i>
+                                                {% endif %}
+                                                <span>{{ user.admin_level_display }}</span>
+                                            </div>
+                                            <div class="role-level">Level 
+                                                {% if user.admin_level == 'central' %}5
+                                                {% elif user.admin_level == 'region' %}4
+                                                {% elif user.admin_level == 'division' %}3
+                                                {% elif user.admin_level == 'district' %}2
+                                                {% elif user.admin_level == 'school' %}1
+                                                {% else %}1{% endif %}
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="user-stats">
+                                            <div class="stat">
+                                                <span class="stat-label">Last Active</span>
+                                                <span class="stat-value">{{ user.last_active }}</span>
+                                            </div>
+                                            <div class="stat">
+                                                <span class="stat-label">Access Scope</span>
+                                                <span class="stat-value">{{ user.access_scope }}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="user-card-footer">
+                                        <button class="btn btn-primary btn-sm view-user-role-btn" 
+                                                data-user-id="{{ user.admin_id }}" 
+                                                data-user-name="{{ user.full_name|default:user.username }}"
+                                                data-user-email="{{ user.email }}"
+                                                data-user-role="{{ user.admin_level_display }}"
+                                                data-user-assignment="{{ user.assignment }}"
+                                                data-user-permissions="{{ user.permissions|join:',' }}"
+                                                data-user-permission-count="{{ user.permission_count }}"
+                                                data-user-access-scope="{{ user.access_scope }}"
+                                                title="View role details and permissions">
+                                            <i class="fas fa-user-shield"></i>
+                                            View Role
+                                        </button>
+                                    </div>
+                                </div>
+                                {% empty %}
+                                <div class="no-users-message">
+                                    <div class="empty-state">
+                                        <i class="fas fa-users"></i>
+                                        <h3>No users found</h3>
+                                        <p>There are no active users to display based on your current access level.</p>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+
+                            <!-- Table View -->
+                            <div class="user-table-view" id="userTableView" style="display: none;">
+                                <div class="table-responsive">
+                                    <table class="users-table">
+                                        <thead>
+                                            <tr>
+                                                <th>User</th>
+                                                <th>Role</th>
+                                                <th>Assignment</th>
+                                                <th>Last Active</th>
+                                                <th>Permissions</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for user in users %}
+                                            <tr class="user-row" data-admin-level="{{ user.admin_level }}" data-user-name="{{ user.full_name|default:user.username }}" data-user-email="{{ user.email }}" data-user-role="{{ user.admin_level_display }}" data-user-created="{{ user.created_at|date:'c' }}">
+                                                <td class="user-info-cell" data-label="User">
+                                                    <div class="user-info-row">
+                                                        <div class="user-avatar-small">
+                                                            {% if user.full_name %}
+                                                                {% for name in user.full_name.split %}{{ name.0 }}{% endfor %}
+                                                            {% else %}
+                                                                {{ user.username.0|upper }}{{ user.username.1|upper }}
+                                                            {% endif %}
+                                                        </div>
+                                                        <div class="user-details">
+                                                            <div class="user-name-table">{{ user.full_name|default:user.username }}</div>
+                                                            <div class="user-email-table">{{ user.email }}</div>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td class="role-cell" data-label="Role">
+                                                    <div class="role-badge-table {{ user.admin_level }}-office">
+                                                        {% if user.admin_level == 'central' %}
+                                                            <i class="fas fa-crown"></i>
+                                                        {% elif user.admin_level == 'region' %}
+                                                            <i class="fas fa-map-marked-alt"></i>
+                                                        {% elif user.admin_level == 'division' %}
+                                                            <i class="fas fa-building"></i>
+                                                        {% elif user.admin_level == 'district' %}
+                                                            <i class="fas fa-school"></i>
+                                                        {% elif user.admin_level == 'school' %}
+                                                            <i class="fas fa-graduation-cap"></i>
+                                                        {% endif %}
+                                                        <span>{{ user.admin_level_display }}</span>
+                                                    </div>
+                                                </td>
+                                                <td class="assignment-cell" data-label="Assignment">{{ user.access_scope }}</td>
+                                                <td class="activity-cell" data-label="Last Active">
+                                                    <span class="activity-status {% if user.last_active != 'Never' %}active{% else %}inactive{% endif %}">
+                                                        {{ user.last_active }}
+                                                    </span>
+                                                </td>
+                                                <td class="permissions-cell" data-label="Permissions">
+                                                    <span class="permission-count">{{ user.permission_count }} permissions</span>
+                                                </td>
+                                                <td class="actions-cell" data-label="Actions">
+                                                    <button class="btn btn-sm btn-primary view-user-role-btn" 
+                                                            data-user-id="{{ user.admin_id }}" 
+                                                            data-user-name="{{ user.full_name|default:user.username }}"
+                                                            data-user-email="{{ user.email }}"
+                                                            data-user-role="{{ user.admin_level_display }}"
+                                                            data-user-assignment="{{ user.assignment }}"
+                                                            data-user-permissions="{{ user.permissions|join:',' }}"
+                                                            data-user-permission-count="{{ user.permission_count }}"
+                                                            data-user-access-scope="{{ user.access_scope }}"
+                                                            title="View role details">
+                                                        <i class="fas fa-user-shield"></i>
+                                                        View Role
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                    </div>
+                </div>
+            </section>
+            </div>
+        </main>
+        
+        <!-- User Role Details Modal -->
+        <div class="modal" id="userRoleModal">
+            <div class="modal-overlay"></div>
+            <div class="modal-content modal-large user-role-modal">
+                <div class="modal-header">
+                    <div class="modal-title-section">
+                        <h2><i class="fas fa-user-shield"></i>User Role Details</h2>
+                        <p class="modal-subtitle">Complete overview of user permissions and assignments</p>
+                    </div>
+                    <button class="close-btn" id="closeUserRoleModal">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <div class="modal-body">
+                    <div class="user-role-layout">
+                        <!-- Left Panel - User Profile -->
+                        <div class="user-profile-panel">
+                            <div class="profile-card">
+                                <div class="profile-header">
+                                    <div class="user-avatar-container">
+                                        <div class="avatar-circle-large" id="userModalAvatar">U</div>
+                                        <div class="status-indicator online"></div>
+                                    </div>
+                                    <div class="profile-info">
+                                        <h3 id="userModalName" class="user-name">User Name</h3>
+                                        <p id="userModalEmail" class="user-email">user@deped.gov.ph</p>
+                                        <div class="role-badge-container">
+                                            <span class="role-badge" id="userModalRole">Role</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="profile-stats">
+                                    <div class="stat-card">
+                                        <div class="stat-icon">
+                                            <i class="fas fa-shield-alt"></i>
+                                        </div>
+                                        <div class="stat-content">
+                                            <span class="stat-value" id="userModalPermissionCount">0</span>
+                                            <span class="stat-label">Permissions</span>
+                                        </div>
+                                    </div>
+                                    <div class="stat-card">
+                                        <div class="stat-icon">
+                                            <i class="fas fa-globe"></i>
+                                        </div>
+                                        <div class="stat-content">
+                                            <span class="stat-value" id="userModalAccessScope">-</span>
+                                            <span class="stat-label">Access Scope</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Right Panel - Details -->
+                        <div class="user-details-panel">
+                            <!-- Role Information Section -->
+                            <div class="details-section role-info-section">
+                                <div class="section-header">
+                                    <h4><i class="fas fa-info-circle"></i>Role Information</h4>
+                                </div>
+                                <div class="info-cards-grid">
+                                    <div class="info-card">
+                                        <div class="info-card-icon">
+                                            <i class="fas fa-user-tag"></i>
+                                        </div>
+                                        <div class="info-card-content">
+                                            <span class="info-label">Position</span>
+                                            <span class="info-value" id="userModalRoleDisplay">-</span>
+                                        </div>
+                                    </div>
+                                    <div class="info-card">
+                                        <div class="info-card-icon">
+                                            <i class="fas fa-map-marker-alt"></i>
+                                        </div>
+                                        <div class="info-card-content">
+                                            <span class="info-label">Assignment</span>
+                                            <span class="info-value" id="userModalAssignmentFull">-</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Permissions Section -->
+                            <div class="details-section permissions-section">
+                                <div class="section-header">
+                                    <h4><i class="fas fa-key"></i>Permissions & Access Rights</h4>
+                                    <span class="permission-count-badge" id="permissionCountBadge">0</span>
+                                </div>
+                                <div class="permissions-container" id="userModalPermissions">
+                                    <div class="no-permissions-state">
+                                        <div class="empty-state-icon">
+                                            <i class="fas fa-lock"></i>
+                                        </div>
+                                        <h5>No Specific Permissions</h5>
+                                        <p>This user has standard role-based permissions only</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="modal-footer">
+                    <div class="footer-content">
+                        <div class="footer-info">
+                            <i class="fas fa-info-circle"></i>
+                            <span>Role details are read-only for security purposes</span>
+                        </div>
+                        <div class="footer-actions">
+                            <button class="btn btn-outline" id="closeUserRoleModalBtn">
+                                <i class="fas fa-times"></i>
+                                Close
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Role Details Modal -->
+        <div class="modal" id="roleDetailsModal">
+            <div class="modal-overlay"></div>
+            <div class="modal-content modal-medium">
+                <div class="modal-header">
+                    <div class="modal-title-section">
+                        <h2><i class="fas fa-shield-alt"></i><span id="roleDetailsTitle">Role Details</span></h2>
+                        <p class="modal-subtitle">Complete information about this role's permissions and scope</p>
+                    </div>
+                    <button class="close-btn" id="closeRoleDetailsModal">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <div class="modal-body">
+                    <div class="role-details-content">
+                        <!-- Role Overview -->
+                        <div class="details-section">
+                            <div class="details-header">
+                                <div class="role-icon-large" id="roleDetailsIcon">
+                                    <i class="fas fa-shield-alt"></i>
+                                </div>
+                                <div class="role-summary">
+                                    <h3 id="roleDetailsName">Role Name</h3>
+                                    <div class="role-meta">
+                                        <span class="role-level-badge" id="roleDetailsLevel">Level</span>
+                                        <span class="role-scope" id="roleDetailsScope">Scope</span>
+                                    </div>
+                                    <p id="roleDetailsDescription">Role description will appear here</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Statistics -->
+                        <div class="details-section">
+                            <h4><i class="fas fa-chart-bar"></i>Role Statistics</h4>
+                            <div class="stats-grid">
+                                <div class="stat-card">
+                                    <div class="stat-icon">
+                                        <i class="fas fa-users"></i>
+                                    </div>
+                                    <div class="stat-info">
+                                        <span class="stat-number" id="roleDetailsUserCount">0</span>
+                                        <span class="stat-label">Active Users</span>
+                                    </div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-icon">
+                                        <i class="fas fa-key"></i>
+                                    </div>
+                                    <div class="stat-info">
+                                        <span class="stat-number" id="roleDetailsPermissionCount">0</span>
+                                        <span class="stat-label">Permissions</span>
+                                    </div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-icon">
+                                        <i class="fas fa-building"></i>
+                                    </div>
+                                    <div class="stat-info">
+                                        <span class="stat-number" id="roleDetailsAccessScope">-</span>
+                                        <span class="stat-label">Access Level</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Detailed Permissions -->
+                        <div class="details-section">
+                            <h4><i class="fas fa-list-check"></i>Detailed Permissions</h4>
+                            <div class="permissions-detailed" id="roleDetailsPermissions">
+                                <!-- Permissions will be populated by JavaScript -->
+                            </div>
+                        </div>
+                        
+                        <!-- Hierarchy Information -->
+                        <div class="details-section">
+                            <h4><i class="fas fa-sitemap"></i>Organizational Hierarchy</h4>
+                            <div class="hierarchy-info">
+                                <div class="hierarchy-item">
+                                    <span class="hierarchy-label">Reports To:</span>
+                                    <span class="hierarchy-value" id="roleDetailsReportsTo">-</span>
+                                </div>
+                                <div class="hierarchy-item">
+                                    <span class="hierarchy-label">Manages:</span>
+                                    <span class="hierarchy-value" id="roleDetailsManages">-</span>
+                                </div>
+                                <div class="hierarchy-item">
+                                    <span class="hierarchy-label">Can Create:</span>
+                                    <span class="hierarchy-value" id="roleDetailsCanCreate">-</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Recent Activity -->
+                        <div class="details-section">
+                            <h4><i class="fas fa-clock"></i>Recent Activity</h4>
+                            <div class="activity-list" id="roleDetailsActivity">
+                                <div class="activity-item">
+                                    <div class="activity-icon">
+                                        <i class="fas fa-user-plus"></i>
+                                    </div>
+                                    <div class="activity-content">
+                                        <span class="activity-description">New user assigned to this role</span>
+                                        <span class="activity-time">2 hours ago</span>
+                                    </div>
+                                </div>
+                                <div class="activity-item">
+                                    <div class="activity-icon">
+                                        <i class="fas fa-file-check"></i>
+                                    </div>
+                                    <div class="activity-content">
+                                        <span class="activity-description">Form submission approved</span>
+                                        <span class="activity-time">1 day ago</span>
+                                    </div>
+                                </div>
+                                <div class="activity-item">
+                                    <div class="activity-icon">
+                                        <i class="fas fa-key"></i>
+                                    </div>
+                                    <div class="activity-content">
+                                        <span class="activity-description">Permission accessed</span>
+                                        <span class="activity-time">3 days ago</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="modal-footer">
+                    <div class="footer-actions">
+                        <button type="button" class="btn btn-outline" id="closeRoleDetailsBtn">
+                            <i class="fas fa-times"></i>
+                            Close
+                        </button>
+                        <button type="button" class="btn btn-secondary" id="exportRoleDetailsBtn">
+                            <i class="fas fa-download"></i>
+                            Export Details
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    
+    <!-- Pass server data to JavaScript -->
+    <script>
+        window.rolePermissionStats = {{ permission_stats_json|safe }};
+    </script>
+    <script src="{% static 'admin/role/role.js' %}"></script>
+</body>
+</html>

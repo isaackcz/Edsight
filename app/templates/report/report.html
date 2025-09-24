@@ -1,0 +1,414 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reports & Analytics | Admin Panel</title>
+    <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="{% static 'report/report.css' %}">
+    <link rel="stylesheet" href="{% static 'report/report_responsive.css' %}">
+    <link rel="icon" type="image/png" href="{% static 'auth/img/logo_big.png' %}">
+</head>
+<body>
+    <div class="admin-container">
+        <!-- Sidebar Navigation (dashboard style) -->
+        <aside class="sidebar">
+            <div class="logo">
+                <i class="fas fa-chart-line"></i>
+                <span>Reports & Analytics</span>
+            </div>
+            <nav class="sidebar-menu">
+                <a href="/dashboard/" class="menu-item">
+                    <i class="fas fa-home"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="/form/" class="menu-item">
+                    <i class="fas fa-database"></i>
+                    <span>Form</span>
+                </a>
+                <a href="#" class="menu-item active">
+                    <i class="fas fa-chart-pie"></i>
+                    <span>Analytics</span>
+                </a>
+                <a href="#" class="menu-item">
+                    <i class="fas fa-cog"></i>
+                    <span>Settings</span>
+                </a>
+            </nav>
+            <div class="user-profile">
+                <div class="avatar">
+                    <i class="fas fa-user"></i>
+                </div>
+                <div class="user-info">
+                    <span class="username">Admin User</span>
+                    <span class="role">Administrator</span>
+                </div>
+            </div>
+        </aside>
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Sneat Header -->
+            <div class="header">
+                <button class="mobile-menu-toggle" onclick="toggleSidebar()">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <h1>Reports & Analytics</h1>
+                <div class="header-actions">
+                    <div class="notification">
+                        <i class="fas fa-bell"></i>
+                        <span class="badge">3</span>
+                    </div>
+                </div>
+            </div>
+            <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+            <!-- Analytics Content -->
+            <div class="content-wrapper">
+                <!-- Analytics Cards -->
+                <div class="analytics-overview">
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background-color: rgba(76, 175, 80, 0.1);">
+                            <i class="fas fa-check-circle" style="color: #4caf50;"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3>87.5%</h3>
+                            <p>Completion Rate</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background-color: rgba(33, 150, 243, 0.1);">
+                            <i class="fas fa-clock" style="color: #2196f3;"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3>24.3h</h3>
+                            <p>Avg Completion Time</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background-color: rgba(41, 52, 64, 0.1);">
+                            <i class="fas fa-file-alt" style="color: #293440;"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3>1,243</h3>
+                            <p>Completed Forms</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background-color: rgba(255, 152, 0, 0.1);">
+                            <i class="fas fa-exclamation-triangle" style="color: #ff9800;"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3>42</h3>
+                            <p>Pending Forms</p>
+                        </div>
+                    </div>
+                </div>
+                <!-- Charts Section -->
+                <div class="charts-grid">
+                    
+                            </div>
+
+                <!-- School Completion Details Table -->
+                <div class="chart-card" style="margin-top: 8px;">
+                        <div class="chart-header">
+                        <h3>School Completion Details</h3>
+                            <div class="chart-actions">
+                            <button id="export-completion-csv" title="Export CSV"><i class="fas fa-file-csv"></i></button>
+                            <button id="export-completion-xlsx" title="Export Excel"><i class="fas fa-file-excel"></i></button>
+                            <button id="export-completion-pdf" title="Export PDF"><i class="fas fa-file-pdf"></i></button>
+                        </div>
+                    </div>
+                    
+                    <!-- Search and Filter Controls -->
+                    <div class="chart-container filter-section">
+                        <form autocomplete="off">
+                        <div class="completion-filters">
+                            <div class="search-row" style="margin-bottom: 1rem;">
+                                <div class="search-box" style="flex: 1; max-width: 300px;">
+                                    <i class="fas fa-search"></i>
+                                    <input type="text" id="completion-search" placeholder="Search schools..." style="width: 100%;" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" name="search-completion-unique">
+                                </div>
+                                <div class="filter-status" id="completion-filter-status" style="margin-left: 1rem; font-size: 0.875rem; color: var(--text-muted);">
+                                    No filters applied
+                                </div>
+                            </div>
+                            
+                            <!-- Separated Filter Rows to Prevent Overlap -->
+                            <div class="filter-section-grid">
+                                <div class="filter-column">
+                                    <label class="filter-label">Region</label>
+                                    <div class="search-filter-container geographic-filter">
+                                        <input type="text" id="filter-region" class="search-filter" placeholder="Search regions..." data-filter-type="region" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" name="search-region-unique-name">
+                                        <div id="filter-region-results" class="search-results"></div>
+                                    </div>
+                                </div>
+                                
+                                <div class="filter-column">
+                                    <label class="filter-label">Division</label>
+                                    <div class="search-filter-container geographic-filter">
+                                        <input type="text" id="filter-division" class="search-filter" placeholder="Search divisions..." data-filter-type="division" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" name="search-division-unique">
+                                        <div id="filter-division-results" class="search-results"></div>
+                                    </div>
+                                </div>
+                                
+                                <div class="filter-column">
+                                    <label class="filter-label">District</label>
+                                    <div class="search-filter-container geographic-filter">
+                                        <input type="text" id="filter-district" class="search-filter" placeholder="Search districts..." data-filter-type="district" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" name="search-district-unique">
+                                        <div id="filter-district-results" class="search-results"></div>
+                                    </div>
+                                </div>
+                                
+                                <div class="filter-column">
+                                    <label class="filter-label">School</label>
+                                    <div class="search-filter-container geographic-filter">
+                                        <input type="text" id="filter-school" class="search-filter" placeholder="Search schools..." data-filter-type="school" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" name="search-school-unique">
+                                        <div id="filter-school-results" class="search-results"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        </form>
+                    </div>
+
+                    <!-- Combined Totals Display -->
+                    <div id="combined-totals" class="chart-container filter-section" style="background: var(--gray-50); display: none;">
+                        <div class="totals-grid">
+                            <div class="total-card">
+                                <h4>Combined Completion</h4>
+                                <span id="total-completion" class="total-value">0%</span>
+                            </div>
+                            <div class="total-card">
+                                <h4>Combined Answer Rate</h4>
+                                <span id="total-answers" class="total-value">0%</span>
+                            </div>
+                            <div class="total-card">
+                                <h4>Combined Status</h4>
+                                <span id="total-status" class="total-value">Not Started</span>
+                    </div>
+                </div>
+                    </div>
+
+                    <!-- School Completion Table -->
+                    <div class="chart-container table-section">
+                        <table class="table" style="width:100%; border-collapse: collapse;">
+                            <thead>
+                                <tr>
+                                    <th style="text-align:left; padding:8px; cursor:pointer;" data-sort="region_name">Region <i class="fas fa-sort"></i></th>
+                                    <th style="text-align:left; padding:8px; cursor:pointer;" data-sort="division_name">Division <i class="fas fa-sort"></i></th>
+                                    <th style="text-align:left; padding:8px; cursor:pointer;" data-sort="district_name">District <i class="fas fa-sort"></i></th>
+                                    <th style="text-align:left; padding:8px; cursor:pointer;" data-sort="school_name">School <i class="fas fa-sort"></i></th>
+                                    <th style="text-align:right; padding:8px; cursor:pointer;" data-sort="completion_pct">Completion % <i class="fas fa-sort"></i></th>
+                                    <th style="text-align:right; padding:8px; cursor:pointer;" data-sort="answered">Answered <i class="fas fa-sort"></i></th>
+                                    <th style="text-align:left; padding:8px; cursor:pointer;" data-sort="status">Status <i class="fas fa-sort"></i></th>
+                                </tr>
+                            </thead>
+                            <tbody id="school-completion-table-body"></tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- School Completion Pagination -->
+                    <div class="pagination-container">
+                        <div class="pagination-info">
+                            <span id="completion-pagination-info">Showing 0 of 0 results</span>
+                            <select id="completion-page-size" class="page-size-select">
+                                <option value="25">25 per page</option>
+                                <option value="50" selected>50 per page</option>
+                                <option value="100">100 per page</option>
+                                <option value="200">200 per page</option>
+                            </select>
+                        </div>
+                        <div class="pagination-controls">
+                            <button id="completion-first-page" class="pagination-btn" title="First page">
+                                <i class="fas fa-angle-double-left"></i>
+                            </button>
+                            <button id="completion-prev-page" class="pagination-btn" title="Previous page">
+                                <i class="fas fa-angle-left"></i>
+                            </button>
+                            <div class="pagination-numbers" id="completion-pagination-numbers"></div>
+                            <button id="completion-next-page" class="pagination-btn" title="Next page">
+                                <i class="fas fa-angle-right"></i>
+                            </button>
+                            <button id="completion-last-page" class="pagination-btn" title="Last page">
+                                <i class="fas fa-angle-double-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Category Content Table -->
+                <div class="chart-card" style="margin-top: 8px;">
+                    <div class="chart-header">
+                        <h3>Category Content Table</h3>
+                        <div class="chart-actions">
+                            <button id="export-category-csv" title="Export CSV"><i class="fas fa-file-csv"></i></button>
+                            <button id="export-category-xlsx" title="Export Excel"><i class="fas fa-file-excel"></i></button>
+                            <button id="export-category-pdf" title="Export PDF"><i class="fas fa-file-pdf"></i></button>
+                        </div>
+                    </div>
+                    
+                    <!-- Search and Filter Controls -->
+                    <div class="chart-container filter-section">
+                        <form autocomplete="off">
+                        <div class="category-filters">
+                            <div class="content-search-row" style="margin-bottom: 1rem;">
+                                <div class="search-box" style="flex: 1; max-width: 300px;">
+                                    <i class="fas fa-search"></i>
+                                    <input type="text" id="category-search" placeholder="Search content..." style="width: 100%;" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" name="category-search-unique">
+                                </div>
+                            </div>
+                            
+                            <!-- Geographic Selection Grid -->
+                            <div class="geographic-selection" style="margin-bottom: 1.5rem;">
+                                <h4 style="margin-bottom: 0.75rem; font-size: 0.875rem; color: var(--text-heading);">Geographic Selection</h4>
+                                <div class="filter-section-grid">
+                                    <div class="filter-column">
+                                        <label class="filter-label">Region</label>
+                                        <div class="search-filter-container geographic-filter">
+                                            <input type="text" id="geo-region" class="search-filter" placeholder="Search regions..." data-filter-type="region" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" name="geo-region-unique">
+                                            <div id="geo-region-results" class="search-results"></div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="filter-column">
+                                        <label class="filter-label">Division</label>
+                                        <div class="search-filter-container geographic-filter">
+                                            <input type="text" id="geo-division" class="search-filter" placeholder="Search divisions..." data-filter-type="division" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" name="geo-division-unique">
+                                            <div id="geo-division-results" class="search-results"></div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="filter-column">
+                                        <label class="filter-label">District</label>
+                                        <div class="search-filter-container geographic-filter">
+                                            <input type="text" id="geo-district" class="search-filter" placeholder="Search districts..." data-filter-type="district" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" name="geo-district-unique">
+                                            <div id="geo-district-results" class="search-results"></div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="filter-column">
+                                        <label class="filter-label">School</label>
+                                        <div class="search-filter-container geographic-filter">
+                                            <input type="text" id="geo-school" class="search-filter" placeholder="Search schools..." data-filter-type="school" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" name="geo-school-unique">
+                                            <div id="geo-school-results" class="search-results"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                            </div>
+                            
+                            <!-- Content Filter Grid -->
+                            <div class="content-selection">
+                                <h4 style="margin-bottom: 0.75rem; font-size: 0.875rem; color: var(--text-heading);">Content Filters</h4>
+                                <div class="filter-section-grid">
+                                    <div class="filter-column">
+                                        <label class="filter-label">Category</label>
+                                        <div class="search-filter-container content-filter">
+                                            <input type="text" id="filter-category" class="search-filter" placeholder="Search categories..." data-filter-type="category" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" name="filter-category-unique">
+                                            <div id="filter-category-results" class="search-results"></div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="filter-column">
+                                        <label class="filter-label">Subsection</label>
+                                        <div class="search-filter-container content-filter">
+                                            <input type="text" id="filter-subsection" class="search-filter" placeholder="Search subsections..." data-filter-type="subsection" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" name="filter-subsection-unique">
+                                            <div id="filter-subsection-results" class="search-results"></div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="filter-column">
+                                        <label class="filter-label">Topic</label>
+                                        <div class="search-filter-container content-filter">
+                                            <input type="text" id="filter-topic" class="search-filter" placeholder="Search topics..." data-filter-type="topic" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" name="filter-topic-unique">
+                                            <div id="filter-topic-results" class="search-results"></div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="filter-column">
+                                        <label class="filter-label">Question</label>
+                                        <div class="search-filter-container content-filter">
+                                            <input type="text" id="filter-question" class="search-filter" placeholder="Search questions..." data-filter-type="question" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" name="filter-question-unique">
+                                            <div id="filter-question-results" class="search-results"></div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="filter-column">
+                                        <label class="filter-label">Sub-question</label>
+                                        <div class="search-filter-container content-filter">
+                                            <input type="text" id="filter-subquestion" class="search-filter" placeholder="Search sub-questions..." data-filter-type="subquestion" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" name="filter-subquestion-unique">
+                                            <div id="filter-subquestion-results" class="search-results"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        </form>
+                    </div>
+
+
+                    <!-- Category Content Table -->
+                    <div class="chart-container table-section">
+                        <table class="table" style="width:100%; border-collapse: collapse;">
+                            <thead>
+                                <tr>
+                                    <th style="text-align:left; padding:8px; cursor:pointer;" data-sort="school_name">School <i class="fas fa-sort"></i></th>
+                                    <th style="text-align:left; padding:8px; cursor:pointer;" data-sort="category">Category <i class="fas fa-sort"></i></th>
+                                    <th style="text-align:left; padding:8px; cursor:pointer;" data-sort="subsection">Subsection <i class="fas fa-sort"></i></th>
+                                    <th style="text-align:left; padding:8px; cursor:pointer;" data-sort="topic">Topic <i class="fas fa-sort"></i></th>
+                                    <th style="text-align:left; padding:8px; cursor:pointer;" data-sort="question">Question <i class="fas fa-sort"></i></th>
+                                    <th style="text-align:left; padding:8px; cursor:pointer;" data-sort="sub_question">Sub-question <i class="fas fa-sort"></i></th>
+                                    <th style="text-align:left; padding:8px; cursor:pointer;" data-sort="answer">Answer <i class="fas fa-sort"></i></th>
+                                </tr>
+                            </thead>
+                            <tbody id="category-content-table-body"></tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Category Content Pagination -->
+                    <div class="pagination-container">
+                        <div class="pagination-info">
+                            <span id="category-pagination-info">Showing 0 of 0 results</span>
+                            <select id="category-page-size" class="page-size-select">
+                                <option value="25">25 per page</option>
+                                <option value="50" selected>50 per page</option>
+                                <option value="100">100 per page</option>
+                                <option value="200">200 per page</option>
+                            </select>
+                        </div>
+                        <div class="pagination-controls">
+                            <button id="category-first-page" class="pagination-btn" title="First page">
+                                <i class="fas fa-angle-double-left"></i>
+                            </button>
+                            <button id="category-prev-page" class="pagination-btn" title="Previous page">
+                                <i class="fas fa-angle-left"></i>
+                            </button>
+                            <div class="pagination-numbers" id="category-pagination-numbers"></div>
+                            <button id="category-next-page" class="pagination-btn" title="Next page">
+                                <i class="fas fa-angle-right"></i>
+                            </button>
+                            <button id="category-last-page" class="pagination-btn" title="Last page">
+                                <i class="fas fa-angle-double-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    <script src="{% static 'report/report.js' %}?v={{ timestamp }}"></script>
+    <script>
+        // Force reload if Chart.js version issues persist
+        if (typeof Chart !== 'undefined') {
+            console.log('Chart.js version:', Chart.version);
+            console.log('Chart.js available chart types:', Object.keys(Chart.registry.controllers.items));
+        }
+        
+        // Add a global flag to help with debugging
+        window.chartJsReady = true;
+        console.log('Chart.js and report.js loaded successfully');
+    </script>
+</body>
+</html>

@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    <title>User Management | Frosted Admin</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'admin/user_management/user_management.css' %}">
+    <link rel="stylesheet" href="{% static 'admin/user_management/UM_responsive.css' %}">
+    <link rel="stylesheet" href="{% static 'admin/user_management/admin_user_styles.css' %}">
+    <link rel="stylesheet" href="{% static 'admin/admin_dark_theme.css' %}">
+    <link rel="icon" type="image/png" href="{% static 'auth/img/logo_big.png' %}">
+</head>
+<body class="dark-theme">
+    <div class="admin-container">
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar">
+            <div class="logo-container">
+                <i class="fas fa-shield-alt logo"></i>
+                <span class="logo-text">Frosted Admin</span>
+            </div>
+            
+            <div class="sidebar-menu">
+                <div class="menu-title">MAIN</div>
+                <a href="{% url 'admin-page' %}" class="menu-item">
+                    <i class="fas fa-home"></i>
+                    <span>Dashboard</span>
+                </a>
+                
+                <div class="menu-title">MANAGEMENT</div>
+                <a href="{% url 'user-management-page' %}" class="menu-item active">
+                    <i class="fas fa-users"></i>
+                    <span>User Management</span>
+                </a>
+                <a href="{% url 'role-page' %}" class="menu-item">
+                    <i class="fas fa-user-shield"></i>
+                    <span>Role & Access</span>
+                </a>
+                <a href="{% url 'logs-page' %}" class="menu-item">
+                    <i class="fas fa-history"></i>
+                    <span>Logs & Auditing</span>
+                </a>
+                <a href="#" class="menu-item">
+                    <i class="fas fa-user-clock"></i>
+                    <span>Session Controls</span>
+                </a>
+                
+                <div class="menu-title">TOOLS</div>
+                <a href="#" class="menu-item">
+                    <i class="fas fa-tools"></i>
+                    <span>System Tools</span>
+                </a>
+                <a href="#" class="menu-item">
+                    <i class="fas fa-comment-alt"></i>
+                    <span>Communication</span>
+                </a>
+                <a href="{% url 'settings-page' %}" class="menu-item">
+                    <i class="fas fa-cog"></i>
+                    <span>Admin Controls</span>
+                </a>
+            </div>
+            
+            <!-- Logout Section -->
+            <div class="sidebar-footer">
+                <a href="{% url 'logout' %}" class="menu-item logout-btn">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Sign Out</span>
+                </a>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="header">
+                <div class="header-title">
+                    <h1>Admin User Management</h1>
+                    <p>Manage admin users and their role-based permissions</p>
+                </div>
+                
+                <div class="header-actions">
+                    <div class="admin-scope-info">
+                        <div class="scope-badge">{{ admin_scope.admin_level|upper }}</div>
+                        <div class="scope-text">{{ admin_scope.coverage }}</div>
+                    </div>
+                    <div class="user-profile">
+                        <div class="user-avatar">{{ admin_scope.admin_level|slice:":2"|upper }}</div>
+                        <div class="user-info">
+                            <div class="user-name">{{ admin_scope.username|default:"Admin User" }}</div>
+                            <div class="user-role">{{ admin_scope.admin_level|title }} Admin</div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+            
+            <!-- User Management Controls -->
+            <div class="controls-container">
+                <div class="controls-left">
+                    {% if admin_scope.permissions.can_create_users %}
+                    <button class="btn btn-primary" id="addUserBtn">
+                        <i class="fas fa-plus"></i>
+                        Add New Admin User
+                    </button>
+                    {% endif %}
+                    
+                    {% if admin_scope.permissions.can_manage_users %}
+                    <div class="bulk-actions">
+                        <select id="bulkActionSelect">
+                            <option value="" disabled selected>Bulk Actions</option>
+                            <option value="activate">Activate Users</option>
+                            <option value="deactivate">Deactivate Users</option>
+                            <option value="reset">Reset Passwords</option>
+                        </select>
+                        <button class="btn btn-outline" id="applyBulkAction">
+                            Apply
+                        </button>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="controls-right">
+                    <div class="export-actions">
+                        <button class="btn btn-outline" onclick="exportUsers('csv')">
+                            <i class="fas fa-file-csv"></i>
+                            CSV
+                        </button>
+                        <button class="btn btn-outline" onclick="exportUsers('pdf')" disabled title="PDF export coming soon">
+                            <i class="fas fa-file-pdf"></i>
+                            PDF
+                        </button>
+                    </div>
+                    
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="userSearch" placeholder="Search users...">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Filters Section -->
+            <div class="filters-container">
+                <div class="filter-group">
+                    <label>Admin Level:</label>
+                    <select id="roleFilter">
+                        <option value="all">All Levels</option>
+                        <option value="central">Central Office</option>
+                        <option value="region">Region</option>
+                        <option value="division">Division</option>
+                        <option value="district">District</option>
+                        <option value="school">School</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label>Status:</label>
+                    <select id="statusFilter">
+                        <option value="all">All Status</option>
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive</option>
+                        <option value="suspended">Suspended</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label>Geographic Area:</label>
+                    <select id="areaFilter">
+                        <option value="all">All Areas</option>
+                        <!-- Areas will be populated based on admin scope -->
+                    </select>
+                </div>
+                
+                <button class="btn btn-outline" id="resetFilters">
+                    <i class="fas fa-sync-alt"></i>
+                    Reset Filters
+                </button>
+            </div>
+            
+            <!-- User Table -->
+            <div class="table-container">
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th><input type="checkbox" id="selectAll"></th>
+                                <th>Admin User</th>
+                                <th>Email</th>
+                                <th>Admin Level</th>
+                                <th>Assigned Area</th>
+                                <th>Status</th>
+                                <th>Last Login</th>
+                                <th>Permissions</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- User data will be populated here by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="table-footer">
+                    <div class="table-info">
+                        Showing <span id="startCount">1</span> to <span id="endCount">10</span> of <span id="totalCount">32</span> entries
+                    </div>
+                    <div class="pagination">
+                        <button class="page-btn" id="prevPage"><i class="fas fa-chevron-left"></i></button>
+                        <button class="page-btn active">1</button>
+                        <button class="page-btn">2</button>
+                        <button class="page-btn">3</button>
+                        <button class="page-btn" id="nextPage"><i class="fas fa-chevron-right"></i></button>
+                    </div>
+                </div>
+            </div>
+        </main>
+        
+        <!-- Enhanced User Creation Modal -->
+        <div class="modal" id="userModal">
+            <div class="modal-content modal-large">
+                <div class="modal-header">
+                    <div class="modal-title-section">
+                    <h2 id="modalTitle">
+                        <i class="fas fa-user-plus"></i>
+                        Create New Admin User
+                    </h2>
+                        <p class="modal-subtitle">Set up a new admin user with role-based permissions and geographic assignments</p>
+                    </div>
+                    <button class="close-btn" id="closeModal" title="Close modal">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <!-- Progress Indicator -->
+                    <div class="form-progress">
+                        <div class="progress-line"></div>
+                        <div class="progress-step active" data-step="1">
+                            <div class="step-circle">
+                            <div class="step-number">1</div>
+                                <i class="fas fa-check step-check" style="display: none;"></i>
+                            </div>
+                            <div class="step-label">Basic Info</div>
+                            <div class="step-description">User details & credentials</div>
+                        </div>
+                        <div class="progress-step" data-step="2">
+                            <div class="step-circle">
+                            <div class="step-number">2</div>
+                                <i class="fas fa-check step-check" style="display: none;"></i>
+                            </div>
+                            <div class="step-label">Assignment</div>
+                            <div class="step-description">Geographic coverage</div>
+                        </div>
+                        <div class="progress-step" data-step="3">
+                            <div class="step-circle">
+                            <div class="step-number">3</div>
+                                <i class="fas fa-check step-check" style="display: none;"></i>
+                            </div>
+                            <div class="step-label">Permissions</div>
+                            <div class="step-description">Access & capabilities</div>
+                        </div>
+                    </div>
+
+                    <form id="userForm" novalidate>
+                        {% csrf_token %}
+                        <!-- Step 1: Basic Information -->
+                        <div class="form-step active" id="step1">
+                            <div class="step-header">
+                                <div class="step-icon">
+                                    <i class="fas fa-user"></i>
+                                </div>
+                                <div class="step-content">
+                                    <h3>Basic Information</h3>
+                                    <p>Enter the essential details for the new admin user account</p>
+                                </div>
+                            </div>
+
+                            <div class="form-section">
+                            <div class="form-group">
+                                    <label for="fullName">
+                                        Full Name <span class="required">*</span>
+                                    </label>
+                                    <div class="input-wrapper">
+                                        <input type="text" id="fullName" name="full_name" required 
+                                               placeholder="e.g., Juan Carlos Dela Cruz" 
+                                               autocomplete="name">
+                                        <div class="input-icon">
+                                            <i class="fas fa-user"></i>
+                                        </div>
+                                    </div>
+                                    <small class="form-hint">
+                                        <i class="fas fa-info-circle"></i>
+                                        Enter the complete name as it appears in official documents
+                                    </small>
+                                    <div class="form-error" id="fullNameError" style="display: none;">
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                        <span class="error-text"></span>
+                                    </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                        <label for="username">
+                                            Username <span class="required">*</span>
+                                        </label>
+                                        <div class="input-wrapper">
+                                            <input type="text" id="username" name="username" required 
+                                                   placeholder="e.g., juan_delacruz" 
+                                                   autocomplete="username"
+                                                   pattern="[a-z0-9_]+"
+                                                   title="Only lowercase letters, numbers, and underscores allowed">
+                                            <div class="input-icon">
+                                                <i class="fas fa-at"></i>
+                                            </div>
+                                            <div class="input-validation">
+                                                <i class="fas fa-check validation-success" style="display: none;"></i>
+                                                <i class="fas fa-times validation-error" style="display: none;"></i>
+                                            </div>
+                                        </div>
+                                        <small class="form-hint">
+                                            <i class="fas fa-key"></i>
+                                            Lowercase letters, numbers, and underscores only (3-50 characters)
+                                        </small>
+                                        <div class="form-error" id="usernameError" style="display: none;">
+                                            <i class="fas fa-exclamation-triangle"></i>
+                                            <span class="error-text"></span>
+                                        </div>
+                                </div>
+                        <div class="form-group">
+                                        <label for="adminLevel">
+                                            Admin Level <span class="required">*</span>
+                                        </label>
+                                        <div class="input-wrapper">
+                                    <select id="adminLevel" name="admin_level" required>
+                                        <option value="">Select Admin Level</option>
+                                        {% if admin_scope.admin_level == 'central' %}
+                                                <option value="central" data-description="Nationwide access to all regions">
+                                                    <i class="fas fa-building"></i> Central Office
+                                                </option>
+                                                <option value="region" data-description="Regional access within assigned region">
+                                                    <i class="fas fa-map-marked-alt"></i> Region
+                                                </option>
+                                                <option value="division" data-description="Divisional access within assigned division">
+                                                    <i class="fas fa-sitemap"></i> Division
+                                                </option>
+                                                <option value="district" data-description="District access within assigned district">
+                                                    <i class="fas fa-map"></i> District
+                                                </option>
+                                                <option value="school" data-description="Single school access only">
+                                                    <i class="fas fa-school"></i> School
+                                                </option>
+                                        {% elif admin_scope.admin_level == 'region' %}
+                                                <option value="region" data-description="Regional access within assigned region">
+                                                    <i class="fas fa-map-marked-alt"></i> Region
+                                                </option>
+                                                <option value="division" data-description="Divisional access within assigned division">
+                                                    <i class="fas fa-sitemap"></i> Division
+                                                </option>
+                                                <option value="district" data-description="District access within assigned district">
+                                                    <i class="fas fa-map"></i> District
+                                                </option>
+                                                <option value="school" data-description="Single school access only">
+                                                    <i class="fas fa-school"></i> School
+                                                </option>
+                                        {% elif admin_scope.admin_level == 'division' %}
+                                                <option value="division" data-description="Divisional access within assigned division">
+                                                    <i class="fas fa-sitemap"></i> Division
+                                                </option>
+                                                <option value="district" data-description="District access within assigned district">
+                                                    <i class="fas fa-map"></i> District
+                                                </option>
+                                                <option value="school" data-description="Single school access only">
+                                                    <i class="fas fa-school"></i> School
+                                                </option>
+                                        {% elif admin_scope.admin_level == 'district' %}
+                                                <option value="district" data-description="District access within assigned district">
+                                                    <i class="fas fa-map"></i> District
+                                                </option>
+                                                <option value="school" data-description="Single school access only">
+                                                    <i class="fas fa-school"></i> School
+                                                </option>
+                                        {% elif admin_scope.admin_level == 'school' %}
+                                                <option value="school" data-description="Single school access only">
+                                                    <i class="fas fa-school"></i> School
+                                                </option>
+                                        {% endif %}
+                                    </select>
+                                            <div class="input-icon">
+                                                <i class="fas fa-layer-group"></i>
+                                            </div>
+                                        </div>
+                                        <div class="admin-level-description" id="adminLevelDescription">
+                                            <i class="fas fa-lightbulb"></i>
+                                            <span>Select an admin level to see description</span>
+                                        </div>
+                                        <div class="form-error" id="adminLevelError" style="display: none;">
+                                            <i class="fas fa-exclamation-triangle"></i>
+                                            <span class="error-text"></span>
+                                        </div>
+                                    </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                        <label for="email">
+                                            DepEd Email <span class="required">*</span>
+                                        </label>
+                                        <div class="email-split-wrapper">
+                                            <div class="email-input-part">
+                                                <div class="search-input-wrapper">
+                                                    <input type="text" id="emailPart" name="email_part" required 
+                                                           placeholder="Enter School ID or firstname.lastname"
+                                                           autocomplete="off"
+                                                           data-filter-type="school-email">
+                                                    <div class="input-icon">
+                                                        <i class="fas fa-user" id="emailIcon"></i>
+                                                    </div>
+                                                    <div class="search-clear-btn" style="display: none;">
+                                                        <i class="fas fa-times"></i>
+                                                    </div>
+                                                    <div class="search-results"></div>
+                                                    <div class="input-validation">
+                                                        <i class="fas fa-check validation-success" style="display: none;"></i>
+                                                        <i class="fas fa-times validation-error" style="display: none;"></i>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="email-separator">@</div>
+                                            <div class="email-domain-part">
+                                                <div class="domain-display">deped.gov.ph</div>
+                                            </div>
+                                        </div>
+                                        <input type="hidden" id="email" name="email" value="">
+                                        <small class="form-hint" id="emailHint">
+                                            <i class="fas fa-info-circle"></i>
+                                            <span id="emailHintText">For school admins: Enter School ID to search and verify. For others: firstname.lastname</span>
+                                        </small>
+                                        <div class="form-error" id="emailError" style="display: none;">
+                                            <i class="fas fa-exclamation-triangle"></i>
+                                            <span class="error-text"></span>
+                                        </div>
+                                        <div class="school-verification" id="schoolVerification" style="display: none;">
+                                            <div class="verification-card">
+                                                <div class="verification-icon">
+                                                    <i class="fas fa-check-circle"></i>
+                                                </div>
+                                                <div class="verification-details">
+                                                    <div class="school-name" id="verifiedSchoolName">School Name</div>
+                                                    <div class="school-email" id="verifiedSchoolEmail">Generated Email</div>
+                                                    <div class="school-location" id="verifiedSchoolLocation">Location</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="status">Initial Status</label>
+                                        <div class="input-wrapper">
+                                    <select id="status" name="status">
+                                                <option value="active" selected>
+                                                    <i class="fas fa-check-circle"></i> Active
+                                                </option>
+                                                <option value="inactive">
+                                                    <i class="fas fa-pause-circle"></i> Inactive
+                                                </option>
+                                                <option value="suspended">
+                                                    <i class="fas fa-ban"></i> Suspended
+                                                </option>
+                                    </select>
+                                            <div class="input-icon">
+                                                <i class="fas fa-toggle-on"></i>
+                                            </div>
+                                        </div>
+                                        <small class="form-hint">
+                                            <i class="fas fa-info-circle"></i>
+                                            User account status upon creation
+                                        </small>
+                                        <div class="form-error" id="statusError" style="display: none;">
+                                            <i class="fas fa-exclamation-triangle"></i>
+                                            <span class="error-text"></span>
+                                        </div>
+                                    </div>
+                            </div>
+
+                            <div class="form-group">
+                                    <label for="password">
+                                        Password <span class="required">*</span>
+                                    </label>
+                                    <div class="password-input-wrapper">
+                                        <div class="input-wrapper">
+                                            <input type="password" id="password" name="password" required 
+                                                   placeholder="Enter secure password"
+                                                   autocomplete="new-password">
+                                            <div class="input-icon">
+                                                <i class="fas fa-lock"></i>
+                                            </div>
+                                            <div class="input-actions">
+                                                <button type="button" class="action-btn generate-btn" id="generatePassword" 
+                                                        title="Generate secure password">
+                                                    <i class="fas fa-dice"></i>
+                                    </button>
+                                                <button type="button" class="action-btn toggle-password" id="togglePassword" 
+                                                        title="Toggle password visibility">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                            </div>
+                                </div>
+                                <div class="password-strength" id="passwordStrength">
+                                            <div class="strength-indicator">
+                                    <div class="strength-meter">
+                                        <div class="strength-bar"></div>
+                                    </div>
+                                    <div class="strength-text">Password strength</div>
+                                </div>
+                                            <div class="strength-requirements">
+                                                <div class="requirement" data-requirement="length">
+                                                    <i class="fas fa-times"></i>
+                                                    <span>At least 8 characters</span>
+                                                </div>
+                                                <div class="requirement" data-requirement="lowercase">
+                                                    <i class="fas fa-times"></i>
+                                                    <span>One lowercase letter</span>
+                                                </div>
+                                                <div class="requirement" data-requirement="uppercase">
+                                                    <i class="fas fa-times"></i>
+                                                    <span>One uppercase letter</span>
+                                                </div>
+                                                <div class="requirement" data-requirement="number">
+                                                    <i class="fas fa-times"></i>
+                                                    <span>One number</span>
+                                                </div>
+                                                <div class="requirement" data-requirement="special">
+                                                    <i class="fas fa-times"></i>
+                                                    <span>One special character</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <small class="form-hint">
+                                        <i class="fas fa-shield-alt"></i>
+                                        Use a strong password with mixed characters for security
+                                    </small>
+                                    <div class="form-error" id="passwordError" style="display: none;">
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                        <span class="error-text"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Step 2: Geographic Assignment -->
+                        <div class="form-step" id="step2">
+                            <div class="step-header">
+                                <div class="step-icon">
+                                    <i class="fas fa-map-marker-alt"></i>
+                                </div>
+                                <div class="step-content">
+                                    <h3>Geographic Assignment</h3>
+                                    <p>Assign the admin user to their specific coverage area based on their admin level</p>
+                                </div>
+                            </div>
+
+                            <div class="assignment-info" id="assignmentInfo">
+                                <div class="info-card">
+                                    <div class="info-icon">
+                                    <i class="fas fa-info-circle"></i>
+                                    </div>
+                                    <div class="info-content">
+                                        <h4>Assignment Requirements</h4>
+                                        <p id="requirementText">Select admin level first to see assignment requirements</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-section" id="geographicSection">
+                               <div class="geographic-hierarchy">
+                                   <div class="hierarchy-item">
+                                    <div class="form-group">
+                                           <label for="region">
+                                               Region <span class="required" id="regionRequired" style="display: none;">*</span>
+                                           </label>
+                                           <div class="search-input-wrapper">
+                                               <input type="text" id="region" name="region_id" 
+                                                      placeholder="Search and select region..." 
+                                                      autocomplete="off"
+                                                      data-filter-type="region">
+                                               <div class="input-icon">
+                                                   <i class="fas fa-map-marked-alt"></i>
+                                               </div>
+                                               <div class="search-clear-btn" style="display: none;">
+                                                   <i class="fas fa-times"></i>
+                                               </div>
+                                               <div class="search-results"></div>
+                                           </div>
+                                           <small class="form-hint">
+                                               <i class="fas fa-info-circle"></i>
+                                               Type to search for a region or click to see all available regions
+                                           </small>
+                                       </div>
+                                    </div>
+                                   
+                                   <div class="hierarchy-item">
+                                    <div class="form-group">
+                                           <label for="division">
+                                               Division <span class="required" id="divisionRequired" style="display: none;">*</span>
+                                           </label>
+                                           <div class="search-input-wrapper">
+                                               <input type="text" id="division" name="division_id" 
+                                                      placeholder="Search and select division..." 
+                                                      autocomplete="off"
+                                                      disabled
+                                                      data-filter-type="division">
+                                               <div class="input-icon">
+                                                   <i class="fas fa-sitemap"></i>
+                                               </div>
+                                               <div class="search-clear-btn" style="display: none;">
+                                                   <i class="fas fa-times"></i>
+                                               </div>
+                                               <div class="search-results"></div>
+                                           </div>
+                                           <small class="form-hint">
+                                               <i class="fas fa-info-circle"></i>
+                                               Select a region first to search available divisions
+                                           </small>
+                            </div>
+                        </div>
+                        
+                                   <div class="hierarchy-item">
+                            <div class="form-group">
+                                           <label for="district">
+                                               District <span class="required" id="districtRequired" style="display: none;">*</span>
+                                           </label>
+                                           <div class="search-input-wrapper">
+                                               <input type="text" id="district" name="district_id" 
+                                                      placeholder="Search and select district..." 
+                                                      autocomplete="off"
+                                                      disabled
+                                                      data-filter-type="district">
+                                               <div class="input-icon">
+                                                   <i class="fas fa-map"></i>
+                                               </div>
+                                               <div class="search-clear-btn" style="display: none;">
+                                                   <i class="fas fa-times"></i>
+                                               </div>
+                                               <div class="search-results"></div>
+                                           </div>
+                                           <small class="form-hint">
+                                               <i class="fas fa-info-circle"></i>
+                                               Select a division first to search available districts
+                                           </small>
+                                       </div>
+                                    </div>
+                                   
+                                </div>
+                            </div>
+
+                            <!-- Assignment Preview -->
+                            <div class="assignment-preview" id="assignmentPreview">
+                                <div class="preview-header">
+                                    <div class="preview-icon">
+                                        <i class="fas fa-eye"></i>
+                                    </div>
+                                    <div class="preview-title">
+                                        <h4>Assignment Preview</h4>
+                                        <p>Review the coverage area and access level for this admin user</p>
+                                    </div>
+                                </div>
+                                <div class="preview-content">
+                                    <div class="preview-card">
+                                    <div class="preview-item">
+                                            <div class="preview-label">
+                                                <i class="fas fa-map"></i>
+                                                Coverage Area
+                                            </div>
+                                            <div class="preview-value" id="coveragePreview">Not assigned yet</div>
+                                    </div>
+                                    <div class="preview-item">
+                                            <div class="preview-label">
+                                                <i class="fas fa-shield-alt"></i>
+                                                Access Level
+                                            </div>
+                                            <div class="preview-value" id="accessPreview">Not defined yet</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Step 3: Permissions -->
+                        <div class="form-step" id="step3">
+                            <div class="step-header">
+                                <div class="step-icon">
+                                    <i class="fas fa-shield-alt"></i>
+                                </div>
+                                <div class="step-content">
+                                    <h3>Permissions & Access</h3>
+                                <p>Configure what this admin user can do in the system</p>
+                                </div>
+                            </div>
+
+                            <div class="permissions-info">
+                                <div class="info-card">
+                                    <div class="info-icon">
+                                    <i class="fas fa-lightbulb"></i>
+                                    </div>
+                                    <div class="info-content">
+                                        <h4>Default Permissions</h4>
+                                        <p>Default permissions have been set based on the admin level. You can customize them below.</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-section">
+                                <div class="section-header">
+                                <h4>System Permissions</h4>
+                                    <p>Select the permissions this admin user should have</p>
+                                </div>
+                                
+                                <div class="permissions-grid">
+                                    <div class="permission-item">
+                                        <div class="permission-checkbox">
+                                        <input type="checkbox" id="canCreateUsers" name="can_create_users">
+                                            <label for="canCreateUsers" class="permission-toggle">
+                                                <span class="toggle-slider"></span>
+                                            </label>
+                                        </div>
+                                        <div class="permission-content">
+                                            <div class="permission-icon">
+                                            <i class="fas fa-user-plus"></i>
+                                            </div>
+                                            <div class="permission-details">
+                                                <h5>Create Users</h5>
+                                                <p>Can create new admin users within their scope</p>
+                                                <div class="permission-badge">User Management</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="permission-item">
+                                        <div class="permission-checkbox">
+                                        <input type="checkbox" id="canManageUsers" name="can_manage_users">
+                                            <label for="canManageUsers" class="permission-toggle">
+                                                <span class="toggle-slider"></span>
+                                            </label>
+                                        </div>
+                                        <div class="permission-content">
+                                            <div class="permission-icon">
+                                            <i class="fas fa-users-cog"></i>
+                                            </div>
+                                            <div class="permission-details">
+                                                <h5>Manage Users</h5>
+                                                <p>Can edit, deactivate, and manage admin users</p>
+                                                <div class="permission-badge">User Management</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="permission-item">
+                                        <div class="permission-checkbox">
+                                        <input type="checkbox" id="canSetDeadlines" name="can_set_deadlines">
+                                            <label for="canSetDeadlines" class="permission-toggle">
+                                                <span class="toggle-slider"></span>
+                                            </label>
+                                        </div>
+                                        <div class="permission-content">
+                                            <div class="permission-icon">
+                                            <i class="fas fa-calendar-alt"></i>
+                                            </div>
+                                            <div class="permission-details">
+                                                <h5>Set Deadlines</h5>
+                                                <p>Can set and modify form submission deadlines</p>
+                                                <div class="permission-badge">Form Management</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="permission-item">
+                                        <div class="permission-checkbox">
+                                        <input type="checkbox" id="canApproveSubmissions" name="can_approve_submissions">
+                                            <label for="canApproveSubmissions" class="permission-toggle">
+                                                <span class="toggle-slider"></span>
+                                            </label>
+                                        </div>
+                                        <div class="permission-content">
+                                            <div class="permission-icon">
+                                            <i class="fas fa-check-circle"></i>
+                                            </div>
+                                            <div class="permission-details">
+                                                <h5>Approve Submissions</h5>
+                                                <p>Can review, approve, or reject form submissions</p>
+                                                <div class="permission-badge">Content Review</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="permission-item">
+                                        <div class="permission-checkbox">
+                                        <input type="checkbox" id="canViewSystemLogs" name="can_view_system_logs">
+                                            <label for="canViewSystemLogs" class="permission-toggle">
+                                                <span class="toggle-slider"></span>
+                                            </label>
+                                        </div>
+                                        <div class="permission-content">
+                                            <div class="permission-icon">
+                                            <i class="fas fa-history"></i>
+                                            </div>
+                                            <div class="permission-details">
+                                                <h5>View System Logs</h5>
+                                                <p>Can access system activity and audit logs</p>
+                                                <div class="permission-badge">Audit & Monitoring</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                            </div>
+                        </div>
+                        
+                            <!-- Permission Summary -->
+                            <div class="permission-summary" id="permissionSummary">
+                                <div class="summary-header">
+                                    <div class="summary-icon">
+                                        <i class="fas fa-list-check"></i>
+                                    </div>
+                                    <div class="summary-title">
+                                        <h4>Permission Summary</h4>
+                                        <p>Review the permissions and access scope for this admin user</p>
+                                    </div>
+                                </div>
+                                <div class="summary-content">
+                                    <div class="summary-card">
+                                    <div class="summary-item">
+                                            <div class="summary-label">
+                                                <i class="fas fa-key"></i>
+                                                Selected Permissions
+                                            </div>
+                                            <div class="summary-value" id="selectedPermissions">None selected</div>
+                                    </div>
+                                    <div class="summary-item">
+                                            <div class="summary-label">
+                                                <i class="fas fa-globe"></i>
+                                                Access Scope
+                                            </div>
+                                            <div class="summary-value" id="accessScope">Based on geographic assignment</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Form Navigation -->
+                        <div class="form-navigation">
+                            <div class="nav-left">
+                            <button type="button" class="btn btn-outline" id="prevBtn" style="display: none;">
+                                    <i class="fas fa-chevron-left"></i>
+                                    <span>Previous</span>
+                            </button>
+                            </div>
+                            
+                            <div class="nav-center">
+                                <div class="step-indicator">
+                                    <span class="current-step">Step <span id="currentStepNumber">1</span> of 3</span>
+                                    <div class="step-progress-bar">
+                                        <div class="step-progress-fill" style="width: 33.33%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="nav-right">
+                            <button type="button" class="btn btn-outline" id="cancelBtn">
+                                    <i class="fas fa-times"></i>
+                                    <span>Cancel</span>
+                            </button>
+                            <button type="button" class="btn btn-primary" id="nextBtn">
+                                    <span>Next</span>
+                                    <i class="fas fa-chevron-right"></i>
+                            </button>
+                            <button type="submit" class="btn btn-success" id="saveUserBtn" style="display: none;">
+                                    <i class="fas fa-save"></i>
+                                    <span>Create Admin User</span>
+                            </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Form Validation Summary -->
+                        <div class="validation-summary" id="validationSummary" style="display: none;">
+                            <div class="validation-header">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                <h4>Please fix the following errors:</h4>
+                            </div>
+                            <ul class="validation-errors" id="validationErrorsList">
+                                <!-- Validation errors will be populated here -->
+                            </ul>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Reset Password Modal -->
+        <div class="modal" id="passwordModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Reset Password</h2>
+                    <button class="close-btn" id="closePasswordModal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="user-info">
+                        <div class="avatar">JD</div>
+                        <div>
+                            <div class="name">John Doe</div>
+                            <div class="email">john.doe@example.com</div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>New Password</label>
+                        <div class="password-input">
+                            <input type="text" id="newPassword" value="TemporaryP@ss123" readonly>
+                            <button class="copy-btn" id="copyPassword">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                        </div>
+                        <div class="password-strength">
+                            <div class="strength-meter">
+                                <div class="strength-bar strong"></div>
+                            </div>
+                            <div class="strength-text">Strong password</div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-outline" id="cancelPassword">Cancel</button>
+                        <button type="button" class="btn btn-primary" id="confirmReset">Reset Password</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="{% static 'admin/user_management/simple_geographic_search.js' %}"></script>
+    <script src="{% static 'admin/user_management/admin_user_management.js' %}"></script>
+</body>
+</html>

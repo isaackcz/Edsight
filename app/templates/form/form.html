@@ -1,0 +1,276 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Question Creation</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'form/form.css' %}">
+    <link rel="icon" type="image/png" href="{% static 'auth/img/logo_big.png' %}">
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Sidebar (copied from dashboard.html) -->
+        <div class="sidebar">
+            <div class="logo">
+                <i class="fas fa-chart-line"></i>
+                <span>Form Analytics</span>
+            </div>
+            <div class="menu">
+                <a href="/dashboard/" class="menu-item">
+                    <i class="fas fa-home"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="/form/" class="menu-item active">
+                    <i class="fas fa-database"></i>
+                    <span>Form</span>
+                </a>
+                <a href="/report/" class="menu-item">
+                    <i class="fas fa-chart-pie"></i>
+                    <span>Analytics</span>
+                </a>
+                <div class="menu-item">
+                    <i class="fas fa-cog"></i>
+                    <span>Settings</span>
+                </div>
+            </div>
+            <div class="user-profile">
+                <div class="avatar">
+                    <i class="fas fa-user"></i>
+                </div>
+                <div class="user-info">
+                    <span class="username">Admin User</span>
+                    <span class="role">Administrator</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Header (copied from dashboard.html) -->
+            <div class="header">
+                <div class="header-actions">
+                    <div class="notification">
+                        <i class="fas fa-bell"></i>
+                        <span class="badge">2</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Form Content -->
+            <div class="content">
+                <!-- Enhanced Progress Indicator -->
+                <div class="progress-container">
+                    <div class="progress-indicator" data-step="1">
+                        <div class="step active">
+                            <div class="step-circle">
+                                <div class="step-number">1</div>
+                                <div class="step-check"><i class="fas fa-check"></i></div>
+                            </div>
+                            <div class="step-content">
+                                <div class="step-label">Set Topic</div>
+                                <div class="step-description">Choose category and create topic</div>
+                            </div>
+                        </div>
+                        <div class="step">
+                            <div class="step-circle">
+                                <div class="step-number">2</div>
+                                <div class="step-check"><i class="fas fa-check"></i></div>
+                            </div>
+                            <div class="step-content">
+                                <div class="step-label">Add Questions</div>
+                                <div class="step-description">Create and configure questions</div>
+                            </div>
+                        </div>
+                        <div class="step">
+                            <div class="step-circle">
+                                <div class="step-number">3</div>
+                                <div class="step-check"><i class="fas fa-check"></i></div>
+                            </div>
+                            <div class="step-content">
+                                <div class="step-label">Confirm</div>
+                                <div class="step-description">Review and finalize</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Enhanced Topic Section -->
+                <div class="form-section modern-card" id="topic-section">
+                    <div class="section-header">
+                        <div class="section-icon">
+                            <i class="fas fa-plus-circle"></i>
+                        </div>
+                        <div class="section-title">
+                            <h3>Create a New Topic</h3>
+                            <p class="section-description">Select a category and sub-section, then name your new topic to get started.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="context-info-card">
+                        <div class="context-item">
+                            <i class="fas fa-folder"></i>
+                            <span class="context-label">Category:</span>
+                            <span id="category-display" class="context-value">Not selected</span>
+                        </div>
+                        <div class="context-separator"></div>
+                        <div class="context-item">
+                            <i class="fas fa-layer-group"></i>
+                            <span class="context-label">Sub-section:</span>
+                            <span id="subsection-display" class="context-value">Not selected</span>
+                        </div>
+                    </div>
+
+                    <div class="form-grid">
+                        <div class="form-group modern-input">
+                            <label for="category" class="modern-label">
+                                Category
+                            </label>
+                            <div class="select-wrapper modern-select">
+                                <select id="category" name="category" required>
+                                    <option value="">Choose a category</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group modern-input">
+                            <label for="sub-section" class="modern-label">
+                                Sub-section
+                            </label>
+                            <div class="select-wrapper modern-select">
+                                <select id="sub-section" name="sub-section" required>
+                                    <option value="">Choose a sub-section</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group modern-input full-width">
+                            <label for="topic" class="modern-label">
+                                Topic Name
+                            </label>
+                            <div class="input-wrapper modern-input-field" style="position:relative;">
+                                <input type="text" id="topic" name="topic" placeholder="Enter or select topic name" autocomplete="off" required>
+                                <div id="topic-suggestions" class="autocomplete-suggestions modern-dropdown"></div>
+                            </div>
+                            <div class="input-hint">
+                                Start typing to select an existing topic or create a new one
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="topic-area"></div>
+                    
+                    <div class="form-actions modern-actions">
+                        <button type="button" id="next-to-questions" class="btn primary modern-btn">
+                            <span>Next: Add Questions</span>
+                            <i class="fas fa-arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Questions Section (Hidden Initially) -->
+                <div class="form-section" id="questions-section" style="display: none;">
+                    <div class="section-header">
+                        <h3><i class="fas fa-question-circle"></i> Add Questions to Topic</h3>
+                        <div class="topic-info">
+                            <span id="current-topic-name"></span>
+                            <span class="topic-meta"></span>
+                        </div>
+                    </div>
+                    <div class="questions-container" id="questions-container">
+                        <!-- Questions will be added here -->
+                    </div>
+                    <button type="button" id="add-question" class="btn secondary">
+                        <i class="fas fa-plus"></i> Add Another Question
+                    </button>
+                    <div class="form-actions">
+                        <button type="button" id="back-to-topic" class="btn outline">
+                            <i class="fas fa-arrow-left"></i> Back to Topic
+                        </button>
+                        <button type="button" id="finish-topic" class="btn primary">
+                            Finish Topic <i class="fas fa-check"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Confirmation Section (Hidden Initially) -->
+                <div class="form-section modern-card" id="confirmation-section" style="display: none;">
+                    <div class="section-header">
+                        <div class="section-icon">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="section-title">
+                            <h3>Topic Created Successfully!</h3>
+                            <p class="section-description">Your topic and questions have been saved successfully.</p>
+                        </div>
+                    </div>
+                    <div class="confirmation-card">
+                        <div class="confirmation-icon">
+                            <i class="fas fa-check"></i>
+                        </div>
+                        <div class="confirmation-content">
+                            <p>You've successfully created the topic:</p>
+                            <h4 id="confirmed-topic-name">Classroom Safety</h4>
+                            <p class="topic-meta">(Infrastructure > Classrooms)</p>
+                            <div class="questions-summary">
+                                <p><i class="fas fa-question"></i> <span id="questions-count">3</span> questions added</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="confirmation-options">
+                        <h4>What would you like to do next?</h4>
+                        <div class="option-buttons">
+                            <button type="button" id="add-another-topic" class="btn primary">
+                                <i class="fas fa-plus"></i> Add Another Topic
+                            </button>
+                            <button type="button" id="finish-process" class="btn outline">
+                                <i class="fas fa-home"></i> Return to Dashboard
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <!-- Enhanced Drafted Questionnaires Section -->
+                <div class="drafts-section modern-section">
+                    <div class="section-header">
+                        <div class="section-icon">
+                            <i class="fas fa-file-alt"></i>
+                        </div>
+                        <div class="section-title">
+                            <h3>Drafted Questionnaires</h3>
+                            <p class="section-description">Manage your existing questionnaire drafts and templates.</p>
+                        </div>
+                    </div>
+                    <div class="drafts-container modern-grid">
+                        <!-- Categories will be added here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script type="module" src="{% static 'form/form.js' %}"></script>
+        <style>
+.sidebar .menu a.menu-item {
+    text-decoration: none !important;
+    color: inherit !important;
+    display: flex;
+    align-items: center;
+}
+.sidebar .menu a.menu-item i {
+    color: inherit !important;
+}
+.sidebar .menu a.menu-item.active {
+    font-weight: bold;
+}
+.topic-context-info {
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 15px;
+    padding: 8px 12px;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+    border-left: 3px solid #4e73df;
+}
+</style>
+</body>
+</html>

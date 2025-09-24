@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EdSight - Offline</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .offline-container {
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            max-width: 400px;
+            width: 90%;
+        }
+        
+        .offline-icon {
+            width: 80px;
+            height: 80px;
+            background: #fef3c7;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 24px;
+        }
+        
+        .offline-icon svg {
+            width: 40px;
+            height: 40px;
+            color: #f59e0b;
+        }
+        
+        h1 {
+            color: #1f2937;
+            margin: 0 0 16px;
+            font-size: 24px;
+            font-weight: 600;
+        }
+        
+        p {
+            color: #6b7280;
+            margin: 0 0 32px;
+            line-height: 1.6;
+        }
+        
+        .offline-features {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 24px;
+            margin: 24px 0;
+            text-align: left;
+        }
+        
+        .offline-features h3 {
+            color: #374151;
+            margin: 0 0 16px;
+            font-size: 16px;
+            font-weight: 600;
+        }
+        
+        .feature-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .feature-list li {
+            color: #6b7280;
+            margin: 8px 0;
+            padding-left: 24px;
+            position: relative;
+        }
+        
+        .feature-list li::before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #10b981;
+            font-weight: bold;
+        }
+        
+        .retry-button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .retry-button:hover {
+            background: #2563eb;
+        }
+        
+        .connection-status {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 16px;
+            font-size: 14px;
+            color: #6b7280;
+        }
+        
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #ef4444;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .online .status-indicator {
+            background: #10b981;
+            animation: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="offline-container">
+        <div class="offline-icon">
+            <svg fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
+            </svg>
+        </div>
+        
+        <h1>You're Offline</h1>
+        <p>Don't worry! EdSight works offline too. Your data is safe and will sync when you're back online.</p>
+        
+        <div class="offline-features">
+            <h3>What you can do offline:</h3>
+            <ul class="feature-list">
+                <li>Continue filling out forms</li>
+                <li>View your dashboard</li>
+                <li>Access previously loaded data</li>
+                <li>Save your progress locally</li>
+            </ul>
+        </div>
+        
+        <button class="retry-button" onclick="checkConnection()">Check Connection</button>
+        
+        <div class="connection-status" id="connectionStatus">
+            <div class="status-indicator"></div>
+            <span>Checking connection...</span>
+        </div>
+    </div>
+
+    <script>
+        // Check connection status
+        function checkConnection() {
+            const statusElement = document.getElementById('connectionStatus');
+            const statusIndicator = statusElement.querySelector('.status-indicator');
+            const statusText = statusElement.querySelector('span');
+            
+            statusText.textContent = 'Checking connection...';
+            statusElement.classList.remove('online');
+            
+            // Try to fetch a small resource to test connection
+            fetch('/api/dashboard/stats/', { 
+                method: 'GET',
+                cache: 'no-cache'
+            })
+            .then(() => {
+                statusText.textContent = 'Connected! Redirecting...';
+                statusElement.classList.add('online');
+                setTimeout(() => {
+                    window.location.href = '/user-dashboard/';
+                }, 1000);
+            })
+            .catch(() => {
+                statusText.textContent = 'Still offline';
+                statusElement.classList.remove('online');
+            });
+        }
+        
+        // Listen for online/offline events
+        window.addEventListener('online', () => {
+            checkConnection();
+        });
+        
+        window.addEventListener('offline', () => {
+            const statusElement = document.getElementById('connectionStatus');
+            const statusText = statusElement.querySelector('span');
+            statusText.textContent = 'Connection lost';
+            statusElement.classList.remove('online');
+        });
+        
+        // Check connection on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(checkConnection, 1000);
+        });
+        
+        // Periodic connection check
+        setInterval(checkConnection, 30000); // Check every 30 seconds
+    </script>
+</body>
+</html> 

@@ -18,6 +18,8 @@ from django.contrib import admin
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from django.http import JsonResponse, HttpResponse
+from django.conf import settings
+from django.conf.urls.static import static
 
 urlpatterns = [
     # Root URL - redirect to dashboard
@@ -150,3 +152,7 @@ urlpatterns += [
     path('api/question/<int:question_id>/update/', views.update_question, name='update_question_api'),
     path('api/questions/<int:question_id>/', views.delete_question, name='delete_question_api'),
 ]
+
+# Serve static files in development
+if settings.DEBUG:
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

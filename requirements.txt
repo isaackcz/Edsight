@@ -13,15 +13,27 @@ asgiref>=3.7.0
 PyJWT>=2.8.0
 python-multipart>=0.0.6
 
-# Redis for caching
-aioredis>=2.0.0
+# Redis for caching / Celery backend
+redis>=5.0.0
+
+# Celery worker
+celery>=5.3,<5.4
+
+# WSGI server for Django
+gunicorn>=21.2.0
 
 # Django integration
 django>=4.2.0
 django-cors-headers>=4.3.0
+django-browser-reload>=1.12.1
 
 # Database
 mysql-connector-python>=8.0.0
+mysqlclient>=2.2.4
 
 # Additional utilities
 python-dotenv>=1.0.0
+bcrypt>=4.1.2
+requests>=2.32.0
+openpyxl>=3.1.2
+djangorestframework>=3.15.2

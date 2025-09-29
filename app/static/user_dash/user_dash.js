@@ -1137,6 +1137,7 @@ function setupQuickActions() {
 
 function setupFormActions() {
     const saveProgressBtn = document.getElementById('save-progress-btn');
+    const submitToDistrictBtn = document.getElementById('submit-to-district-btn');
     
     if (saveProgressBtn) {
         saveProgressBtn.addEventListener('click', async function() {
@@ -1160,6 +1161,48 @@ function setupFormActions() {
                 setTimeout(() => {
                     this.innerHTML = '<i class="fas fa-save"></i> Save Progress';
                     this.disabled = false;
+                }, 3000);
+            }
+        });
+    }
+
+    if (submitToDistrictBtn) {
+        submitToDistrictBtn.addEventListener('click', async function() {
+            try {
+                submitToDistrictBtn.disabled = true;
+                submitToDistrictBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
+
+                // Ensure local changes are saved first
+                if (window.formDataManager) {
+                    await window.formDataManager.saveToDatabase();
+                }
+
+                // Call server to mark submission to district
+                const resp = await fetch('/api/form/submit/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ submit_type: 'to_district' })
+                });
+                const data = await resp.json();
+                if (!resp.ok || data.error) {
+                    throw new Error(data.error || 'Submit failed');
+                }
+
+                submitToDistrictBtn.innerHTML = '<i class="fas fa-check"></i> Submitted';
+                setTimeout(() => {
+                    submitToDistrictBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Submit to District';
+                    submitToDistrictBtn.disabled = false;
+                }, 2000);
+
+                // Optional: show toast
+                if (window.showToast) {
+                    window.showToast('Form submitted to District for review', 'success');
+                }
+            } catch (e) {
+                submitToDistrictBtn.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Error';
+                setTimeout(() => {
+                    submitToDistrictBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Submit to District';
+                    submitToDistrictBtn.disabled = false;
                 }, 3000);
             }
         });

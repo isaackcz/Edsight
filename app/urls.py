@@ -2,6 +2,7 @@ from django.urls import path, include
 from django.shortcuts import render, redirect
 from . import views
 from . import admin_views
+from . import form_management_views
 from .views import (
     dashboard_page, form_page, auth_page, login_view, signin_page, 
     report_page, logout_view, api_dashboard_stats, api_dashboard_categories, 
@@ -28,6 +29,7 @@ urlpatterns = [
     # Main pages
     path('dashboard/', dashboard_page, name='dashboard-page'),
     path('form/', form_page, name='form-page'),
+    path('form-management/', form_management_views.form_management_page, name='form-management-page'),
     path('report/', report_page, name='report-page'),
     path('user-dashboard/', user_dashboard, name='user_dashboard'),
     
@@ -60,6 +62,18 @@ urlpatterns = [
     path('api/admin/roles/assign/', admin_views.api_assign_role, name='api-assign-role'),
     path('api/geographic-data/<str:data_type>/', views.api_geographic_data, name='api-geographic-data'),
     path('api/schools/search/', views.api_schools_search, name='api-schools-search'),
+    
+    # Form Management API endpoints
+    path('api/admin/form-management/user-info/', form_management_views.api_user_info, name='api-form-management-user-info'),
+    path('api/admin/form-management/statistics/', form_management_views.api_statistics, name='api-form-management-statistics'),
+    path('api/admin/form-management/forms/', form_management_views.api_forms, name='api-form-management-forms'),
+    path('api/admin/form-management/forms/<int:form_id>/', form_management_views.api_form_detail, name='api-form-management-form-detail'),
+    path('api/admin/form-management/forms/<int:form_id>/approve/', form_management_views.api_approve_form, name='api-form-management-approve-form'),
+    path('api/admin/form-management/forms/<int:form_id>/return/', form_management_views.api_return_form, name='api-form-management-return-form'),
+    path('api/admin/form-management/bulk-approve/', form_management_views.api_bulk_approve, name='api-form-management-bulk-approve'),
+    path('api/admin/form-management/bulk-return/', form_management_views.api_bulk_return, name='api-form-management-bulk-return'),
+    path('api/admin/form-management/export/', form_management_views.api_export_forms, name='api-form-management-export'),
+    path('api/admin/form-management/notifications/', form_management_views.api_notifications, name='api-form-management-notifications'),
     
     # Legacy form endpoints (consider deprecating)
     path('get_categories', views.get_categories, name='get-categories'),

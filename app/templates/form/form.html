@@ -6,6 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Panel - Question Creation</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'dashboard/dashboard.css' %}">
+    <link rel="stylesheet" href="{% static 'dashboard/dash_responsive.css' %}">
     <link rel="stylesheet" href="{% static 'form/form.css' %}">
     <link rel="icon" type="image/png" href="{% static 'auth/img/logo_big.png' %}">
 </head>
@@ -26,6 +28,10 @@
                     <i class="fas fa-database"></i>
                     <span>Form</span>
                 </a>
+                <a href="/form-management/" class="menu-item">
+                    <i class="fas fa-clipboard-check"></i>
+                    <span>Form Management</span>
+                </a>
                 <a href="/report/" class="menu-item">
                     <i class="fas fa-chart-pie"></i>
                     <span>Analytics</span>
@@ -34,6 +40,10 @@
                     <i class="fas fa-cog"></i>
                     <span>Settings</span>
                 </div>
+                <a href="{% url 'logout' %}" class="menu-item logout-btn">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Sign Out</span>
+                </a>
             </div>
             <div class="user-profile">
                 <div class="avatar">
@@ -48,8 +58,12 @@
 
         <!-- Main Content -->
         <div class="main-content">
-            <!-- Header (copied from dashboard.html) -->
+            <!-- Header (dashboard style with search + notifications) -->
             <div class="header">
+                <div class="search-bar">
+                    <i class="fas fa-search"></i>
+                    <input type="text" placeholder="Search forms, topics...">
+                </div>
                 <div class="header-actions">
                     <div class="notification">
                         <i class="fas fa-bell"></i>

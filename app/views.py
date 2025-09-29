@@ -2176,8 +2176,20 @@ def api_form_submit(request):
         
         # Update form status
         form.updated_at = timezone.now()
-        if data.get('submit_type') == 'final':
+        submit_type = data.get('submit_type')
+        if submit_type == 'final':
             form.status = 'completed'
+        elif submit_type == 'to_district':
+            # School submitting to District for review
+            form.status = 'district_pending'
+            form.current_level = 'district'
+            # set submitted_at if available in schema; ignore if missing
+            try:
+                from django.db import connection
+                with connection.cursor() as c:
+                    c.execute("UPDATE forms SET submitted_at = NOW() WHERE form_id = %s", [form.form_id])
+            except Exception:
+                pass
         else:
             form.status = 'draft'
         form.save()

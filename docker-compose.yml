@@ -1,0 +1,141 @@
+version: "3.9"
+
+services:
+  db:
+    image: mariadb:10.11
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-edsight_root}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-edsight}
+      MYSQL_USER: ${MYSQL_USER:-edsight}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-edsight_pass}
+    command: ["mysqld", "--local-infile=0", "--port=3307"]
+    ports:
+      - "3307:3307"
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-P", "3307"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  django:
+    build:
+      context: .
+      dockerfile: Dockerfile.django
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      DJANGO_SETTINGS_MODULE: config.settings
+      DB_HOST: db
+      DB_PORT: 3307
+      DB_NAME: ${MYSQL_DATABASE:-edsight}
+      DB_USER: ${MYSQL_USER:-edsight}
+      DB_PASSWORD: ${MYSQL_PASSWORD:-edsight_pass}
+      SECRET_KEY: ${SECRET_KEY:-change-me}
+      DEBUG: ${DEBUG:-False}
+      ALLOWED_HOSTS: ${ALLOWED_HOSTS:-*}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_DB: 0
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+      - staticfiles:/vol/static
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  fastapi:
+    build:
+      context: .
+      dockerfile: Dockerfile.fastapi
+    depends_on:
+      django:
+        condition: service_started
+    env_file:
+      - .env
+    environment:
+      DB_HOST: db
+      DB_PORT: 3307
+      DB_NAME: ${MYSQL_DATABASE:-edsight}
+      DB_USER: ${MYSQL_USER:-edsight}
+      DB_PASSWORD: ${MYSQL_PASSWORD:-edsight_pass}
+      DJANGO_HOST: django
+      REDIS_URL: redis://redis:6379/0
+    ports:
+      - "9000:9000"
+    volumes:
+      - .:/app
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/health" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  celery:
+    build:
+      context: .
+      dockerfile: Dockerfile.django
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      DJANGO_SETTINGS_MODULE: config.settings
+      DB_HOST: db
+      DB_PORT: 3307
+      DB_NAME: ${MYSQL_DATABASE:-edsight}
+      DB_USER: ${MYSQL_USER:-edsight}
+      DB_PASSWORD: ${MYSQL_PASSWORD:-edsight_pass}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_DB: 0
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
+    command: ["bash", "-lc", "celery -A app worker -l info"]
+    volumes:
+      - .:/app
+
+  nginx:
+    image: nginx:1.27-alpine
+    depends_on:
+      django:
+        condition: service_started
+      fastapi:
+        condition: service_started
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - staticfiles:/vol/static:ro
+
+volumes:
+  db_data:
+  staticfiles:
+

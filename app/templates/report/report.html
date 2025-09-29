@@ -8,19 +8,21 @@
     <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="{% static 'dashboard/dashboard.css' %}">
+    <link rel="stylesheet" href="{% static 'dashboard/dash_responsive.css' %}">
     <link rel="stylesheet" href="{% static 'report/report.css' %}">
     <link rel="stylesheet" href="{% static 'report/report_responsive.css' %}">
     <link rel="icon" type="image/png" href="{% static 'auth/img/logo_big.png' %}">
 </head>
 <body>
-    <div class="admin-container">
-        <!-- Sidebar Navigation (dashboard style) -->
-        <aside class="sidebar">
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
             <div class="logo">
                 <i class="fas fa-chart-line"></i>
-                <span>Reports & Analytics</span>
+                <span>Form Analytics</span>
             </div>
-            <nav class="sidebar-menu">
+            <div class="menu">
                 <a href="/dashboard/" class="menu-item">
                     <i class="fas fa-home"></i>
                     <span>Dashboard</span>
@@ -29,15 +31,23 @@
                     <i class="fas fa-database"></i>
                     <span>Form</span>
                 </a>
-                <a href="#" class="menu-item active">
-                    <i class="fas fa-chart-pie"></i>
-                    <span>Analytics</span>
+                <a href="/form-management/" class="menu-item">
+                    <i class="fas fa-clipboard-check"></i>
+                    <span>Form Management</span>
                 </a>
-                <a href="#" class="menu-item">
+                <a href="/report/" class="menu-item active">
+                    <i class="fas fa-chart-pie"></i>
+                    <span>Reports</span>
+                </a>
+                <div class="menu-item">
                     <i class="fas fa-cog"></i>
                     <span>Settings</span>
+                </div>
+                <a href="{% url 'logout' %}" class="menu-item logout-btn">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Sign Out</span>
                 </a>
-            </nav>
+            </div>
             <div class="user-profile">
                 <div class="avatar">
                     <i class="fas fa-user"></i>
@@ -47,15 +57,16 @@
                     <span class="role">Administrator</span>
                 </div>
             </div>
-        </aside>
-        <!-- Main Content Area -->
-        <main class="main-content">
-            <!-- Sneat Header -->
+        </div>
+        
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Header (dashboard style with search + notifications) -->
             <div class="header">
-                <button class="mobile-menu-toggle" onclick="toggleSidebar()">
-                    <i class="fas fa-bars"></i>
-                </button>
-                <h1>Reports & Analytics</h1>
+                <div class="search-bar">
+                    <i class="fas fa-search"></i>
+                    <input type="text" placeholder="Search analytics, schools...">
+                </div>
                 <div class="header-actions">
                     <div class="notification">
                         <i class="fas fa-bell"></i>
@@ -63,9 +74,8 @@
                     </div>
                 </div>
             </div>
-            <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
             <!-- Analytics Content -->
-            <div class="content-wrapper">
+            <div class="content">
                 <!-- Analytics Cards -->
                 <div class="analytics-overview">
                     <div class="stat-card">
@@ -396,7 +406,7 @@
                     </div>
                 </div>
             </div>
-        </main>
+        </div>
     </div>
     <script src="{% static 'report/report.js' %}?v={{ timestamp }}"></script>
     <script>

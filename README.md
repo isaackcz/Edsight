@@ -1,148 +1,180 @@
 # EdSight - Educational Data Management System
 
-EdSight is a comprehensive educational data management system built with Django and FastAPI, designed to handle educational assessments, analytics, and reporting for educational institutions.
-
-## 🚀 Features
-
-- **User Management**: Multi-level user hierarchy with role-based access control
-- **Form Management**: Dynamic form creation and data collection
-- **Analytics Dashboard**: Comprehensive data analysis and reporting
-- **Security**: Enhanced security features with 2FA and audit logging
-- **API Integration**: RESTful APIs for data access and integration
-- **Progressive Web App**: Offline capabilities and mobile-friendly interface
+A comprehensive Docker-based educational data management system built with Django and FastAPI, designed to handle large-scale educational assessments and analytics for up to 90,000 users.
 
 ## 🏗️ Architecture
 
-- **Backend**: Django + FastAPI hybrid architecture
-- **Database**: MariaDB/MySQL with optimized queries
-- **Frontend**: HTML, CSS, JavaScript, Bootstrap
-- **Authentication**: JWT-based authentication with 2FA
-- **Caching**: Redis for session management and caching
-- **Security**: Comprehensive audit logging and security monitoring
+EdSight is a microservices-based application with the following components:
 
-## 📁 Project Structure
+- **Django Frontend**: Main web application with user interface
+- **FastAPI Backend**: High-performance API for data processing
+- **MariaDB Database**: Primary data storage with optimized indexing
+- **Redis**: Caching and session management
+- **Celery**: Asynchronous task processing
+- **Nginx**: Reverse proxy and static file serving
 
-```
-EdSight/
-├── app/                    # Main Django application
-│   ├── models.py          # Database models
-│   ├── views.py           # Django views
-│   ├── urls.py            # URL routing
-│   ├── static/            # Static files (CSS, JS, images)
-│   ├── templates/         # HTML templates
-│   └── migrations/        # Database migrations
-├── backend/               # FastAPI backend
-│   └── main.py           # FastAPI application
-├── config/               # Django settings
-├── database_updates/     # Database migration scripts
-├── frontend/             # Frontend assets
-└── requirements.txt      # Python dependencies
-```
-
-## 🛠️ Installation
+## 🚀 Quick Start
 
 ### Prerequisites
-- Python 3.8+
-- MariaDB/MySQL
-- Redis (for caching)
-- Node.js (for frontend development)
 
-### Setup
+- Docker and Docker Compose
+- Git
 
-1. **Clone the repository**
+### Installation
+
+1. **Clone the repository**:
    ```bash
    git clone https://github.com/isaackcz/Edsight.git
    cd EdSight
    ```
 
-2. **Install dependencies**
+2. **Set up environment variables**:
    ```bash
-   pip install -r requirements.txt
+   cp .env.docker .env
+   # Edit .env with your configuration
    ```
 
-3. **Configure database**
-   - Create a MariaDB/MySQL database
-   - Update database settings in `config/settings.py`
-
-4. **Run migrations**
+3. **Build and start the application**:
    ```bash
-   python manage.py migrate
+   docker compose up -d --build
    ```
 
-5. **Create superuser**
+4. **Create a superuser**:
    ```bash
-   python manage.py createsuperuser
+   docker compose exec django python manage.py createsuperuser
    ```
 
-6. **Start the development server**
-   ```bash
-   python manage.py runserver
-   ```
+5. **Access the application**:
+   - Main Application: http://localhost
+   - Django Admin: http://localhost/admin
+   - API Gateway: http://localhost/api-gw/
 
-## 🔧 Configuration
+## 📋 Services
 
-### Environment Variables
-Create a `.env` file with the following variables:
+| Service | Port | Description |
+|---------|------|-------------|
+| Nginx | 80 | Reverse proxy and static files |
+| Django | 8000 | Main web application |
+| FastAPI | 9000 | API services |
+| MariaDB | 3307 | Database |
+| Redis | 6379 | Cache and message broker |
+
+## 🔧 Development
+
+### Local Development
+
+```bash
+# Start all services
+docker compose up -d
+
+# View logs
+docker compose logs -f django
+
+# Run Django commands
+docker compose exec django python manage.py migrate
+docker compose exec django python manage.py collectstatic
+
+# Stop services
+docker compose down -v
 ```
-DATABASE_URL=mysql://user:password@localhost/edsight
-SECRET_KEY=your-secret-key
-DEBUG=True
-REDIS_URL=redis://localhost:6379/0
+
+### Database Management
+
+```bash
+# Access MariaDB
+docker compose exec db mysql -u edsight -p edsight
+
+# Run migrations
+docker compose exec django python manage.py migrate
+
+# Create superuser
+docker compose exec django python manage.py createsuperuser
 ```
 
-### Database Setup
-The system includes comprehensive database migration scripts in the `database_updates/` directory.
+## 🏗️ Production Deployment
 
-## 📊 Features Overview
+### Security Configuration
 
-### User Management
-- **Admin Users**: System administrators with full access
-- **School Users**: Educational institution administrators
-- **Regular Users**: Standard system users
-- **Role-based Access Control**: Granular permissions system
+1. **Update environment variables** in `.env`:
+   ```env
+   SECRET_KEY=your-secure-secret-key
+   DEBUG=False
+   ALLOWED_HOSTS=your-domain.com
+   MYSQL_ROOT_PASSWORD=secure-root-password
+   MYSQL_PASSWORD=secure-user-password
+   ```
 
-### Form Management
-- **Dynamic Forms**: Create custom forms for data collection
-- **Question Types**: Multiple choice, text, numeric, and more
-- **Data Validation**: Comprehensive input validation
-- **Sub-questions**: Hierarchical question structures
+2. **Configure SSL/TLS** with proper certificates
 
-### Analytics & Reporting
-- **Real-time Analytics**: Live data analysis and visualization
-- **Custom Reports**: Generate reports based on specific criteria
-- **Data Export**: Export data in various formats
-- **Statistical Analysis**: Advanced statistical computations
+3. **Set up monitoring** and logging
 
-### Security Features
-- **Two-Factor Authentication**: Enhanced security for sensitive accounts
-- **Audit Logging**: Comprehensive activity tracking
-- **Session Management**: Secure session handling
-- **Data Encryption**: Sensitive data encryption at rest
+### Scaling for 90k Users
 
-## 🚀 Deployment
+The system is designed to handle high loads with:
 
-### Production Setup
-1. Configure production database
-2. Set up Redis for caching
-3. Configure static file serving
-4. Set up SSL/TLS certificates
-5. Configure load balancing (for high-traffic scenarios)
+- **Horizontal scaling**: Stateless design with load balancers
+- **Database optimization**: Connection pooling, read replicas, indexing
+- **Caching strategy**: Redis for sessions and API responses
+- **Asynchronous processing**: Celery workers for background tasks
+- **CDN integration**: For static file delivery
 
-### Performance Optimization
-- Database query optimization
-- Redis caching implementation
-- Static file CDN integration
-- Database connection pooling
+## 📊 Features
+
+- **User Management**: Multi-level user hierarchy (Admin, School, Teacher, Student)
+- **Form Management**: Dynamic form creation and distribution
+- **Data Analytics**: Comprehensive reporting and analytics
+- **Security**: Two-factor authentication, encryption, audit logging
+- **Performance**: Optimized for 90,000+ concurrent users
+- **Monitoring**: Health checks, logging, and alerting
+
+## 🛠️ Technology Stack
+
+- **Backend**: Django 4.2, FastAPI 0.104
+- **Database**: MariaDB 10.11
+- **Cache**: Redis 7
+- **Task Queue**: Celery 5.3
+- **Web Server**: Nginx 1.27
+- **Containerization**: Docker, Docker Compose
 
 ## 📝 API Documentation
 
-The system provides RESTful APIs for:
-- User authentication and management
-- Form data submission and retrieval
-- Analytics data access
-- Report generation
+- **FastAPI Docs**: http://localhost/api-gw/docs
+- **Django Admin**: http://localhost/admin
 
-API documentation is available at `/api/docs/` when running the FastAPI backend.
+## 🔒 Security Features
+
+- Environment-based secrets management
+- Database security with restricted user permissions
+- Input validation and output escaping
+- HTTPS enforcement with HSTS
+- Content Security Policy (CSP)
+- Audit logging for all security events
+
+## 📈 Performance Optimizations
+
+- Database query optimization with `select_related()` and `prefetch_related()`
+- Redis caching for frequently accessed data
+- Asynchronous task processing
+- Static file optimization with CDN support
+- Connection pooling and read replicas
+
+## 🧪 Testing
+
+```bash
+# Run tests
+docker compose exec django python manage.py test
+
+# Run with coverage
+docker compose exec django coverage run --source='.' manage.py test
+docker compose exec django coverage report
+```
+
+## 📚 Documentation
+
+- [Docker Setup Guide](README_DOCKER.md)
+- [API Documentation](docs/api.md)
+- [Deployment Guide](docs/deployment.md)
+- [Security Guidelines](docs/security.md)
 
 ## 🤝 Contributing
 
@@ -154,23 +186,38 @@ API documentation is available at `/api/docs/` when running the FastAPI backend.
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## 🆘 Support
 
 For support and questions:
 - Create an issue in the GitHub repository
-- Check the documentation in the `database_updates/` directory
-- Review the implementation guides in the project files
+- Check the documentation in the `docs/` directory
+- Review the troubleshooting section below
 
-## 🔄 Recent Updates
+## 🔧 Troubleshooting
 
-- Enhanced security with 2FA implementation
-- Improved analytics dashboard
-- Optimized database queries
-- Added comprehensive audit logging
-- Implemented Progressive Web App features
+### Common Issues
+
+1. **Port conflicts**: Ensure ports 80, 8000, 9000, 3307, and 6379 are available
+2. **Permission issues**: Run `docker compose down -v` and rebuild
+3. **Database connection**: Check MariaDB health with `docker compose ps`
+
+### Health Checks
+
+- Django: http://localhost:8000/health
+- FastAPI: http://localhost:9000/health
+- Database: `docker compose exec db mysqladmin ping -h 127.0.0.1 -P 3307`
+
+## 📊 Monitoring
+
+The system includes comprehensive monitoring:
+- Application health checks
+- Database performance metrics
+- Redis cache statistics
+- Celery worker status
+- HTTP request logging
 
 ---
 
-**EdSight** - Empowering Education Through Data
+**Built with ❤️ for educational excellence**

@@ -4,7 +4,19 @@ from django.contrib.auth import get_user_model
 # --- ENUM choices ---
 FORM_STATUS_CHOICES = [
     ('draft', 'Draft'),
-    ('in-progress', 'In Progress'),
+    ('submitted', 'Submitted'),
+    ('district_pending', 'Pending District Review'),
+    ('district_approved', 'District Approved'),
+    ('district_returned', 'Returned to School'),
+    ('division_pending', 'Pending Division Review'),
+    ('division_approved', 'Division Approved'),
+    ('division_returned', 'Returned to District'),
+    ('region_pending', 'Pending Region Review'),
+    ('region_approved', 'Region Approved'),
+    ('region_returned', 'Returned to Division'),
+    ('central_pending', 'Pending Central Review'),
+    ('central_approved', 'Central Approved'),
+    ('central_returned', 'Returned to Region'),
     ('completed', 'Completed'),
 ]
 
@@ -198,14 +210,55 @@ class Form(models.Model):
     status = models.CharField(max_length=20, choices=FORM_STATUS_CHOICES, default='draft')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    
+    # Workflow tracking
+    submitted_at = models.DateTimeField(null=True, blank=True)
+    current_level = models.CharField(max_length=10, default='school', choices=[
+        ('school', 'School'),
+        ('district', 'District'),
+        ('division', 'Division'),
+        ('region', 'Region'),
+        ('central', 'Central Office'),
+    ])
+    last_reviewed_by = models.ForeignKey('AdminUser', on_delete=models.SET_NULL, null=True, blank=True, related_name='reviewed_forms')
+    last_reviewed_at = models.DateTimeField(null=True, blank=True)
+    
+    # Form metadata
+    form_type = models.CharField(max_length=50, default='standard')
+    academic_year = models.CharField(max_length=10, default='2024-2025')
+    submission_deadline = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         db_table = 'forms'
         indexes = [
             models.Index(fields=['user'], name='form_user_id_idx'),
             models.Index(fields=['school'], name='form_school_id_idx'),
+            models.Index(fields=['status'], name='form_status_idx'),
+            models.Index(fields=['current_level'], name='form_current_level_idx'),
+            models.Index(fields=['submitted_at'], name='form_submitted_at_idx'),
         ]
-        unique_together = ['user', 'school']  # Ensure one form per user per school
+        unique_together = ['user', 'school', 'academic_year']  # Ensure one form per user per school per academic year
+    
+    def get_next_level(self):
+        """Get the next approval level in the workflow"""
+        level_map = {
+            'school': 'district',
+            'district': 'division', 
+            'division': 'region',
+            'region': 'central',
+            'central': 'completed'
+        }
+        return level_map.get(self.current_level)
+    
+    def get_previous_level(self):
+        """Get the previous approval level in the workflow"""
+        level_map = {
+            'district': 'school',
+            'division': 'district',
+            'region': 'division', 
+            'central': 'region'
+        }
+        return level_map.get(self.current_level)
 
 class Answer(models.Model):
     answer_id = models.AutoField(primary_key=True)
@@ -838,6 +891,62 @@ class FormApproval(models.Model):
     
     def __str__(self):
         return f"Form {self.form_id} - {self.get_approval_level_display()} - {self.get_status_display()}"
+
+
+class FormNotification(models.Model):
+    """Notification system for form workflow"""
+    NOTIFICATION_TYPE_CHOICES = [
+        ('form_submitted', 'Form Submitted'),
+        ('form_approved', 'Form Approved'),
+        ('form_returned', 'Form Returned'),
+        ('form_rejected', 'Form Rejected'),
+        ('deadline_reminder', 'Deadline Reminder'),
+        ('overdue_notification', 'Overdue Notification'),
+    ]
+    
+    PRIORITY_CHOICES = [
+        ('low', 'Low'),
+        ('medium', 'Medium'),
+        ('high', 'High'),
+        ('urgent', 'Urgent'),
+    ]
+    
+    notification_id = models.BigAutoField(primary_key=True)
+    form = models.ForeignKey('Form', on_delete=models.CASCADE, related_name='notifications')
+    recipient = models.ForeignKey(AdminUser, on_delete=models.CASCADE, related_name='received_notifications')
+    sender = models.ForeignKey(AdminUser, on_delete=models.CASCADE, null=True, blank=True, related_name='sent_notifications')
+    notification_type = models.CharField(max_length=20, choices=NOTIFICATION_TYPE_CHOICES)
+    title = models.CharField(max_length=200)
+    message = models.TextField()
+    priority = models.CharField(max_length=10, choices=PRIORITY_CHOICES, default='medium')
+    is_read = models.BooleanField(default=False)
+    read_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    # Additional context
+    action_required = models.BooleanField(default=False)
+    action_url = models.CharField(max_length=500, blank=True, null=True)
+    metadata = models.JSONField(default=dict, blank=True)
+    
+    class Meta:
+        db_table = 'form_notifications'
+        indexes = [
+            models.Index(fields=['recipient', 'is_read']),
+            models.Index(fields=['form', 'notification_type']),
+            models.Index(fields=['created_at']),
+            models.Index(fields=['priority', 'created_at']),
+        ]
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"{self.get_notification_type_display()} - {self.title}"
+    
+    def mark_as_read(self):
+        """Mark notification as read"""
+        from django.utils import timezone
+        self.is_read = True
+        self.read_at = timezone.now()
+        self.save()
 
 
 class UserCreationRequest(models.Model):

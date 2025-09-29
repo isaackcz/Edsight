@@ -48,6 +48,7 @@ EdSight is a microservices-based application with the following components:
    - Main Application: http://localhost
    - Django Admin: http://localhost/admin
    - API Gateway: http://localhost/api-gw/
+   - phpMyAdmin: http://localhost/phpmyadmin/ (or http://localhost:8080)
 
 ## 📋 Services
 
@@ -58,6 +59,7 @@ EdSight is a microservices-based application with the following components:
 | FastAPI | 9000 | API services |
 | MariaDB | 3307 | Database |
 | Redis | 6379 | Cache and message broker |
+| phpMyAdmin | 8080 | Database management interface |
 
 ## 🔧 Development
 

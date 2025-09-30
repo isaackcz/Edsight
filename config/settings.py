@@ -57,6 +57,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -146,6 +147,9 @@ STATICFILES_DIRS = [
 ]
 # When running in Docker with nginx, collectstatic will place files here
 STATIC_ROOT = os.environ.get('STATIC_ROOT', '/vol/static')
+
+# WhiteNoise static files storage for hashed filenames and compression
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Redis configuration (for Celery/cache/queues)
 REDIS_HOST = os.environ.get('REDIS_HOST', 'localhost')

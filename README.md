@@ -1,225 +1,305 @@
-# EdSight - Educational Data Management System
+# 🎓 EdSight - Educational Data Management System
 
-A comprehensive Docker-based educational data management system built with Django and FastAPI, designed to handle large-scale educational assessments and analytics for up to 90,000 users.
-
-## 🏗️ Architecture
-
-EdSight is a microservices-based application with the following components:
-
-- **Django Frontend**: Main web application with user interface
-- **FastAPI Backend**: High-performance API for data processing
-- **MariaDB Database**: Primary data storage with optimized indexing
-- **Redis**: Caching and session management
-- **Celery**: Asynchronous task processing
-- **Nginx**: Reverse proxy and static file serving
+A comprehensive Django + FastAPI application for educational data collection and analysis, containerized with Docker for easy deployment across different environments.
 
 ## 🚀 Quick Start
 
 ### Prerequisites
 
-- Docker and Docker Compose
-- Git
+Before cloning this project, ensure you have the following installed:
 
-### Installation
+1. **XAMPP** - [Download here](https://www.apachefriends.org/download.html)
+2. **Docker Desktop** - [Download here](https://www.docker.com/products/docker-desktop/)
+3. **Git** - [Download here](https://git-scm.com/downloads)
 
-1. **Clone the repository**:
-   ```bash
-   git clone https://github.com/isaackcz/Edsight.git
-   cd EdSight
-   ```
+### Installation Steps
 
-2. **Set up environment variables**:
-   ```bash
-   cp .env.docker .env
-   # Edit .env with your configuration
-   ```
-
-3. **Build and start the application**:
-   ```bash
-   docker compose up -d --build
-   ```
-
-4. **Create a superuser**:
-   ```bash
-   docker compose exec django python manage.py createsuperuser
-   ```
-
-5. **Access the application**:
-   - Main Application: http://localhost
-   - Django Admin: http://localhost/admin
-   - API Gateway: http://localhost/api-gw/
-   - phpMyAdmin: http://localhost/phpmyadmin/ (or http://localhost:8080)
-
-## 📋 Services
-
-| Service | Port | Description |
-|---------|------|-------------|
-| Nginx | 80 | Reverse proxy and static files |
-| Django | 8000 | Main web application |
-| FastAPI | 9000 | API services |
-| MariaDB | 3307 | Database |
-| Redis | 6379 | Cache and message broker |
-| phpMyAdmin | 8080 | Database management interface |
-
-## 🔧 Development
-
-### Local Development
-
+#### 1. Clone the Repository
 ```bash
-# Start all services
-docker compose up -d
-
-# View logs
-docker compose logs -f django
-
-# Run Django commands
-docker compose exec django python manage.py migrate
-docker compose exec django python manage.py collectstatic
-
-# Stop services
-docker compose down -v
+git clone https://github.com/yourusername/EdSight.git
+cd EdSight
 ```
 
-### Database Management
-
+#### 2. Validate Your Setup (Optional but Recommended)
 ```bash
-# Access MariaDB
-docker compose exec db mysql -u edsight -p edsight
-
-# Run migrations
-docker compose exec django python manage.py migrate
-
-# Create superuser
-docker compose exec django python manage.py createsuperuser
+# Run this to check if everything is properly installed
+check_setup.bat
 ```
 
-## 🏗️ Production Deployment
+> 📋 **Quick Setup**: If you prefer a simpler guide, see [SETUP_INSTRUCTIONS.md](SETUP_INSTRUCTIONS.md)
 
-### Security Configuration
+#### 3. Start XAMPP Services
+1. Open **XAMPP Control Panel** as Administrator
+2. Start **MySQL** service (should show green "Running" status)
+3. Start **Apache** service (should show green "Running" status)
+4. Keep XAMPP Control Panel open (don't close it)
 
-1. **Update environment variables** in `.env`:
-   ```env
-   SECRET_KEY=your-secure-secret-key
-   DEBUG=False
-   ALLOWED_HOSTS=your-domain.com
-   MYSQL_ROOT_PASSWORD=secure-root-password
-   MYSQL_PASSWORD=secure-user-password
-   ```
-
-2. **Configure SSL/TLS** with proper certificates
-
-3. **Set up monitoring** and logging
-
-### Scaling for 90k Users
-
-The system is designed to handle high loads with:
-
-- **Horizontal scaling**: Stateless design with load balancers
-- **Database optimization**: Connection pooling, read replicas, indexing
-- **Caching strategy**: Redis for sessions and API responses
-- **Asynchronous processing**: Celery workers for background tasks
-- **CDN integration**: For static file delivery
-
-## 📊 Features
-
-- **User Management**: Multi-level user hierarchy (Admin, School, Teacher, Student)
-- **Form Management**: Dynamic form creation and distribution
-- **Data Analytics**: Comprehensive reporting and analytics
-- **Security**: Two-factor authentication, encryption, audit logging
-- **Performance**: Optimized for 90,000+ concurrent users
-- **Monitoring**: Health checks, logging, and alerting
-
-## 🛠️ Technology Stack
-
-- **Backend**: Django 4.2, FastAPI 0.104
-- **Database**: MariaDB 10.11
-- **Cache**: Redis 7
-- **Task Queue**: Celery 5.3
-- **Web Server**: Nginx 1.27
-- **Containerization**: Docker, Docker Compose
-
-## 📝 API Documentation
-
-- **FastAPI Docs**: http://localhost/api-gw/docs
-- **Django Admin**: http://localhost/admin
-
-## 🔒 Security Features
-
-- Environment-based secrets management
-- Database security with restricted user permissions
-- Input validation and output escaping
-- HTTPS enforcement with HSTS
-- Content Security Policy (CSP)
-- Audit logging for all security events
-
-## 📈 Performance Optimizations
-
-- Database query optimization with `select_related()` and `prefetch_related()`
-- Redis caching for frequently accessed data
-- Asynchronous task processing
-- Static file optimization with CDN support
-- Connection pooling and read replicas
-
-## 🧪 Testing
-
+#### 4. Start the Application
 ```bash
-# Run tests
-docker compose exec django python manage.py test
-
-# Run with coverage
-docker compose exec django coverage run --source='.' manage.py test
-docker compose exec django coverage report
+# Double-click this file or run in terminal:
+start_docker.bat
 ```
 
-## 📚 Documentation
+#### 5. Access the Application
+- **Main Application**: http://localhost:8000
+- **API Endpoints**: http://localhost:9000
+- **Load Balancer**: http://localhost:8082
+- **Database Management**: http://localhost/phpmyadmin
 
-- [Docker Setup Guide](README_DOCKER.md)
-- [API Documentation](docs/api.md)
-- [Deployment Guide](docs/deployment.md)
-- [Security Guidelines](docs/security.md)
+## 🏗️ Project Architecture
+
+```
+┌─────────────────┐    ┌──────────────────┐
+│   Your Device   │    │   Docker Host    │
+│                 │    │                  │
+│  XAMPP MySQL    │◄───┤  Django App      │
+│  (Port 3306)    │    │  (Port 8000)     │
+│                 │    │                  │
+│  XAMPP Apache   │    │  FastAPI App     │
+│  (Port 80)      │    │  (Port 9000)     │
+│                 │    │                  │
+│  XAMPP phpMyAdmin│   │  Nginx LB        │
+│  (Port 80)      │    │  (Port 8082)     │
+└─────────────────┘    └──────────────────┘
+```
+
+## 📁 Project Structure
+
+```
+EdSight/
+├── app/                    # Django application
+│   ├── models.py          # Database models
+│   ├── views.py           # Django views
+│   ├── urls.py            # URL routing
+│   └── static/            # Static files (CSS, JS, images)
+├── backend/               # FastAPI application
+│   └── main.py            # FastAPI main application
+├── config/                # Django settings
+│   └── settings.py        # Configuration settings
+├── templates/             # HTML templates
+├── docker-compose.yml     # Docker services configuration
+├── Dockerfile.django      # Django container configuration
+├── Dockerfile.fastapi     # FastAPI container configuration
+├── start_docker.bat       # Start application script
+├── stop_docker.bat        # Stop application script
+├── clean_docker.bat       # Cleanup Docker resources
+└── README.md              # This file
+```
+
+## 🛠️ Development Workflow
+
+### Daily Development
+```bash
+# 1. Start XAMPP (MySQL + Apache)
+# 2. Start the application
+start_docker.bat
+
+# 3. Develop your features
+# 4. When done, stop the application
+stop_docker.bat
+```
+
+### Docker Management
+```bash
+# Quick cleanup (daily use)
+quick_clean.bat
+
+# Full cleanup (weekly use)  
+clean_docker.bat
+
+# Complete reset (when needed)
+reset_docker.bat
+```
+
+### Monitoring Commands
+```bash
+# Check container status
+docker-compose ps
+
+# View real-time logs
+docker-compose logs -f
+
+# Stop all services
+docker-compose down
+
+# Restart services
+docker-compose restart
+```
+
+## 🔧 Configuration
+
+### Database Configuration
+The application uses XAMPP MySQL with the following default settings:
+- **Host**: localhost (from Docker: host.docker.internal)
+- **Port**: 3306
+- **Database**: edsight
+- **User**: root
+- **Password**: (empty - XAMPP default)
+
+### Environment Variables
+The application uses these environment variables (with defaults):
+```bash
+DB_NAME=edsight
+DB_USER=root
+DB_PASSWORD=
+SECRET_KEY=change-me-please-use-a-real-secret-key-in-production
+DEBUG=True
+ALLOWED_HOSTS=*
+```
+
+## 🌐 API Endpoints
+
+### Django Endpoints
+- `GET /` - Home page
+- `GET /auth/login/` - Login page
+- `POST /auth/login/` - Authentication
+- `GET /user-dashboard/` - User dashboard
+- `GET /admin/` - Admin interface
+
+### FastAPI Endpoints
+- `GET /` - API root
+- `GET /health` - Health check
+- `POST /api/auth/login` - API authentication
+- `GET /api/dashboard/stats` - Dashboard statistics
+- `POST /api/forms/submit` - Form submission
+
+## 🚨 Troubleshooting
+
+### Common Issues
+
+#### "This site can't be reached" Error
+**Problem**: Browser shows connection refused
+**Solution**: 
+1. Ensure XAMPP MySQL and Apache are running
+2. Run `docker-compose ps` to check container status
+3. Check logs with `docker-compose logs django`
+
+#### Database Connection Error
+**Problem**: "Access denied for user" or "Can't connect to server"
+**Solution**:
+1. Verify XAMPP MySQL is running on port 3306
+2. Check XAMPP MySQL user is `root` with no password
+3. Ensure database `edsight` exists in XAMPP
+
+#### Port Conflicts
+**Problem**: Services won't start due to port conflicts
+**Solution**:
+1. Stop conflicting services (other web servers, databases)
+2. Use `netstat -ano | findstr :8000` to check port usage
+3. Restart Docker and XAMPP services
+
+#### Docker Containers Not Starting
+**Problem**: Containers fail to start or show unhealthy status
+**Solution**:
+1. Check Docker Desktop is running
+2. Run `docker-compose down` then `start_docker.bat`
+3. Check logs: `docker-compose logs [service-name]`
+
+### Reset Everything
+If you encounter persistent issues:
+```bash
+# Complete reset
+reset_docker.bat
+
+# Then restart
+start_docker.bat
+```
+
+## 📊 System Requirements
+
+### Minimum Requirements
+- **OS**: Windows 10/11, macOS 10.15+, or Linux
+- **RAM**: 4GB (8GB recommended)
+- **Storage**: 2GB free space
+- **Network**: Internet connection for initial setup
+
+### Software Requirements
+- **XAMPP**: 3.3.0 or later
+- **Docker Desktop**: 4.0 or later
+- **Git**: 2.30 or later
+
+## 🔒 Security Notes
+
+### Development Environment
+- Default credentials are used for development
+- Database uses root user with no password
+- DEBUG mode is enabled by default
+
+### Production Deployment
+Before deploying to production:
+1. Change `SECRET_KEY` in settings
+2. Set `DEBUG=False`
+3. Configure proper database credentials
+4. Set up HTTPS/SSL certificates
+5. Configure proper user authentication
 
 ## 🤝 Contributing
 
+### Development Setup
 1. Fork the repository
-2. Create a feature branch
+2. Create a feature branch: `git checkout -b feature-name`
 3. Make your changes
-4. Add tests for new functionality
-5. Submit a pull request
+4. Test with the provided Docker setup
+5. Commit your changes: `git commit -m "Add feature"`
+6. Push to your branch: `git push origin feature-name`
+7. Submit a pull request
 
-## 📄 License
+### Code Style
+- Follow PEP 8 for Python code
+- Use meaningful variable and function names
+- Add comments for complex logic
+- Update documentation for new features
+
+## 📝 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## 🆘 Support
 
-For support and questions:
-- Create an issue in the GitHub repository
-- Check the documentation in the `docs/` directory
-- Review the troubleshooting section below
+### Getting Help
+1. Check the troubleshooting section above
+2. Review the [DOCKER_SETUP_GUIDE.md](DOCKER_SETUP_GUIDE.md)
+3. Check existing issues on GitHub
+4. Create a new issue with detailed error information
 
-## 🔧 Troubleshooting
+### Reporting Issues
+When reporting issues, please include:
+- Operating system and version
+- XAMPP version
+- Docker Desktop version
+- Complete error messages
+- Steps to reproduce the issue
 
-### Common Issues
+## 🎯 Features
 
-1. **Port conflicts**: Ensure ports 80, 8000, 9000, 3307, and 6379 are available
-2. **Permission issues**: Run `docker compose down -v` and rebuild
-3. **Database connection**: Check MariaDB health with `docker compose ps`
+- **User Authentication**: Secure login system
+- **Form Management**: Dynamic form creation and submission
+- **Data Analytics**: Built-in analytics and reporting
+- **Admin Panel**: Comprehensive administration interface
+- **API Integration**: RESTful API for external integrations
+- **Responsive Design**: Mobile-friendly interface
+- **Data Export**: CSV and PDF export capabilities
 
-### Health Checks
+## 🔄 Updates
 
-- Django: http://localhost:8000/health
-- FastAPI: http://localhost:9000/health
-- Database: `docker compose exec db mysqladmin ping -h 127.0.0.1 -P 3307`
+### Keeping Up to Date
+```bash
+# Pull latest changes
+git pull origin main
 
-## 📊 Monitoring
-
-The system includes comprehensive monitoring:
-- Application health checks
-- Database performance metrics
-- Redis cache statistics
-- Celery worker status
-- HTTP request logging
+# Rebuild Docker containers
+reset_docker.bat
+start_docker.bat
+```
 
 ---
 
-**Built with ❤️ for educational excellence**
+## 🎉 Success!
+
+If you've followed these instructions correctly, you should now have:
+- ✅ EdSight application running on http://localhost:8000
+- ✅ FastAPI backend on http://localhost:9000
+- ✅ XAMPP phpMyAdmin on http://localhost/phpmyadmin
+- ✅ All services containerized and working together
+
+**Happy coding! 🚀**

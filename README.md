@@ -8,43 +8,36 @@ A comprehensive Django + FastAPI application for educational data collection and
 
 Before cloning this project, ensure you have the following installed:
 
-1. **XAMPP** - [Download here](https://www.apachefriends.org/download.html)
-2. **Docker Desktop** - [Download here](https://www.docker.com/products/docker-desktop/)
-3. **Git** - [Download here](https://git-scm.com/downloads)
+1. **Docker Desktop** - [Download here](https://www.docker.com/products/docker-desktop/)
+2. **Git** - [Download here](https://git-scm.com/downloads)
+3. **4GB RAM** minimum (8GB recommended)
 
 ### Installation Steps
 
 #### 1. Clone the Repository
 ```bash
-git clone https://github.com/yourusername/EdSight.git
-cd EdSight
+git clone https://github.com/isaackcz/Edsight.git
+cd Edsight
 ```
 
-#### 2. Validate Your Setup (Optional but Recommended)
+#### 2. Start the Application
 ```bash
-# Run this to check if everything is properly installed
-check_setup.bat
-```
-
-> 📋 **Quick Setup**: If you prefer a simpler guide, see [SETUP_INSTRUCTIONS.md](SETUP_INSTRUCTIONS.md)
-
-#### 3. Start XAMPP Services
-1. Open **XAMPP Control Panel** as Administrator
-2. Start **MySQL** service (should show green "Running" status)
-3. Start **Apache** service (should show green "Running" status)
-4. Keep XAMPP Control Panel open (don't close it)
-
-#### 4. Start the Application
-```bash
-# Double-click this file or run in terminal:
+# Windows - Double-click this file or run in terminal:
 start_docker.bat
+
+# Linux/Mac
+docker-compose up -d
 ```
 
-#### 5. Access the Application
+#### 3. Access the Application
 - **Main Application**: http://localhost:8000
 - **API Endpoints**: http://localhost:9000
 - **Load Balancer**: http://localhost:8082
-- **Database Management**: http://localhost/phpmyadmin
+- **Database**: localhost:3307
+
+**That's it! No XAMPP or external dependencies required!** 🎉
+
+> 📋 **Quick Setup**: For detailed setup instructions, see [QUICK_START.md](QUICK_START.md)
 
 ## 🏗️ Project Architecture
 

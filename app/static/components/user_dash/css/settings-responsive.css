@@ -1,0 +1,348 @@
+/* ========================================
+   User Dashboard - Settings Page Responsive Styles
+   Mobile-first responsive design
+   ======================================== */
+
+/* Tablet & Medium Screens (768px - 1000px) */
+@media (max-width: 1000px) {
+    .page-title {
+        font-size: 28px;
+    }
+    
+    .page-subtitle {
+        font-size: 15px;
+    }
+    
+    .settings-section {
+        padding: 28px;
+    }
+    
+    .form-row {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+    
+    .section-title {
+        font-size: 20px;
+    }
+    
+    .sessions-table th,
+    .sessions-table td {
+        padding: 12px 14px;
+        font-size: 13px;
+    }
+}
+
+/* Mobile Screens (520px - 767px) */
+@media (max-width: 767px) {
+    .page-title {
+        font-size: 24px;
+    }
+    
+    .page-subtitle {
+        font-size: 14px;
+    }
+    
+    .settings-container {
+        gap: 20px;
+    }
+    
+    .settings-section {
+        padding: 24px;
+        border-radius: 14px;
+    }
+    
+    .section-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+    
+    .section-icon {
+        font-size: 24px;
+    }
+    
+    .section-title {
+        font-size: 18px;
+    }
+    
+    .section-description {
+        margin-left: 0;
+        font-size: 13px;
+    }
+    
+    .form-row {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+    
+    .form-label {
+        font-size: 13px;
+    }
+    
+    .form-input {
+        padding: 10px 14px;
+        font-size: 14px;
+    }
+    
+    .form-help-text {
+        font-size: 11px;
+    }
+    
+    .button-group {
+        flex-direction: column;
+    }
+    
+    .btn {
+        width: 100%;
+        justify-content: center;
+        padding: 12px 20px;
+        font-size: 14px;
+    }
+    
+    .toggle-group {
+        padding: 14px;
+    }
+    
+    .toggle-title {
+        font-size: 14px;
+    }
+    
+    .toggle-description {
+        font-size: 12px;
+    }
+    
+    /* Make sessions table responsive */
+    .sessions-table {
+        display: block;
+        overflow-x: auto;
+        white-space: nowrap;
+    }
+    
+    .sessions-table thead,
+    .sessions-table tbody,
+    .sessions-table tr {
+        display: block;
+    }
+    
+    .sessions-table thead {
+        display: none; /* Hide headers on mobile */
+    }
+    
+    .sessions-table tr {
+        margin-bottom: 16px;
+        border: 2px solid var(--antiflash-white);
+        border-radius: 12px;
+        padding: 12px;
+        white-space: normal;
+    }
+    
+    .sessions-table td {
+        display: block;
+        text-align: left;
+        padding: 8px 0;
+        border: none;
+    }
+    
+    .sessions-table td:before {
+        content: attr(data-label);
+        font-weight: 600;
+        display: inline-block;
+        width: 100px;
+        color: var(--polynesian-blue);
+    }
+    
+    .session-device {
+        gap: 8px;
+    }
+    
+    .session-device i {
+        font-size: 18px;
+    }
+    
+    .logs-filter {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .filter-select {
+        width: 100%;
+        padding: 10px 14px;
+        font-size: 13px;
+    }
+    
+    .log-item {
+        gap: 12px;
+        padding: 14px;
+    }
+    
+    .log-icon {
+        width: 36px;
+        height: 36px;
+        font-size: 16px;
+    }
+    
+    .log-title {
+        font-size: 14px;
+    }
+    
+    .log-description {
+        font-size: 12px;
+    }
+    
+    .alert {
+        padding: 14px 16px;
+        font-size: 13px;
+    }
+}
+
+/* Small Mobile Screens (360px - 519px) */
+@media (max-width: 519px) {
+    .page-header {
+        margin-bottom: 24px;
+    }
+    
+    .page-title {
+        font-size: 20px;
+    }
+    
+    .page-subtitle {
+        font-size: 13px;
+    }
+    
+    .settings-section {
+        padding: 20px;
+    }
+    
+    .section-header {
+        margin-bottom: 20px;
+        padding-bottom: 12px;
+    }
+    
+    .section-title {
+        font-size: 16px;
+    }
+    
+    .section-description {
+        font-size: 12px;
+    }
+    
+    .form-group {
+        gap: 6px;
+    }
+    
+    .form-label {
+        font-size: 12px;
+    }
+    
+    .form-input {
+        padding: 10px 12px;
+        font-size: 13px;
+    }
+    
+    .btn {
+        padding: 10px 16px;
+        font-size: 13px;
+    }
+    
+    .btn i {
+        font-size: 16px;
+    }
+    
+    .toggle-group {
+        padding: 12px;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+    
+    .toggle-title {
+        font-size: 13px;
+    }
+    
+    .toggle-description {
+        font-size: 11px;
+    }
+    
+    .sessions-table tr {
+        padding: 10px;
+        margin-bottom: 12px;
+    }
+    
+    .sessions-table td {
+        padding: 6px 0;
+        font-size: 12px;
+    }
+    
+    .sessions-table td:before {
+        width: 90px;
+        font-size: 11px;
+    }
+    
+    .log-item {
+        padding: 12px;
+    }
+    
+    .log-icon {
+        width: 32px;
+        height: 32px;
+        font-size: 14px;
+    }
+    
+    .log-title {
+        font-size: 13px;
+    }
+    
+    .log-description,
+    .log-timestamp {
+        font-size: 11px;
+    }
+    
+    .alert {
+        padding: 12px 14px;
+        font-size: 12px;
+    }
+    
+    .alert i {
+        font-size: 18px;
+    }
+}
+
+/* Extra Small Screens (< 360px) */
+@media (max-width: 359px) {
+    .page-title {
+        font-size: 18px;
+    }
+    
+    .settings-section {
+        padding: 16px;
+    }
+    
+    .section-title {
+        font-size: 15px;
+    }
+    
+    .form-input {
+        font-size: 12px;
+    }
+    
+    .btn {
+        padding: 10px 14px;
+        font-size: 12px;
+    }
+    
+    .toggle-switch {
+        width: 48px;
+        height: 24px;
+    }
+    
+    .toggle-slider:before {
+        height: 18px;
+        width: 18px;
+    }
+    
+    .toggle-switch input:checked + .toggle-slider:before {
+        transform: translateX(24px);
+    }
+}
+

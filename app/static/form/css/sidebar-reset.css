@@ -1,0 +1,168 @@
+/**
+ * Sidebar Reset for Form Pages
+ * This file resets any form-specific sidebar overrides to ensure
+ * uniformity with the shared sidebar component across all user dashboard pages.
+ * 
+ * The sidebar should ONLY be styled by:
+ * - app/static/shared/css/sidebar.css
+ * - app/static/shared/css/responsive.css
+ */
+
+/* Reset sidebar positioning to use shared styles */
+@media (min-width: 1001px) {
+  .sidebar {
+    position: sticky !important;
+    left: auto !important;
+    top: 24px !important;
+    width: 220px !important;
+    height: calc(100vh - 48px) !important;
+    box-shadow: var(--subtle-shadow) !important;
+    background: var(--white) !important;
+    border-radius: 14px !important;
+    padding: 20px 18px !important;
+    transition: var(--transition) !important;
+    z-index: 2 !important;
+    transform: none !important;
+  }
+}
+
+/* Reset mobile sidebar to use shared off-canvas approach */
+@media (max-width: 1000px) {
+  .sidebar {
+    position: fixed !important;
+    left: 0 !important;
+    top: 0 !important;
+    height: 100vh !important;
+    width: 260px !important;
+    max-width: 80% !important;
+    transform: translateX(-120%) !important;
+    transition: transform 0.22s ease, opacity 0.22s ease !important;
+    border-radius: 0 !important;
+    box-shadow: var(--soft-shadow) !important;
+    z-index: 99999 !important;
+    background: var(--white) !important;
+    opacity: 1 !important;
+    pointer-events: none !important;
+    backdrop-filter: none !important;
+    padding: 20px 18px !important;
+  }
+
+  .dashboard-container.sidebar-open .sidebar {
+    transform: translateX(0) !important;
+    pointer-events: auto !important;
+  }
+
+  /* Use shared backdrop instead of sidebar-overlay */
+  .sidebar-overlay {
+    display: none !important;
+  }
+
+  .dashboard-container.sidebar-open::before {
+    content: "" !important;
+    position: fixed !important;
+    inset: 0 !important;
+    background: rgba(0, 0, 0, 0.36) !important;
+    z-index: 55 !important;
+    cursor: default !important;
+  }
+
+  /* Remove any sidebar-close buttons added by form CSS */
+  .sidebar-close {
+    display: none !important;
+  }
+}
+
+/* Reset sidebar-toggle to use shared styles */
+.sidebar-toggle {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 44px !important;
+  height: 44px !important;
+  background: none !important;
+  border: none !important;
+  font-size: 20px !important;
+  color: var(--black) !important;
+  margin-right: 8px !important;
+  cursor: pointer !important;
+  z-index: auto !important;
+  border-radius: 50% !important;
+  transition: background 0.2s !important;
+}
+
+/* Remove form-specific body.sidebar-open rules */
+body.sidebar-open {
+  overflow: visible !important;
+}
+
+body.sidebar-open .sidebar {
+  /* Let the shared responsive.css handle this */
+  box-shadow: var(--soft-shadow) !important;
+  outline: none !important;
+}
+
+/* Reset menu-item spacing to shared styles */
+.menu-item {
+  margin-bottom: 6px !important;
+  padding: 12px 10px !important;
+}
+
+/* Ensure no gradient backgrounds on sidebar (form CSS adds this) */
+.sidebar {
+  background: var(--white) !important;
+  background-image: none !important;
+}
+
+/* Reset any sidebar collapsed state overrides */
+.dashboard-container.sidebar-collapsed .sidebar {
+  width: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border-radius: 0 !important;
+  opacity: 0 !important;
+  overflow: hidden !important;
+  transition: width 0.22s ease, padding 0.22s ease, opacity 0.22s ease !important;
+}
+
+@media (max-width: 1000px) {
+  .dashboard-container.sidebar-collapsed .sidebar {
+    width: 260px !important;
+    padding: 20px 18px !important;
+    opacity: 1 !important;
+  }
+}
+
+/* Ensure hamburger button works consistently */
+.hamburger-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 44px !important;
+  height: 44px !important;
+  background: none !important;
+  border: none !important;
+  font-size: 20px !important;
+  color: var(--black) !important;
+  margin-right: 8px !important;
+  cursor: pointer !important;
+  border-radius: 50% !important;
+  transition: background 0.2s !important;
+}
+
+/* Hide hamburger on desktop */
+@media (min-width: 1001px) {
+  .hamburger-btn,
+  .sidebar-toggle {
+    display: none !important;
+  }
+}
+
+/* Show hamburger on mobile */
+@media (max-width: 1000px) {
+  .hamburger-btn,
+  .sidebar-toggle {
+    display: inline-flex !important;
+  }
+}
+
+

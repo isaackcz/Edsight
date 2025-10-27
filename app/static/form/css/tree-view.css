@@ -1,0 +1,893 @@
+/**
+ * Tree View CSS for Draft Questionnaires
+ * Extends the existing form theme with tree-specific styles
+ */
+
+/* Tree View Layout */
+.tree-view-layout {
+  display: flex;
+  gap: 16px;
+  margin-top: 16px;
+  min-height: 500px;
+  align-items: flex-start;
+}
+
+/* When drafts-container has tree-view-layout class, it becomes the main container */
+.drafts-container.tree-view-layout {
+  display: flex;
+  gap: 16px;
+  margin-top: 16px;
+  min-height: 500px;
+  align-items: flex-start;
+}
+
+.treeview-sidebar {
+  width: 240px;
+  min-width: 180px;
+  max-width: 500px;
+  min-height: 70vh;
+  background: var(--antiflash-white);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  box-shadow: 0 1px 4px rgba(30, 30, 36, 0.04);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  position: sticky;
+  top: 16px;
+  border-left: 3px solid var(--primary);
+  resize: horizontal;
+  overflow: hidden;
+  order: 1; /* Ensure it comes first */
+}
+
+/* Treeview Resizer Handle */
+.treeview-resizer {
+  width: 8px;
+  height: 100%;
+  background: var(--border-color);
+  cursor: col-resize;
+  position: relative;
+  flex-shrink: 0;
+  transition: background-color 0.2s ease;
+  align-self: stretch;
+  order: 2; /* Ensure it comes after sidebar */
+}
+
+.treeview-resizer:hover {
+  background: var(--primary);
+}
+
+.treeview-resizer:active {
+  background: var(--primary);
+}
+
+/* Resizer handle visual indicator */
+.treeview-resizer::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 2px;
+  height: 20px;
+  background: var(--gray-400);
+  border-radius: 1px;
+  opacity: 0.6;
+}
+
+.treeview-resizer:hover::before {
+  background: white;
+  opacity: 1;
+}
+
+/* Resizing states */
+.treeview-sidebar.resizing {
+  transition: none;
+  user-select: none;
+}
+
+.treeview-resizer.active {
+  background: var(--primary);
+}
+
+.treeview-resizer.active::before {
+  background: white;
+  opacity: 1;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .treeview-sidebar {
+    width: 200px;
+    min-width: 150px;
+    max-width: 300px;
+  }
+  
+  .treeview-resizer {
+    width: 6px;
+  }
+}
+
+.sidebar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--gray-50);
+  border-radius: var(--border-radius) var(--border-radius) 0 0;
+}
+
+.sidebar-header h3 {
+  margin: 0;
+  color: var(--text-heading);
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.treeview-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px;
+  max-height: calc(80vh - 60px);
+}
+
+.treeview-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.treeview-content::-webkit-scrollbar-track {
+  background: var(--gray-100);
+  border-radius: 3px;
+}
+
+.treeview-content::-webkit-scrollbar-thumb {
+  background: var(--gray-300);
+  border-radius: 3px;
+}
+
+.treeview-content::-webkit-scrollbar-thumb:hover {
+  background: var(--gray-400);
+}
+
+.hierarchy-tree {
+  font-size: 0.9rem;
+}
+
+.tree-node {
+  margin-bottom: 4px;
+}
+
+.tree-node-item {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: var(--transition);
+  user-select: none;
+  position: relative;
+}
+
+.tree-node-item:hover {
+  background: var(--gray-50);
+}
+
+.tree-node-item.selected {
+  background: var(--primary-light);
+  color: var(--primary);
+}
+
+.tree-node-item.expanded {
+  background: var(--gray-100);
+}
+
+.tree-node-item::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: transparent;
+  transition: var(--transition);
+}
+
+.tree-node-item:hover::before {
+  background: var(--primary);
+}
+
+.tree-node-item.selected::before {
+  background: var(--primary);
+}
+
+.tree-expand-icon {
+  width: 16px;
+  height: 16px;
+  margin-right: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s ease;
+}
+
+.tree-expand-icon.expanded {
+  transform: rotate(90deg);
+}
+
+.tree-node-icon {
+  width: 16px;
+  height: 16px;
+  margin-right: 8px;
+  color: var(--text-muted);
+}
+
+.tree-node-label {
+  flex: 1;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 150px;
+  transition: all 0.2s ease;
+}
+
+.tree-node-label.full-title {
+  max-width: calc(100% - 40px) !important;
+  text-overflow: unset !important;
+  white-space: normal !important;
+  line-height: 1.3 !important;
+}
+
+.tree-node-count {
+  background: var(--gray-200);
+  color: var(--text-muted);
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-size: 0.75rem;
+  margin-left: 8px;
+}
+
+.tree-children {
+  margin-left: 24px;
+  border-left: 1px solid var(--border-color);
+  padding-left: 12px;
+  display: none; /* Start collapsed by default */
+}
+
+.tree-node.expanded .tree-children {
+  display: block; /* Show children when expanded */
+}
+
+/* Main Content Area */
+.main-content-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  width: 100%;
+  order: 3; /* Ensure it comes after resizer */
+}
+
+.content-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+  padding: 16px 20px;
+  background: var(--white);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.content-title h2 {
+  margin: 0 0 4px 0;
+  color: var(--text-heading);
+  font-size: 1.3rem;
+  font-weight: 600;
+}
+
+.content-title p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+/* Questions Display */
+.questions-container {
+  flex: 1;
+  background: var(--white);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  width: 100%;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.empty-state i {
+  font-size: 3rem;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.empty-state h3 {
+  margin: 0 0 8px 0;
+  color: var(--text-heading);
+  font-size: 1.2rem;
+}
+
+.empty-state p {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+
+.error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  text-align: center;
+  color: var(--danger);
+}
+
+.error-state i {
+  font-size: 3rem;
+  margin-bottom: 16px;
+}
+
+.error-state h3 {
+  margin: 0 0 8px 0;
+  color: var(--danger);
+  font-size: 1.2rem;
+}
+
+.error-state p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+/* Questions Section */
+.questions-section {
+  padding: 16px 20px;
+  width: 100%;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.section-title h3 {
+  margin: 0 0 4px 0;
+  color: var(--text-heading);
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.section-description {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.section-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+/* Context Info Card */
+.context-info-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 16px;
+  background: var(--gray-50);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  margin-bottom: 16px;
+  width: 100%;
+}
+
+.context-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.context-item i {
+  color: var(--primary);
+  font-size: 1.1rem;
+}
+
+.context-label {
+  font-weight: 500;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.context-value {
+  font-weight: 600;
+  color: var(--text-heading);
+  font-size: 0.9rem;
+}
+
+.context-separator {
+  width: 1px;
+  height: 20px;
+  background: var(--border-color);
+}
+
+/* Questions List */
+.questions-list {
+  margin-top: 16px;
+  width: 100%;
+}
+
+.empty-questions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.empty-questions i {
+  font-size: 2.5rem;
+  margin-bottom: 12px;
+  opacity: 0.5;
+}
+
+.empty-questions h4 {
+  margin: 0 0 8px 0;
+  color: var(--text-heading);
+  font-size: 1.1rem;
+}
+
+.empty-questions p {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+/* Question Cards */
+.question-card {
+  background: var(--white);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  padding: 16px;
+  margin-bottom: 12px;
+  transition: var(--transition);
+  width: 100%;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.question-card:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transform: translateY(-1px);
+}
+
+.question-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--gray-100);
+}
+
+.question-number {
+  background: var(--primary);
+  color: var(--white);
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.question-type {
+  flex: 1;
+}
+
+.type-badge {
+  background: var(--primary-light);
+  color: var(--primary);
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.question-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-icon {
+  background: transparent;
+  border: none;
+  padding: 6px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: var(--transition);
+  color: var(--text-muted);
+}
+
+.btn-icon:hover {
+  background: var(--gray-100);
+  color: var(--text-heading);
+}
+
+.question-content {
+  margin-left: 36px;
+  width: calc(100% - 36px);
+}
+
+.question-text-display {
+  font-size: 1rem;
+  line-height: 1.5;
+  color: var(--text-heading);
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.question-description {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  font-style: italic;
+  line-height: 1.4;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .tree-view-layout,
+  .drafts-container.tree-view-layout {
+    flex-direction: column;
+    gap: 16px;
+  }
+  
+  .treeview-sidebar {
+    width: 100%;
+    height: auto;
+    position: static;
+  }
+  
+  .treeview-content {
+    max-height: 300px;
+  }
+  
+  .content-header {
+    flex-direction: column;
+    gap: 16px;
+    align-items: flex-start;
+  }
+  
+  .section-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+  
+  .question-content {
+    margin-left: 0;
+    width: 100%;
+  }
+  
+  .question-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  
+  .question-actions {
+    align-self: flex-end;
+  }
+}
+
+/* Tree CRUD Styles */
+.tree-add-button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  margin: 4px 0;
+  background: var(--gray-50);
+  border: 1px dashed var(--border-color);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: var(--transition);
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  opacity: 0.7;
+}
+
+.tree-add-button:hover {
+  background: var(--primary-light);
+  border-color: var(--primary);
+  color: var(--primary);
+  opacity: 1;
+}
+
+.tree-add-button small {
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.tree-inline-input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 2px solid var(--primary);
+  border-radius: 6px;
+  font-size: 0.9rem;
+  background: var(--white);
+  outline: none;
+  margin: 4px 0;
+}
+
+.tree-inline-input:focus {
+  box-shadow: 0 0 0 3px rgba(171, 199, 214, 0.18);
+}
+
+.tree-node-actions {
+  display: none;
+  gap: 4px;
+  margin-left: auto;
+}
+
+.tree-node-item:hover .tree-node-actions {
+  display: flex;
+}
+
+.tree-action-btn {
+  background: transparent;
+  border: none;
+  padding: 4px;
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--text-muted);
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+}
+
+.tree-action-btn:hover {
+  background: var(--gray-100);
+  color: var(--text-heading);
+}
+
+.tree-action-btn.rename-btn:hover {
+  background: var(--primary-light);
+  color: var(--primary);
+}
+
+.tree-action-btn.delete-btn:hover {
+  background: var(--danger-light, #fee2e2);
+  color: var(--danger, #dc2626);
+}
+
+/* Modal backdrop for delete confirmation */
+.modal-backdrop {
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Questions Controls and Pagination */
+.questions-controls {
+  background: var(--white);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.search-filter-row {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.search-box {
+  position: relative;
+  flex: 1;
+  min-width: 200px;
+}
+
+.search-box i {
+  position: absolute;
+  left: 0px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  font-size: 1rem;
+  pointer-events: none; /* don't block typing/clicks */
+}
+
+.search-box input {
+  width: 100%;
+  padding: 10px 12px 10px 48px; /* extra space so text doesn't overlap icon */
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  font-size: 0.9rem;
+  background: var(--white);
+  transition: var(--transition);
+}
+
+.search-box input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-light);
+}
+
+.filter-controls {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.filter-select {
+  padding: 8px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  font-size: 0.9rem;
+  background: var(--white);
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.filter-select:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.required-badge {
+  background: var(--danger-light, #fee2e2);
+  color: var(--danger, #dc2626);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  margin-left: 8px;
+}
+
+.pagination-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  background: var(--white);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  margin-top: 16px;
+}
+
+/* Stabilize questions list height to reduce flicker during filter/pagination */
+.questions-list {
+  min-height: 160px;
+}
+
+.pagination-info {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.pagination-buttons {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.pagination-btn {
+  padding: 8px 12px;
+  border: 1px solid var(--border-color);
+  background: var(--white);
+  color: var(--text-heading);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.pagination-btn:hover {
+  background: var(--gray-50);
+  border-color: var(--primary);
+}
+
+.pagination-btn.active {
+  background: var(--primary);
+  color: var(--white);
+  border-color: var(--primary);
+}
+
+.pagination-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pagination-ellipsis {
+  padding: 8px 4px;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+/* Responsive pagination */
+@media (max-width: 768px) {
+  .search-filter-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .filter-controls {
+    justify-content: space-between;
+  }
+  
+  .pagination-controls {
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .pagination-buttons {
+    justify-content: center;
+  }
+}
+
+/* Custom hover tooltip for long text */
+.tree-hover-tooltip {
+  position: absolute;
+  background: var(--white);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  padding: 12px 16px;
+  font-size: 0.9rem;
+  color: var(--text-heading);
+  z-index: 1000;
+  max-width: 250px;
+  word-wrap: break-word;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(4px);
+  transition: all 0.2s ease;
+}
+
+.tree-hover-tooltip.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+

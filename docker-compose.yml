@@ -1,8 +1,24 @@
-version: "3.9"
-
 services:
-  # Using host XAMPP MySQL instead of separate MariaDB container
-  # This allows Docker to use your existing XAMPP data
+  # Fully containerized MySQL database
+  mysql:
+    image: mysql:8.0
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: edsight_root
+      MYSQL_DATABASE: edsight
+      MYSQL_USER: edsight
+      MYSQL_PASSWORD: edsight_pass
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./database_updates/edsight.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p$$MYSQL_ROOT_PASSWORD"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    command: --default-authentication-plugin=mysql_native_password
 
   redis:
     image: redis:7-alpine
@@ -20,20 +36,20 @@ services:
       context: .
       dockerfile: Dockerfile.django
     depends_on:
+      mysql:
+        condition: service_healthy
       redis:
         condition: service_healthy
     env_file:
-      - .env
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
+      - .env.docker
     environment:
       DJANGO_SETTINGS_MODULE: config.settings
-      DB_HOST: host.docker.internal
+      DB_HOST: mysql
       DB_PORT: 3306
       DB_NAME: edsight
-      DB_USER: root
-      DB_PASSWORD: ""
-      SECRET_KEY: ${SECRET_KEY:-change-me}
+      DB_USER: edsight
+      DB_PASSWORD: edsight_pass
+      SECRET_KEY: ${SECRET_KEY:-change-me-in-production}
       DEBUG: ${DEBUG:-False}
       ALLOWED_HOSTS: ${ALLOWED_HOSTS:-*}
       REDIS_HOST: redis
@@ -51,24 +67,33 @@ services:
       interval: 10s
       timeout: 5s
       retries: 10
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '0.5'
+        reservations:
+          memory: 512M
+          cpus: '0.25'
+    restart: unless-stopped
 
   fastapi:
     build:
       context: .
       dockerfile: Dockerfile.fastapi
     depends_on:
+      mysql:
+        condition: service_healthy
       django:
         condition: service_started
     env_file:
-      - .env
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
+      - .env.docker
     environment:
-      DB_HOST: host.docker.internal
+      DB_HOST: mysql
       DB_PORT: 3306
       DB_NAME: edsight
-      DB_USER: root
-      DB_PASSWORD: ""
+      DB_USER: edsight
+      DB_PASSWORD: edsight_pass
       DJANGO_HOST: django
       REDIS_URL: redis://redis:6379/0
     ports:
@@ -80,25 +105,34 @@ services:
       interval: 10s
       timeout: 5s
       retries: 10
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.25'
+        reservations:
+          memory: 256M
+          cpus: '0.1'
+    restart: unless-stopped
 
   celery:
     build:
       context: .
       dockerfile: Dockerfile.django
     depends_on:
+      mysql:
+        condition: service_healthy
       redis:
         condition: service_healthy
     env_file:
-      - .env
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
+      - .env.docker
     environment:
       DJANGO_SETTINGS_MODULE: config.settings
-      DB_HOST: host.docker.internal
+      DB_HOST: mysql
       DB_PORT: 3306
       DB_NAME: edsight
-      DB_USER: root
-      DB_PASSWORD: ""
+      DB_USER: edsight
+      DB_PASSWORD: edsight_pass
       REDIS_HOST: redis
       REDIS_PORT: 6379
       REDIS_DB: 0
@@ -107,6 +141,15 @@ services:
     command: ["bash", "-lc", "celery -A app worker -l info"]
     volumes:
       - .:/app
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.25'
+        reservations:
+          memory: 256M
+          cpus: '0.1'
+    restart: unless-stopped
 
   # phpMyAdmin removed - use XAMPP's phpMyAdmin instead
   # Access via: http://localhost/phpmyadmin
@@ -126,4 +169,5 @@ services:
 
 volumes:
   staticfiles:
+  mysql_data:
 

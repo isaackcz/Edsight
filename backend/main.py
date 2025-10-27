@@ -236,7 +236,7 @@ async def login(user_credentials: UserLogin):
             )
         return resp.json()
 
-@app.get("/api/dashboard/stats", response_model=DashboardStats)
+@app.get("/api/dashboard/stats")
 async def get_dashboard_stats(request: Request):
     current_user = await get_current_user(request)
     """
@@ -262,14 +262,24 @@ async def get_dashboard_stats(request: Request):
         # Calculate progress
         overall_progress = (answered_questions / total_questions * 100) if total_questions > 0 else 0
         
+        # Construct a response that matches what the frontend expects
         stats = {
             "total_forms": len(forms),
             "answered_questions": answered_questions,
             "total_questions": total_questions,
             "overall_progress": round(overall_progress, 2),
-            "completion_rate": round(overall_progress, 2)
+            "completion_rate": round(overall_progress, 2),
+
+            # Frontend expects trend objects and additional fields.
+            # Provide safe default values so the dashboard doesn't break
+            "total_forms_trend": {"direction": "up" if len(forms) > 0 else "down", "value": 0},
+            "completion_rate_trend": {"direction": "up", "value": 0},
+            "avg_time": 0,
+            "avg_time_trend": {"direction": "up", "value": 0},
+            "active_schools": 0,
+            "active_schools_trend": {"direction": "up", "value": 0}
         }
-        
+
         return stats
     except Exception as e:
         print(f"Error in get_dashboard_stats: {str(e)}")

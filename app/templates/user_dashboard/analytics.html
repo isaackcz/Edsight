@@ -1,0 +1,119 @@
+{% extends 'user_dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Analytics{% endblock %}
+{% block breadcrumb %}Analytics{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'components/user_dash/css/analytics.css' %}" />
+<link rel="stylesheet" href="{% static 'components/user_dash/css/analytics-responsive.css' %}" />
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'components/user_dash/js/api.js' %}" defer></script>
+<script src="{% static 'components/user_dash/js/analytics.js' %}" defer></script>
+{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="page-header">
+    <h1 class="page-title">Analytics & Insights</h1>
+    <p class="page-subtitle">Detailed analysis of your form progress and performance</p>
+</div>
+
+<!-- Controls Row -->
+<div class="controls-row">
+    <div class="controls-left">
+        <div class="control-dropdown">
+            <button class="dropdown-button">
+                <i class="ph-bold ph-calendar"></i>
+                <span>Last 30 Days</span>
+                <i class="ph-bold ph-caret-down"></i>
+            </button>
+        </div>
+        <button class="refresh-button" title="Refresh Data">
+            <i class="ph-bold ph-arrows-clockwise"></i>
+        </button>
+    </div>
+    <button class="export-button">
+        <i class="ph-bold ph-download-simple"></i>
+        Export Report
+    </button>
+</div>
+
+<!-- Charts Row -->
+<div class="charts-row">
+    <!-- Progress Timeline Chart -->
+    <div class="chart-card">
+        <div class="chart-header">
+            <h3 class="chart-title">Progress Timeline</h3>
+            <div class="chart-legend">
+                <div class="legend-item">
+                    <span class="legend-dot" style="background: #3a6ea5;"></span>
+                    <span>Completion</span>
+                </div>
+            </div>
+        </div>
+        <div class="chart-container">
+            <canvas id="progressTimelineChart"></canvas>
+        </div>
+    </div>
+    
+    <!-- Category Completion Chart -->
+    <div class="chart-card">
+        <div class="chart-header">
+            <h3 class="chart-title">Category Completion</h3>
+            <div class="chart-legend">
+                <div class="legend-item">
+                    <span class="legend-dot" style="background: #4caf50;"></span>
+                    <span>Complete</span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-dot" style="background: #3a6ea5;"></span>
+                    <span>In Progress</span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-dot" style="background: #ff9800;"></span>
+                    <span>Pending</span>
+                </div>
+            </div>
+        </div>
+        <div class="chart-container">
+            <canvas id="categoryCompletionChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Category Status Section -->
+<div class="category-status-section">
+    <h2 class="section-title">Category Status Overview</h2>
+    <div class="category-cards-grid">
+        <!-- Cards will be populated by JavaScript -->
+    </div>
+</div>
+
+<!-- Data Table Section -->
+<div class="data-table-section">
+    <div class="data-table-card">
+        <div class="table-header">
+            <h3 class="table-title">Detailed Progress Report</h3>
+            <input type="text" class="table-search" placeholder="Search sections..." />
+        </div>
+        <table class="analytics-table">
+            <thead>
+                <tr>
+                    <th>Section</th>
+                    <th>Total Questions</th>
+                    <th>Completed</th>
+                    <th>Progress</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Rows will be populated by JavaScript -->
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+

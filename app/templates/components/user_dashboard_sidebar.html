@@ -1,0 +1,27 @@
+{% load static %}
+<!-- User Dashboard Sidebar Component -->
+<div class="sidebar">
+    <div class="logo">
+        <span>EdSight</span>
+    </div>
+    <div class="menu">
+        <a href="{% url 'user-dashboard:overview' %}" class="menu-item {% if active_page == 'overview' %}active{% endif %}">
+            <i class="ph-bold ph-house"></i>
+            <span>Overview</span>
+        </a>
+        <a href="{% url 'user-dashboard:form' %}" class="menu-item {% if active_page == 'form' %}active{% endif %}">
+            <i class="ph-bold ph-file-text"></i>
+            <span>Application Form</span>
+        </a>
+        <a href="{% url 'user-dashboard:analytics' %}" class="menu-item {% if active_page == 'analytics' %}active{% endif %}">
+            <i class="ph-bold ph-chart-pie"></i>
+            <span>Analytics</span>
+        </a>
+        <a href="{% url 'user-dashboard:settings' %}" class="menu-item {% if active_page == 'settings' %}active{% endif %}">
+            <i class="ph-bold ph-gear"></i>
+            <span>Settings</span>
+        </a>
+    </div>
+</div>
+
+

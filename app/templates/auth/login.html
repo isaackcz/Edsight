@@ -1,78 +1,192 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login | Modern Interface</title>
-    <link rel="stylesheet" href="{% static 'auth/login/login.css' %}">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="icon" type="image/png" href="{% static 'auth/img/logo_big.png' %}">
-</head>
-<body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.2/src/bold/style.css"
+    />
+    <!-- Load Poppins from Google Fonts for the page -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="icon" type="image/png" href="{% static 'auth/img/logo.png' %}" />
+
+    <link rel="stylesheet" href="{% static 'auth/css/login.css' %}" />
+  </head>
+  <body>
     <div class="blob-container">
-        <div class="blob"></div>
-        <div class="blob"></div>
-    </div>
-    
-    <div class="login-container">
-        <div class="login-card">
-            <div class="login-header">
-                <div class="logo-container">
-                    <img src="{% static 'auth/img/logo_big.png' %}" alt="Logo" class="logo">
-                </div>
-                <h1>Welcome Back</h1>
-                <p class="subtitle">Please enter your credentials</p>
-            </div>
-            
-            <form id="loginForm" class="login-form">
-                <input type="hidden" id="next" value="{{ next }}">
-                <div class="form-group floating email-group" style="position:relative;">
-                    <i class="fas fa-envelope icon"></i>
-                    <input type="text" id="emailUser" name="emailUser" required placeholder=" ">
-                    <label for="emailUser">School Email</label>
-                    <span class="email-domain">@deped.gov.ph</span>
-                </div>
-                
-                <div class="form-group floating">
-                    <input type="password" id="password" name="password" required placeholder=" ">
-                    <label for="password">Password</label>
-                    <i class="fas fa-lock icon"></i>
-                    <button type="button" class="toggle-password" aria-label="Show password">
-                        <i class="fas fa-eye"></i>
-                    </button>
-                </div>
-                
-                <div class="form-options">
-                    <label class="remember-me">
-                        <input type="checkbox" name="remember">
-                        <span class="checkmark"></span>
-                        Remember me
-                    </label>
-                    <a href="#" class="forgot-password">Forgot password?</a>
-                </div>
-                
-                <button type="submit" class="login-button">
-                    <span class="button-text">Sign In</span>
-                    <i class="fas fa-arrow-right button-icon"></i>
-                </button>
-                
-                <div class="social-login">
-                    <p class="divider"><span>or continue with</span></p>
-                    <div class="social-icons">
-                        <a href="#" class="social-icon" aria-label="Google">
-                            <i class="fab fa-google"></i>
-                        </a>
-                        <a href="#" class="social-icon" aria-label="Microsoft">
-                            <i class="fab fa-microsoft"></i>
-                        </a>
-                    </div>
-                </div>
-            </form>
-            
-        </div>
+      <div class="blob"></div>
+      <div class="blob"></div>
     </div>
 
-    <script src="{% static 'auth/login/login.js' %}"></script>
-</body>
+    <!-- Top-left brand like reference -->
+    <header class="site-header">
+      <div class="brand">edz</div>
+    </header>
+
+    <div class="login-container">
+      <div class="login-card">
+        <div class="login-header">
+          <h1>Log In</h1>
+          <p class="subtitle">Welcome back — please sign in to continue.</p>
+        </div>
+
+        <form id="loginForm" class="login-form">
+          <input type="hidden" id="next" value="{{ next }}" />
+
+          <div class="form-group email-group">
+            <label for="emailUser">Email</label>
+            <div class="email-input-row">
+              <input
+                type="text"
+                id="emailUser"
+                name="emailUser"
+                required
+                placeholder=""
+              />
+              <span class="email-suffix">@deped.gov.ph</span>
+            </div>
+            <small class="small"
+              >Type only your username; the domain
+              <code>@deped.gov.ph</code> will be appended automatically.</small
+            >
+          </div>
+
+          <div class="form-group">
+            <label for="password">Password</label>
+            <div class="password-row">
+              <input
+                type="password"
+                id="password"
+                name="password"
+                required
+                placeholder=""
+              />
+              <button
+                type="button"
+                class="toggle-password"
+                aria-label="Show password"
+              >
+                <i class="ph ph-bold ph-eye" aria-hidden="true"></i>
+              </button>
+            </div>
+            <a href="#" class="forgot-password">Forgot password?</a>
+          </div>
+
+          <button type="submit" class="login-button">
+            <span class="button-text">Log In</span>
+          </button>
+          <p class="subtitle" style="text-align: center; margin-top: 1rem">
+            Don't have an account?
+            <a href="/auth/sign-up/" class="signup-link">Sign Up</a>
+          </p>
+        </form>
+
+        <!-- login footer removed -->
+      </div>
+    </div>
+
+    <script src="{% static 'auth/js/login.js' %}"></script>
+    <script>
+      // Convert a few Font Awesome icons to Phosphor classes so the local fallback works instantly
+      (function () {
+        const map = {
+          "fa-envelope": "ph-envelope",
+          "fa-lock": "ph-lock",
+          "fa-eye": "ph-eye",
+          "fa-arrow-right": "ph-arrow-right",
+          "fa-google": "ph-google-logo",
+          "fa-microsoft": "ph-microsoft-logo",
+        };
+        document.addEventListener("DOMContentLoaded", function () {
+          document.querySelectorAll('[class*="fa-"]').forEach((el) => {
+            Array.from(el.classList).forEach((c) => {
+              if (map[c]) {
+                el.classList.add("ph", map[c]);
+              }
+            });
+          });
+        });
+      })();
+    </script>
+    <script>
+      // Fallback for browsers that don't support CSS `scroll-behavior`
+      (function () {
+        try {
+          const supportsSmooth =
+            "scrollBehavior" in document.documentElement.style;
+          if (!supportsSmooth) {
+            // Polyfill: intercept anchor clicks and animate scroll
+            document.addEventListener("click", function (e) {
+              const a = e.target.closest && e.target.closest('a[href^="#"]');
+              if (!a) return;
+              const href = a.getAttribute("href");
+              if (!href || href === "#") return;
+              const target = document.querySelector(href);
+              if (!target) return;
+              e.preventDefault();
+              const start = window.scrollY || window.pageYOffset;
+              const end = target.getBoundingClientRect().top + start;
+              const duration = 400;
+              let startTime = null;
+              function ease(t) {
+                return t < 0.5
+                  ? 4 * t * t * t
+                  : 1 - Math.pow(-2 * t + 2, 3) / 2;
+              }
+              function step(timestamp) {
+                if (!startTime) startTime = timestamp;
+                const elapsed = timestamp - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                window.scrollTo(0, start + (end - start) * ease(progress));
+                if (elapsed < duration) requestAnimationFrame(step);
+              }
+              requestAnimationFrame(step);
+            });
+          }
+        } catch (err) {
+          // no-op
+        }
+      })();
+    </script>
+    <script>
+      // Trigger entrance animation for the login card
+      (function () {
+        try {
+          if (
+            window.matchMedia &&
+            window.matchMedia("(prefers-reduced-motion: reduce)").matches
+          ) {
+            // respect reduced motion
+            document
+              .querySelectorAll(".login-card")
+              .forEach((el) => el.classList.add("entered"));
+            return;
+          }
+          document.addEventListener("DOMContentLoaded", function () {
+            const card = document.querySelector(".login-card");
+            if (!card) return;
+            // Use RAF to ensure initial styles are applied before transition
+            requestAnimationFrame(function () {
+              card.classList.add("entered");
+            });
+          });
+        } catch (err) {
+          // no-op
+        }
+      })();
+    </script>
+  </body>
 </html>

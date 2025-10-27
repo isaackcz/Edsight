@@ -53,7 +53,15 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django_browser_reload',
     'corsheaders',
-    'app',
+    'apps.core',
+    'apps.authentication',
+    'apps.admin_management',
+    'apps.forms',
+    'apps.analytics',
+    'apps.security',
+    'apps.reports',
+    'apps.utils',
+    'apps.user_dashboard',
 ]
 
 MIDDLEWARE = [
@@ -69,7 +77,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'app.urls'
+ROOT_URLCONF = 'apps.core.urls'
 
 TEMPLATES = [
     {
@@ -146,10 +154,11 @@ STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'app', 'static'),
 ]
 # When running in Docker with nginx, collectstatic will place files here
-STATIC_ROOT = os.environ.get('STATIC_ROOT', '/vol/static')
+STATIC_ROOT = os.environ.get('STATIC_ROOT', os.path.join(BASE_DIR, 'staticfiles'))
 
 # WhiteNoise static files storage for hashed filenames and compression
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+# Disabled for development to avoid missing file errors
+# STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Redis configuration (for Celery/cache/queues)
 REDIS_HOST = os.environ.get('REDIS_HOST', 'localhost')

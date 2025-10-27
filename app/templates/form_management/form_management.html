@@ -1,387 +1,112 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Form Management | EdSight</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="{% static 'dashboard/dashboard.css' %}">
-    <link rel="stylesheet" href="{% static 'dashboard/dash_responsive.css' %}">
-    <link rel="stylesheet" href="{% static 'form_management/form_management.css' %}">
-    <link rel="icon" type="image/png" href="{% static 'auth/img/logo_big.png' %}">
-    <!-- MUI removed: using vanilla JS table/tree to avoid React dependency -->
-</head>
-<body>
-    <div class="dashboard-container">
-        <!-- Sidebar -->
-        <div class="sidebar">
-            <div class="logo">
-                <i class="fas fa-chart-line"></i>
-                <span>Form Analytics</span>
-            </div>
-            <div class="menu">
-                <a href="/dashboard/" class="menu-item">
-                    <i class="fas fa-home"></i>
-                    <span>Dashboard</span>
-                </a>
-                <a href="/form/" class="menu-item">
-                    <i class="fas fa-database"></i>
-                    <span>Form</span>
-                </a>
-                <a href="/form-management/" class="menu-item active">
-                    <i class="fas fa-clipboard-check"></i>
-                    <span>Form Management</span>
-                </a>
-                <a href="/report/" class="menu-item">
-                    <i class="fas fa-chart-pie"></i>
-                    <span>Analytics</span>
-                </a>
-                <div class="menu-item">
-                    <i class="fas fa-cog"></i>
-                    <span>Settings</span>
-                </div>
-                <a href="{% url 'logout' %}" class="menu-item logout-btn">
-                    <i class="fas fa-sign-out-alt"></i>
-                    <span>Sign Out</span>
-                </a>
-            </div>
-            <div class="user-profile">
-                <div class="avatar">
-                    <i class="fas fa-user"></i>
-                </div>
-                <div class="user-info">
-                    <span class="username">Admin User</span>
-                    <span class="role" id="admin-role">Loading...</span>
-                </div>
-            </div>
-        </div>
 
-        <!-- Main Content -->
-        <div class="main-content">
-            <!-- Header -->
-            <div class="header">
-                <div class="search-bar">
-                    <i class="fas fa-search"></i>
-                    <input type="text" id="search-input" placeholder="Search schools, forms...">
-                </div>
-                <div class="header-actions">
-                    <button class="btn primary" id="refresh-btn">
-                        <i class="fas fa-sync-alt"></i>
-                        Refresh
-                    </button>
-                    <button class="btn outline" id="export-btn">
-                        <i class="fas fa-download"></i>
-                        Export
-                    </button>
-                    <div class="notification">
-                        <i class="fas fa-bell"></i>
-                        <span class="badge" id="notification-count">0</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Content -->
-            <div class="content">
-                <!-- Page Title -->
-                <div class="dashboard-title">
-                    <h1>Form Management</h1>
-                    <div class="controls">
-                        <div class="view-toggle">
-                            <button class="btn-icon active" id="table-view-btn" title="Table View">
-                                <i class="fas fa-table"></i>
-                            </button>
-                            <button class="btn-icon" id="tree-view-btn" title="Tree View">
-                                <i class="fas fa-sitemap"></i>
-                            </button>
-                        </div>
-                        <div class="filter-controls">
-                            <select id="status-filter" class="filter-select">
-                                <option value="">All Status</option>
-                                <option value="pending">Pending Review</option>
-                                <option value="approved">Approved</option>
-                                <option value="returned">Returned</option>
-                                <option value="overdue">Overdue</option>
-                            </select>
-                            <select id="level-filter" class="filter-select">
-                                <option value="">All Levels</option>
-                                <option value="district">District</option>
-                                <option value="division">Division</option>
-                                <option value="region">Region</option>
-                                <option value="central">Central Office</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Stats Cards -->
-                <div class="stats-cards">
-                    <div class="card">
-                        <div class="card-header">
-                            <i class="fas fa-clock"></i>
-                            <h3>Pending Review</h3>
-                        </div>
-                        <div class="card-value" id="pending-count">0</div>
-                        <div class="card-trend" id="pending-trend">
-                            <i class="fas fa-arrow-up"></i> Loading...
-                        </div>
-                    </div>
-                    
-                    <div class="card">
-                        <div class="card-header">
-                            <i class="fas fa-check-circle"></i>
-                            <h3>Approved Today</h3>
-                        </div>
-                        <div class="card-value" id="approved-count">0</div>
-                        <div class="card-trend" id="approved-trend">
-                            <i class="fas fa-arrow-up"></i> Loading...
-                        </div>
-                    </div>
-                    
-                    <div class="card">
-                        <div class="card-header">
-                            <i class="fas fa-undo"></i>
-                            <h3>Returned</h3>
-                        </div>
-                        <div class="card-value" id="returned-count">0</div>
-                        <div class="card-trend" id="returned-trend">
-                            <i class="fas fa-arrow-down"></i> Loading...
-                        </div>
-                    </div>
-                    
-                    <div class="card">
-                        <div class="card-header">
-                            <i class="fas fa-file-alt"></i>
-                            <h3>Total Forms</h3>
-                        </div>
-                        <div class="card-value" id="total-count">0</div>
-                        <div class="card-trend" id="total-trend">
-                            <i class="fas fa-arrow-up"></i> Loading...
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Form Management Table -->
-                <div class="table-container" id="table-container">
-                    <div class="table-header">
-                        <h3>Form Submissions</h3>
-                        <div class="table-actions">
-                            <button class="btn primary" id="bulk-approve-btn" disabled>
-                                <i class="fas fa-check"></i>
-                                Bulk Approve
-                            </button>
-                            <button class="btn outline" id="bulk-return-btn" disabled>
-                                <i class="fas fa-undo"></i>
-                                Bulk Return
-                            </button>
-                        </div>
-                    </div>
-                    
-                    <div class="table-content">
-                        <div id="form-data-grid" class="data-grid"></div>
-                    </div>
-                    
-                    <div class="table-footer">
-                        <div class="table-info" id="table-info">
-                            Loading...
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Tree View Container -->
-                <div class="tree-view-container" id="tree-view-container" style="display: none;">
-                    <div class="table-header">
-                        <h3>Organizational Structure</h3>
-                        <div class="table-actions">
-                            <button class="btn outline" id="expand-all-btn">
-                                <i class="fas fa-expand-arrows-alt"></i>
-                                Expand All
-                            </button>
-                        </div>
-                    </div>
-                    <div class="tree-content">
-                        <div id="tree-view" class="tree-view"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+    <!-- Icons & Fonts -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.2/src/bold/style.css"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
     
-    <!-- Form Detail Modal -->
-    <div id="form-detail-modal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 id="modal-title">Form Details</h2>
-                <button class="close-btn" id="close-modal">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="modal-body" id="modal-body">
-                <!-- Form details will be loaded here -->
-            </div>
-            <div class="modal-footer">
-                <button class="btn outline" id="modal-cancel">Cancel</button>
-                <button class="btn success" id="modal-approve">
-                    <i class="fas fa-check"></i>
-                    Approve
-                </button>
-                <button class="btn warning" id="modal-return">
-                    <i class="fas fa-undo"></i>
-                    Return for Revision
-                </button>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Notification Container -->
-    <div id="notification-container" class="notification-container">
-        <!-- Notifications will appear here -->
-    </div>
-    
-    <script src="{% static 'form_management/form_management.js' %}"></script>
-    
+    <!-- Optimized Treeview Styles -->
+    <link rel="stylesheet" href="{% static 'form-management/css/optimized_treeview.css' %}" />
+
     <style>
-    /* CSS Variables for Light Theme */
-    :root {
-        --primary: #293440;
-        --secondary: #46576c;
-        --accent: #788b95;
-        --light: #abc7d6;
-        --background: #e0ebf6;
-        --card-bg: #ffffff;
-        --text-dark: #1a1a1a;
-        --text-light: #f5f5f5;
-        --text-medium: #4a5568;
-        --text-muted: #6b7280;
-        --text-heading: #374151;
+      :root {
+        /* Typography tokens */
+        --base-font-family: "Poppins", "Segoe UI", Tahoma, Geneva, Verdana,
+          sans-serif;
+        --font-weight-regular: 400;
+        --font-weight-medium: 600;
+        --font-weight-bold: 700;
+        --heading-line-height: 1.15;
+        /* Base palette tokens provided by user */
+        --pumpkin: #ff6700ff; /* Accent color (buttons, links) */
+        --antiflash-white: #ebebebff; /* Light background for cards/panels */
+        --silver: #c0c0c0ff; /* Secondary text and borders */
+        --bice-blue: #3a6ea5ff; /* Primary brand color for nav/icons */
+        --polynesian-blue: #004e98ff; /* Strong header/banner color */
+        --white: #f7f9f9ff; /* Main background */
+        --black: #1e1e24ff; /* Primary text */
+
+        /* Core UI tokens (no mapping to other variables) */
         --success: #4caf50;
         --warning: #ff9800;
         --danger: #f44336;
-        --info: #2196f3;
-        --gray-50: #f9fafb;
-        --gray-100: #f3f4f6;
-        --gray-200: #e5e7eb;
-        --gray-300: #d1d5db;
-        --gray-400: #9ca3af;
-        --gray-500: #6b7280;
-        --border-color: #e5e7eb;
-        --primary-light: rgba(41, 52, 64, 0.1);
-        --success-light: rgba(76, 175, 80, 0.1);
-        --warning-light: rgba(255, 152, 0, 0.1);
-        --danger-light: rgba(244, 67, 54, 0.1);
-        --info-light: rgba(33, 150, 243, 0.1);
-        --border-radius: 12px;
-        --border-radius-lg: 16px;
-        --border-radius-xl: 20px;
-        --shadow-xs: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
-        --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-        --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-        --shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-        --transition: all 0.3s ease;
-        --font-family: 'Public Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
-    }
-    
-    .sidebar .menu a.menu-item {
-        text-decoration: none !important;
-        color: inherit !important;
+        --border-radius: 18px;
+        --soft-shadow: 0 8px 24px rgba(30, 30, 36, 0.06);
+        --subtle-shadow: 0 4px 12px rgba(30, 30, 36, 0.04);
+        --transition: all 0.22s ease;
+
+        /* focus outline color (slightly transparent primary) */
+        --focus-outline: rgba(58, 110, 165, 0.16);
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: var(--base-font-family);
+      }
+
+      body {
+        /* Background (60%) */
+        background-color: var(--antiflash-white);
+        color: var(--black); /* main text */
+        min-height: 100vh;
+        overflow-x: hidden;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+
+      .dashboard-container {
         display: flex;
-        align-items: center;
-    }
-    .sidebar .menu a.menu-item i {
-        color: inherit !important;
-    }
-    .sidebar .menu a.menu-item.active {
-        font-weight: bold;
-    }
-    
-    /* View Toggle Styles - Light Theme */
-    .view-toggle {
-        display: flex;
-        gap: 5px;
-        background: var(--gray-100);
-        border-radius: var(--border-radius);
-        padding: 4px;
-    }
-    
-    .view-toggle .btn-icon {
-        background: transparent;
-        border: none;
-        color: var(--text-muted);
-        padding: 8px 12px;
-        border-radius: var(--border-radius);
-        cursor: pointer;
-        transition: var(--transition);
-    }
-    
-    .view-toggle .btn-icon.active,
-    .view-toggle .btn-icon:hover {
-        background: var(--card-bg);
-        color: var(--primary);
-        box-shadow: var(--shadow-sm);
-    }
-    
-    /* Filter Controls - Light Theme */
-    .filter-controls {
-        display: flex;
-        gap: 10px;
-    }
-    
-    .filter-select {
-        background: var(--card-bg);
-        border: 1px solid var(--border-color);
-        border-radius: var(--border-radius);
-        color: var(--text-dark);
-        padding: 8px 12px;
-        font-size: 14px;
-        min-width: 120px;
-    }
-    
-    .filter-select:focus {
-        outline: none;
-        border-color: var(--primary);
-        box-shadow: 0 0 0 3px var(--primary-light);
-    }
-    
-    .filter-select option {
-        background: var(--card-bg);
-        color: var(--text-dark);
-    }
-    
-    /* Table Actions */
-    .table-actions {
-        display: flex;
-        gap: 10px;
-        align-items: center;
-    }
-    
-    .table-actions .btn:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-    }
-    
-    /* Data Grid - Light Theme */
-    .data-grid {
-        height: 500px;
-        width: 100%;
-        background: var(--card-bg);
-        border-radius: var(--border-radius);
-        border: 1px solid var(--border-color);
-    }
-    
-    /* Tree View - Light Theme */
-    .tree-view {
-        background: var(--card-bg);
-        border-radius: var(--border-radius);
-        border: 1px solid var(--border-color);
-        padding: 20px;
-        min-height: 500px;
-        max-height: 600px;
-        overflow-y: auto;
-    }
-    
-    /* Modal Styles */
-    .modal {
+        /* use a CSS variable so we can animate/remove the gap when collapsing */
+        --dashboard-gap: 28px;
+        gap: var(--dashboard-gap);
+        padding: 24px;
+        align-items: flex-start;
+        transition: gap 0.22s ease, padding 0.22s ease;
+      }
+
+      @font-face {
+        font-family: "Debata";
+        src: url("{% static 'shared/fonts/Debata-Regular.ttf' %}") format("truetype");
+        font-weight: 400;
+        font-style: normal;
+        font-display: swap;
+      }
+      @font-face {
+        font-family: "Debata";
+        src: url("{% static 'shared/fonts/Debata-Italic.ttf' %}") format("truetype");
+        font-weight: 400;
+        font-style: italic;
+        font-display: swap;
+      }
+
+      /* Apply Debata to the small brand text in the sidebar logo */
+      .sidebar .logo span {
+        font-family: "Debata", var(--base-font-family);
+        font-weight: 600;
+        letter-spacing: 0.2px;
+      }
+
+      .modal {
         display: none;
         position: fixed;
         z-index: 1000;
@@ -389,174 +114,404 @@
         top: 0;
         width: 100%;
         height: 100%;
-        background-color: rgba(0, 0, 0, 0.8);
-        backdrop-filter: blur(5px);
-    }
-    
-    .modal-content {
-        background: var(--card-bg);
-        margin: 2% auto;
+        background-color: rgba(0, 0, 0, 0.6);
+        backdrop-filter: blur(3px);
+      }
+
+      .modal-content {
+        background: var(--card-bg, #ffffff);
+        margin: 3% auto;
         padding: 0;
-        border: 1px solid var(--border-color);
-        border-radius: var(--border-radius-lg);
-        width: 90%;
-        max-width: 1200px;
-        max-height: 90vh;
+        border: 1px solid rgba(0, 0, 0, 0.06);
+        border-radius: 16px;
+        width: 92%;
+        max-width: 1100px;
+        max-height: 88vh;
         overflow-y: auto;
-        box-shadow: var(--shadow-lg);
-    }
-    
-    .modal-header {
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+      }
+
+      .modal-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: 20px 30px;
-        border-bottom: 1px solid var(--border-color);
-        background: var(--gray-50);
-        border-radius: var(--border-radius-lg) var(--border-radius-lg) 0 0;
-    }
-    
-    .modal-header h2 {
+        padding: 18px 24px;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+        background: var(--gray-50, #f7fafc);
+        border-radius: 16px 16px 0 0;
+      }
+
+      .modal-header h2 {
         margin: 0;
-        color: var(--text-heading);
-        font-size: 1.5rem;
+        color: var(--text-heading, #111827);
+        font-size: 1.25rem;
         font-weight: 600;
-    }
-    
-    .close-btn {
+      }
+
+      .close-btn {
         background: none;
         border: none;
-        color: var(--text-muted);
-        font-size: 1.5rem;
+        color: var(--text-muted, #6b7280);
+        font-size: 1.2rem;
         cursor: pointer;
-        padding: 5px;
-        border-radius: 4px;
-        transition: var(--transition);
-    }
-    
-    .close-btn:hover {
-        background-color: var(--gray-100);
-        color: var(--text-dark);
-    }
-    
-    .modal-body {
-        padding: 30px;
-        color: var(--text-dark);
-    }
-    
-    .modal-footer {
+        padding: 6px;
+        border-radius: 6px;
+      }
+
+      .close-btn:hover {
+        background: rgba(0, 0, 0, 0.03);
+        color: var(--text-dark, #111);
+      }
+
+      .modal-body {
+        padding: 20px 24px;
+        color: var(--text-dark, #111);
+      }
+
+      .modal-footer {
         display: flex;
         justify-content: flex-end;
-        gap: 15px;
-        padding: 20px 30px;
-        border-top: 1px solid var(--border-color);
-        background: var(--gray-50);
-        border-radius: 0 0 var(--border-radius-lg) var(--border-radius-lg);
-    }
-    
-    /* Button Styles */
-    .btn.success {
-        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-        color: white;
-        border: none;
-        padding: 10px 20px;
-        border-radius: 6px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.3s ease;
-    }
-    
-    .btn.success:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(40, 167, 69, 0.3);
-    }
-    
-    .btn.warning {
-        background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
-        color: white;
-        border: none;
-        padding: 10px 20px;
-        border-radius: 6px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.3s ease;
-    }
-    
-    .btn.warning:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(255, 193, 7, 0.3);
-    }
-    
-    /* Notification Container */
-    .notification-container {
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        z-index: 1001;
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-        max-width: 400px;
-    }
-    
-    .notification {
-        background: var(--card-bg);
-        border: 1px solid var(--border-color);
-        border-radius: var(--border-radius);
-        padding: 15px;
-        box-shadow: var(--shadow-lg);
-        animation: slideIn 0.3s ease-out;
-    }
-    
-    .notification-content {
-        display: flex;
-        align-items: center;
         gap: 12px;
-        color: var(--text-dark);
-    }
-    
-    .notification-close {
-        background: none;
-        border: none;
-        color: var(--text-muted);
-        cursor: pointer;
-        padding: 2px;
-        margin-left: auto;
-        border-radius: 3px;
-        transition: var(--transition);
-    }
-    
-    .notification-close:hover {
-        color: var(--text-dark);
-        background: var(--gray-100);
-    }
-    
-    .notification-success {
-        border-left: 4px solid var(--success);
-    }
-    
-    .notification-error {
-        border-left: 4px solid var(--danger);
-    }
-    
-    .notification-warning {
-        border-left: 4px solid var(--warning);
-    }
-    
-    .notification-info {
-        border-left: 4px solid var(--info);
-    }
-    
-    @keyframes slideIn {
-        from {
-            transform: translateX(100%);
-            opacity: 0;
-        }
-        to {
-            transform: translateX(0);
-            opacity: 1;
-        }
-    }
+        padding: 14px 24px;
+        border-top: 1px solid rgba(0, 0, 0, 0.06);
+        background: var(--gray-50, #f7fafc);
+        border-radius: 0 0 16px 16px;
+      }
     </style>
-</body>
+
+    <!-- Shared layout CSS (dashboard) -->
+    <link rel="stylesheet" href="{% static 'shared/css/sidebar.css' %}" />
+    <link rel="stylesheet" href="{% static 'shared/css/header.css' %}" />
+    <link rel="stylesheet" href="{% static 'shared/css/main-content.css' %}" />
+    <link rel="stylesheet" href="{% static 'shared/css/responsive.css' %}" />
+
+    <!-- Page specific CSS -->
+    <link
+      rel="stylesheet"
+      href="{% static 'form-management/css/form_management.css' %}"
+    />
+
+    <link rel="icon" type="image/png" href="{% static 'auth/img/logo.png' %}" />
+  </head>
+  <body>
+    <div class="dashboard-container">
+      <!-- Sidebar (copied from dashboard layout) -->
+      <div class="sidebar">
+        <div class="logo">
+          <span>edz</span>
+        </div>
+        <div class="menu">
+          <a href="/dashboard/" class="menu-item">
+            <i class="ph-bold ph-house"></i>
+            <span>Dashboard</span>
+          </a>
+          <a href="/form/" class="menu-item">
+            <i class="ph-bold ph-database"></i>
+            <span>Form</span>
+          </a>
+          <a href="/form-management/" class="menu-item active">
+            <i class="ph-bold ph-clipboard-text"></i>
+            <span>Form Mgmt.</span>
+          </a>
+          <a href="/reports/" class="menu-item">
+            <i class="ph-bold ph-chart-pie"></i>
+            <span>Reports</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- Main Content (header + content) -->
+      <div class="main-content">
+        <!-- Header -->
+        <div class="header">
+          <div class="header-left">
+            <button class="hamburger" aria-label="Open menu" title="Menu">
+              <i class="ph-bold ph-list"></i>
+            </button>
+          </div>
+          <div class="header-actions">
+            <div class="notification" title="Notifications">
+              <i class="ph-bold ph-bell"></i>
+              <span class="notif-badge">3</span>
+
+              <!-- Notifications panel -->
+              <div class="notifications-panel" aria-hidden="true">
+                <div class="panel-header">
+                  <div class="panel-title">Notifications</div>
+                  <button class="btn-icon" title="Notifications settings">
+                    <i class="ph-bold ph-gear"></i>
+                  </button>
+                </div>
+                <div class="panel-body">
+                  <!-- Sample notification items -->
+                  <div class="notif-item">
+                    <div class="notif-avatar">
+                      <img
+                        src="{% static 'auth/img/default-profile.jpg' %}"
+                        alt="u"
+                      />
+                    </div>
+                    <div class="notif-content">
+                      <div class="notif-title">
+                        <div class="notif-name">Jackie Monroe</div>
+                        <div class="notif-message">
+                          requests permission to change
+                          <strong>Design System</strong>
+                        </div>
+                      </div>
+                      <div class="notif-meta">Project • 5 min ago</div>
+                    </div>
+                  </div>
+                  <div class="notif-item">
+                    <div class="notif-avatar">
+                      <img
+                        src="{% static 'auth/img/default-profile.jpg' %}"
+                        alt="u"
+                      />
+                    </div>
+                    <div class="notif-content">
+                      <div class="notif-title">
+                        <div class="notif-name">Chris Graham</div>
+                        <div class="notif-message">
+                          has added a new employee
+                        </div>
+                      </div>
+                      <div class="notif-meta">Employee • 28 min ago</div>
+                    </div>
+                  </div>
+                  <div class="notif-item">
+                    <div class="notif-avatar">
+                      <img
+                        src="{% static 'auth/img/default-profile.jpg' %}"
+                        alt="u"
+                      />
+                    </div>
+                    <div class="notif-content">
+                      <div class="notif-title">
+                        <div class="notif-name">Paul Miller</div>
+                        <div class="notif-message">
+                          has added a new project <strong>Mobile App</strong>
+                        </div>
+                      </div>
+                      <div class="notif-meta">Project • 12 hours ago</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Avatar / Profile -->
+            <div class="profile">
+              <button
+                class="avatar-btn"
+                aria-haspopup="true"
+                aria-expanded="false"
+                aria-label="Open profile menu"
+              >
+                <span class="avatar">
+                  <img
+                    src="{% static 'auth/img/default-profile.jpg' %}"
+                    alt="Default profile"
+                  />
+                </span>
+              </button>
+              <div
+                class="profile-dropdown"
+                role="menu"
+                aria-label="Profile menu"
+              >
+                <div class="profile-header">
+                  <div
+                    class="avatar"
+                    style="width: 40px; height: 40px; flex: 0 0 auto"
+                  >
+                    <img
+                      src="{% static 'auth/img/default-profile.jpg' %}"
+                      alt="Profile"
+                    />
+                  </div>
+                  <div>
+                    <div class="name">
+                      {% if user and user.is_authenticated %} {{
+                      user.get_full_name|default:user.username }} {% else %}
+                      John Doe {% endif %}
+                    </div>
+                    <div class="subtext">
+                      {% if user and user.is_authenticated %}{{
+                      user.email|default:'' }}{% else %}Administrator{% endif %}
+                    </div>
+                  </div>
+                </div>
+
+                <a href="/profile/"
+                  ><i class="ph-bold ph-user"></i>View profile</a
+                >
+                <a href="/settings/"><i class="ph-bold ph-gear"></i>Settings</a>
+                <div class="dropdown-logout">
+                  <form method="post" action="/logout/">
+                    {% csrf_token %}
+                    <button type="submit">
+                      <i class="ph-bold ph-sign-out"></i>Logout
+                    </button>
+                  </form>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Page Content with Treeview Sidebar -->
+        <div class="content">
+          <!-- Page Title -->
+          <div class="dashboard-title">
+            <h1>Form Management</h1>
+            <div class="controls">
+              <div class="filter-controls">
+                <select id="status-filter" class="filter-select">
+                  <option value="">All Status</option>
+                  <option value="pending">Pending Review</option>
+                  <option value="approved">Approved</option>
+                  <option value="returned">Returned</option>
+                  <option value="overdue">Overdue</option>
+                </select>
+                <select id="level-filter" class="filter-select">
+                  <option value="">All Levels</option>
+                  <option value="district">District</option>
+                  <option value="division">Division</option>
+                  <option value="region">Region</option>
+                  <option value="central">Central Office</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Main Content Layout with Treeview Sidebar -->
+          <div class="form-management-layout">
+            <!-- Treeview Sidebar -->
+            <div class="treeview-sidebar">
+              <div class="sidebar-header">
+                <h3>Organizational Structure</h3>
+                <button class="btn-icon" id="expand-all-tree" title="Expand All">
+                  <i class="ph-bold ph-arrows-out"></i>
+                </button>
+              </div>
+              <div class="treeview-content">
+                <div id="hierarchy-tree" class="hierarchy-tree"></div>
+              </div>
+            </div>
+
+            <!-- Main Content Area -->
+            <div class="main-content-area">
+              <!-- Content Header -->
+              <div class="content-header">
+                <div class="content-title">
+                  <h2 id="content-title">All Schools</h2>
+                  <p id="content-subtitle">Select a region, division, or district to view schools</p>
+                </div>
+                <div class="content-actions">
+                  <button class="btn primary" id="view-forms-btn" disabled>
+                    <i class="ph-bold ph-eye"></i>
+                    View Forms
+                  </button>
+                  <button class="btn outline" id="export-schools-btn" disabled>
+                    <i class="ph-bold ph-download"></i>
+                    Export
+                  </button>
+                </div>
+              </div>
+
+              <!-- Schools List -->
+              <div class="schools-container">
+                <!-- Search Bar -->
+                <div class="search-container">
+                  <input 
+                    type="text" 
+                    id="school-search-input" 
+                    class="search-input" 
+                    placeholder="Search schools by name..." 
+                    autocomplete="off"
+                  />
+                </div>
+                
+                <div id="schools-list" class="schools-list">
+                  <!-- Schools will be loaded here -->
+                </div>
+                
+                <!-- Pagination -->
+                <div id="pagination-container" class="pagination-container" style="display: none;">
+                  <div class="pagination-info">
+                    <span id="pagination-info-text">Showing 0 of 0 schools</span>
+                  </div>
+                  <div class="pagination-controls">
+                    <button id="prev-page-btn" class="pagination-btn" disabled>
+                      <i class="ph-bold ph-caret-left"></i>
+                      Previous
+                    </button>
+                    <div class="pagination-pages" id="pagination-pages">
+                      <!-- Page numbers will be generated here -->
+                    </div>
+                    <button id="next-page-btn" class="pagination-btn" disabled>
+                      Next
+                      <i class="ph-bold ph-caret-right"></i>
+                    </button>
+                    <div class="page-size-selector">
+                      <label for="page-size-select">Show:</label>
+                      <select id="page-size-select">
+                        <option value="10">10</option>
+                        <option value="25" selected>25</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Footer -->
+        <div class="site-footer">
+          <div>© <span id="year"></span> EdSight — All rights reserved</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Form Detail Modal -->
+    <div id="form-detail-modal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 id="modal-title">Form Details</h2>
+          <button class="close-btn" id="close-modal">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div class="modal-body" id="modal-body">
+          <!-- Form details will be loaded here -->
+        </div>
+        <div class="modal-footer">
+          <button class="btn outline" id="modal-cancel">Cancel</button>
+          <button class="btn success" id="modal-approve">
+            <i class="fas fa-check"></i>
+            Approve
+          </button>
+          <button class="btn warning" id="modal-return">
+            <i class="fas fa-undo"></i>
+            Return for Revision
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Notification Container -->
+    <div id="notification-container" class="notification-container"></div>
+
+    <!-- Internal JS -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="{% static 'shared/js/sidebar.js' %}"></script>
+    <script src="{% static 'shared/js/header.js' %}"></script>
+    <script src="{% static 'form-management/js/optimized_treeview.js' %}"></script>
+    <script src="{% static 'form-management/js/performance_monitor.js' %}"></script>
+  </body>
 </html>

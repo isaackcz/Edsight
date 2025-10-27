@@ -1,0 +1,103 @@
+/**
+ * Tab System CSS for Form Interface
+ * Modern tab design with smooth transitions
+ */
+
+/* Tab Navigation Container */
+.form-tabs {
+  margin-bottom: 24px;
+  background: var(--white);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  overflow: hidden;
+}
+
+.tab-navigation {
+  display: flex;
+  background: var(--gray-50);
+  border-bottom: 1px solid var(--border-color);
+}
+
+/* Tab Buttons */
+.tab-button {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px 20px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  font-weight: 500;
+  font-size: 0.95rem;
+  color: var(--text-muted);
+  border-radius: 0;
+}
+
+.tab-button:hover {
+  background: var(--gray-100);
+  color: var(--text-heading);
+}
+
+.tab-button.active {
+  background: var(--white);
+  color: var(--primary);
+  border-bottom: 2px solid var(--primary);
+}
+
+.tab-button i {
+  font-size: 1rem;
+}
+
+.tab-button.active i {
+  color: var(--primary);
+}
+
+/* Tab Content */
+.tab-content {
+  display: none;
+}
+
+.tab-content.active {
+  display: block;
+}
+
+/* Enhanced Tab Button States */
+.tab-button:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .tab-navigation {
+    flex-direction: column;
+  }
+  
+  .tab-button {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border-color);
+  }
+  
+  .tab-button:last-child {
+    border-bottom: none;
+  }
+  
+  .tab-button.active {
+    border-bottom: 2px solid var(--primary);
+  }
+}
+
+
+/* Accessibility Improvements */
+.tab-button[aria-selected="true"] {
+  background: var(--white);
+  color: var(--primary);
+}
+
+.tab-button[aria-selected="false"] {
+  background: transparent;
+  color: var(--text-muted);
+}

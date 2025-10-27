@@ -1,675 +1,764 @@
 <!DOCTYPE html>
 {% load static %}
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>User Dashboard</title>
-    <link rel="icon" type="image/x-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📊</text></svg>">
-    <link rel="manifest" href="{% static 'manifest.json' %}">
-    <meta name="theme-color" content="#3b82f6">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="apple-mobile-web-app-title" content="EdSight">
-    <link rel="apple-touch-icon" href="{% static 'images/icon-192x192.png' %}">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="{% static 'user_dash/user_dash.css' %}">
-    <link rel="stylesheet" href="{% static 'user_dash/pagination.css' %}">
+    <link
+      rel="icon"
+      type="image/x-icon"
+      href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📊</text></svg>"
+    />
+    <link rel="manifest" href="{% static 'shared/manifest.json' %}" />
+    <meta name="theme-color" content="#3b82f6" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="EdSight" />
+    <link
+      rel="apple-touch-icon"
+      href="{% static 'shared/img/icon-192x192.png' %}"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <!-- Phosphor Icons (CDN preferred) with local static fallback -->
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.2/dist/phosphor.css"
+    />
+    <link rel="stylesheet" href="{% static 'shared/phosphor/phosphor.css' %}" />
+    <link rel="stylesheet" href="{% static 'dashboard/css/user_dash.css' %}" />
+    <link rel="stylesheet" href="{% static 'dashboard/css/pagination.css' %}" />
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="{% static 'user_dash/performance-monitor.js' %}" defer></script>
-    <script src="{% static 'user_dash/form-data-manager.js' %}" defer></script>
-    <script src="{% static 'user_dash/user_dash_api.js' %}" defer></script>
-    <script src="{% static 'js/pwa-manager.js' %}" defer></script>
-    <script src="{% static 'user_dash/user_dash.js' %}" defer></script>
-</head>
-<body>
-    <!-- Pre-loader -->
-    <div id="preloader" class="preloader">
-        <div class="preloader-content">
-            <div class="preloader-logo">
-                <div class="logo-icon">
-                    <i class="fas fa-graduation-cap"></i>
-                </div>
-                <span class="logo-text">EdSight</span>
-            </div>
-            <div class="preloader-progress">
-                <div class="loading-animation">
-                    <div class="loading-dots">
-                        <div class="dot"></div>
-                        <div class="dot"></div>
-                        <div class="dot"></div>
-                    </div>
-                    <div class="progress-text" id="progress-text">Initializing...</div>
-                </div>
-            </div>
-            <div class="loading-status" id="loading-status">Preparing application...</div>
-        </div>
-    </div>
+    <script
+      src="{% static 'dashboard/js/performance-monitor.js' %}"
+      defer
+    ></script>
+    <script src="{% static 'dashboard/js/form-data-manager.js' %}" defer></script>
+    <script src="{% static 'dashboard/js/user_dash_api.js' %}" defer></script>
+    <script src="{% static 'shared/js/pwa-manager.js' %}" defer></script>
+    <script src="{% static 'dashboard/js/user_dash.js' %}" defer></script>
+  </head>
+  <body>
+    <!-- Preloader removed -->
 
     <!-- Mobile Header -->
     <div class="mobile-header">
-        <div class="mobile-header-top">
-            <div class="mobile-header-brand">
-                <i class="fas fa-graduation-cap"></i>
-                <span>EdSight</span>
-            </div>
-            <div class="mobile-header-actions">
-                <div class="notification">
-                    <i class="fas fa-bell"></i>
-                    <span class="badge">2</span>
-                </div>
+      <div class="mobile-header-top">
+        <div class="mobile-header-brand">
+          <i class="fas fa-graduation-cap"></i>
+          <span>EdSight</span>
+        </div>
+        <div class="mobile-header-actions">
+          <div class="notification">
+            <i class="fas fa-bell"></i>
+            <span class="badge">2</span>
+          </div>
 
-                <div class="user-avatar">
-                    <i class="fas fa-user"></i>
-                </div>
-            </div>
+          <div class="user-avatar">
+            <i class="fas fa-user"></i>
+          </div>
         </div>
-        <div class="mobile-navbar">
-            <div class="navbar-content">
-                <a href="#" class="nav-item active" data-page="dashboard">
-                    <i class="fas fa-home"></i>
-                    <span>Overview</span>
-                </a>
-                <a href="#" class="nav-item" data-page="form">
-                    <i class="fas fa-file-alt"></i>
-                    <span>Form</span>
-                </a>
-                <a href="#" class="nav-item" data-page="analytics">
-                    <i class="fas fa-chart-pie"></i>
-                    <span>Analytics</span>
-                </a>
-                <a href="#" class="nav-item" data-page="profile">
-                    <i class="fas fa-user-cog"></i>
-                    <span>Settings</span>
-                </a>
-                <a href="#" class="nav-item" id="mobile-logout-btn">
-                    <i class="fas fa-sign-out-alt"></i>
-                    <span>Logout</span>
-                </a>
-            </div>
+      </div>
+      <div class="mobile-navbar">
+        <div class="navbar-content">
+          <a href="#" class="nav-item active" data-page="dashboard">
+            <i class="fas fa-home"></i>
+            <span>Overview</span>
+          </a>
+          <a href="#" class="nav-item" data-page="form">
+            <i class="fas fa-file-alt"></i>
+            <span>Form</span>
+          </a>
+          <a href="#" class="nav-item" data-page="analytics">
+            <i class="fas fa-chart-pie"></i>
+            <span>Analytics</span>
+          </a>
+          <a href="#" class="nav-item" data-page="profile">
+            <i class="fas fa-user-cog"></i>
+            <span>Settings</span>
+          </a>
+          <a href="#" class="nav-item" id="mobile-logout-btn">
+            <i class="fas fa-sign-out-alt"></i>
+            <span>Logout</span>
+          </a>
         </div>
+      </div>
     </div>
 
     <div class="dashboard-container">
-        <!-- Sidebar -->
-        <div class="sidebar">
-            <div class="logo">
-                <i class="fas fa-chart-line"></i>
-                <span>EdSight</span>
+      <!-- Sidebar -->
+      <div class="sidebar">
+        <div class="logo">
+          <i class="fas fa-chart-line"></i>
+          <span>EdSight</span>
+        </div>
+        <div class="menu">
+          <a href="#" class="menu-item active" data-page="dashboard">
+            <i class="fas fa-home"></i>
+            <span>Overview</span>
+          </a>
+          <a href="#" class="menu-item" data-page="form">
+            <i class="fas fa-file-alt"></i>
+            <span>Form</span>
+          </a>
+          <a href="#" class="menu-item" data-page="analytics">
+            <i class="fas fa-chart-pie"></i>
+            <span>Analytics</span>
+          </a>
+          <a href="#" class="menu-item" data-page="profile">
+            <i class="fas fa-user-cog"></i>
+            <span>Settings</span>
+          </a>
+        </div>
+        <div class="user-profile">
+          <div class="avatar">
+            <i class="fas fa-user"></i>
+          </div>
+          <div class="user-info">
+            <span class="username">Loading...</span>
+            <span class="role">Loading...</span>
+          </div>
+        </div>
+        <div class="sidebar-footer">
+          <a href="#" class="menu-item" id="logout-btn">
+            <i class="fas fa-sign-out-alt"></i>
+            <span>Sign Out</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- Main Content -->
+      <div class="main-content">
+        <!-- Header -->
+        <div class="header">
+          <div class="header-left">
+            <div class="hamburger" id="sidebar-toggle">
+              <i class="fas fa-bars"></i>
             </div>
-            <div class="menu">
-                <a href="#" class="menu-item active" data-page="dashboard">
-                    <i class="fas fa-home"></i>
-                    <span>Overview</span>
-                </a>
-                <a href="#" class="menu-item" data-page="form">
-                    <i class="fas fa-file-alt"></i>
-                    <span>Form</span>
-                </a>
-                <a href="#" class="menu-item" data-page="analytics">
-                    <i class="fas fa-chart-pie"></i>
-                    <span>Analytics</span>
-                </a>
-                <a href="#" class="menu-item" data-page="profile">
-                    <i class="fas fa-user-cog"></i>
-                    <span>Settings</span>
-                </a>
+            <div class="breadcrumb">
+              <span class="breadcrumb-item" data-page="dashboard"
+                >Dashboard</span
+              >
+              <i class="fas fa-chevron-right breadcrumb-separator"></i>
+              <span class="breadcrumb-current">Overview</span>
             </div>
-            <div class="user-profile">
-                <div class="avatar">
+          </div>
+          <div class="header-center">
+            <div class="search-bar">
+              <i class="fas fa-search"></i>
+              <input
+                type="text"
+                placeholder="Search forms, sections, or questions..."
+              />
+            </div>
+          </div>
+          <div class="header-actions">
+            <div class="notification">
+              <i class="fas fa-bell"></i>
+              <span class="badge">2</span>
+            </div>
+
+            <div class="user-menu">
+              <div class="user-avatar">
+                <i class="fas fa-user"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Page Content -->
+        <div class="content">
+          <!-- Dashboard Page (default) -->
+          <div class="page active" id="dashboard-page">
+            <!-- Welcome Section -->
+            <div class="welcome-section">
+              <div class="welcome-content">
+                <h1>Welcome back!</h1>
+                <p>
+                  Track your form progress and stay on top of your submissions
+                </p>
+              </div>
+              <div class="deadline-card">
+                <div class="deadline-icon">
+                  <i class="fas fa-clock"></i>
+                </div>
+                <div class="deadline-info">
+                  <h3>Submission Deadline</h3>
+                  <p class="deadline-text">3 days remaining</p>
+                  <div class="deadline-progress">
+                    <div class="deadline-bar">
+                      <div class="deadline-fill" style="width: 75%"></div>
+                    </div>
+                    <span class="deadline-percentage">75% of time used</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="quick-actions">
+              <button id="batch-submit" class="action-btn primary">
+                <i class="fas fa-save"></i>
+                <span>Save All Progress</span>
+              </button>
+              <button id="export-data" class="action-btn secondary">
+                <i class="fas fa-download"></i>
+                <span>Export Data</span>
+              </button>
+              <button id="import-data-btn" class="action-btn secondary">
+                <i class="fas fa-upload"></i>
+                <span>Import Data</span>
+              </button>
+              <button id="clear-data" class="action-btn danger">
+                <i class="fas fa-trash"></i>
+                <span>Clear Data</span>
+              </button>
+            </div>
+
+            <!-- Main Progress Section -->
+            <div class="main-progress-section">
+              <div class="progress-overview">
+                <div class="progress-circle-large">
+                  <canvas
+                    id="mainProgressChart"
+                    width="200"
+                    height="200"
+                  ></canvas>
+                  <div class="progress-center">
+                    <span class="progress-percentage">0%</span>
+                    <small>Complete</small>
+                  </div>
+                </div>
+                <div class="progress-stats">
+                  <div class="stat-card">
+                    <div class="stat-icon">
+                      <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="stat-content">
+                      <h3 id="answered-count">0</h3>
+                      <p>Questions Answered</p>
+                    </div>
+                  </div>
+                  <div class="stat-card">
+                    <div class="stat-icon">
+                      <i class="fas fa-save"></i>
+                    </div>
+                    <div class="stat-content">
+                      <h3 id="saved-count">0</h3>
+                      <p>Saved Locally</p>
+                    </div>
+                  </div>
+                  <div class="stat-card">
+                    <div class="stat-icon">
+                      <i class="fas fa-database"></i>
+                    </div>
+                    <div class="stat-content">
+                      <h3 id="database-count">0</h3>
+                      <p>In Database</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Analytics Grid -->
+            <div class="analytics-grid">
+              <!-- Recent Activity -->
+              <div class="analytics-card">
+                <div class="card-header">
+                  <h3>Recent Activity</h3>
+                  <div class="card-actions">
+                    <button class="btn-icon" title="View All">
+                      <i class="fas fa-list"></i>
+                    </button>
+                  </div>
+                </div>
+                <div class="card-content">
+                  <div class="activity-list">
+                    <div class="activity-item">
+                      <div class="activity-icon">
+                        <i class="fas fa-edit"></i>
+                      </div>
+                      <div class="activity-content">
+                        <h4>Question answered</h4>
+                        <p>School Infrastructure - Basic Facilities</p>
+                        <span class="activity-time">2 hours ago</span>
+                      </div>
+                    </div>
+                    <div class="activity-item">
+                      <div class="activity-icon">
+                        <i class="fas fa-save"></i>
+                      </div>
+                      <div class="activity-content">
+                        <h4>Form saved</h4>
+                        <p>Student Performance - Academic Achievement</p>
+                        <span class="activity-time">1 day ago</span>
+                      </div>
+                    </div>
+                    <div class="activity-item">
+                      <div class="activity-icon">
+                        <i class="fas fa-check-circle"></i>
+                      </div>
+                      <div class="activity-content">
+                        <h4>Section completed</h4>
+                        <p>Teacher Quality - Professional Development</p>
+                        <span class="activity-time">3 days ago</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Form Page -->
+          <div class="page" id="form-page">
+            <div class="page-header">
+              <div class="page-title">
+                <h1>Application Form</h1>
+                <p>Complete your application step by step</p>
+              </div>
+              <div class="page-actions">
+                <div class="deadline-indicator">
+                  <i class="fas fa-clock"></i>
+                  <span>3 days left to complete</span>
+                </div>
+                <button id="save-progress-btn" class="btn primary">
+                  <i class="fas fa-save"></i> Save Progress
+                </button>
+                <button id="submit-to-district-btn" class="btn secondary">
+                  <i class="fas fa-paper-plane"></i> Submit to District
+                </button>
+              </div>
+            </div>
+
+            <div class="form-container">
+              <div class="loading-message">
+                <i class="fas fa-spinner fa-spin"></i>
+                <p>Loading form sections...</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Analytics Page -->
+          <div class="page" id="analytics-page">
+            <div class="page-header">
+              <div class="page-title">
+                <h1>Analytics & Insights</h1>
+                <p>Detailed analysis of your form progress and performance</p>
+              </div>
+            </div>
+
+            <div class="analytics-container">
+              <!-- Analytics Header -->
+              <div class="analytics-header">
+                <div class="analytics-title">
+                  <h2>Analytics Overview</h2>
+                  <p>Track your progress and performance insights</p>
+                </div>
+                <div class="analytics-actions">
+                  <button class="btn-secondary" id="refresh-analytics">
+                    <i class="fas fa-sync-alt"></i>
+                    Refresh
+                  </button>
+                  <button class="btn-primary" id="export-analytics">
+                    <i class="fas fa-download"></i>
+                    Export
+                  </button>
+                </div>
+              </div>
+
+              <!-- Analytics Grid -->
+              <div class="analytics-grid">
+                <!-- Progress Timeline -->
+                <div class="analytics-card timeline-card">
+                  <div class="card-header">
+                    <div class="card-title">
+                      <i class="fas fa-chart-line"></i>
+                      <h3>Progress Timeline</h3>
+                    </div>
+                    <div class="card-subtitle">Last 30 days activity</div>
+                  </div>
+                  <div class="card-content">
+                    <div class="chart-container">
+                      <canvas id="timelineChart"></canvas>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Question Progress section removed as requested -->
+
+                <!-- Form Status by Category - Modern Design -->
+                <div class="analytics-card category-status-card full-width">
+                  <div class="card-header">
+                    <div class="card-title">
+                      <i class="fas fa-chart-pie"></i>
+                      <h3>Form Status by Category</h3>
+                    </div>
+                    <div class="card-subtitle">
+                      Interactive completion overview across all categories
+                    </div>
+                    <div class="card-actions">
+                      <button
+                        class="btn-icon view-toggle"
+                        data-view="grid"
+                        title="Grid View"
+                      >
+                        <i class="fas fa-th"></i>
+                      </button>
+                      <button
+                        class="btn-icon view-toggle active"
+                        data-view="cards"
+                        title="Card View"
+                      >
+                        <i class="fas fa-th-large"></i>
+                      </button>
+                      <button
+                        class="btn-icon"
+                        id="refresh-status"
+                        title="Refresh Data"
+                      >
+                        <i class="fas fa-sync-alt"></i>
+                      </button>
+                    </div>
+                  </div>
+                  <div class="card-content">
+                    <div class="category-status-container">
+                      <div class="status-overview">
+                        <div class="overview-stats">
+                          <div class="stat-item">
+                            <div class="stat-icon completed">
+                              <i class="fas fa-check-circle"></i>
+                            </div>
+                            <div class="stat-info">
+                              <span class="stat-value" id="completed-categories"
+                                >0</span
+                              >
+                              <span class="stat-label">Completed</span>
+                            </div>
+                          </div>
+                          <div class="stat-item">
+                            <div class="stat-icon in-progress">
+                              <i class="fas fa-clock"></i>
+                            </div>
+                            <div class="stat-info">
+                              <span class="stat-value" id="progress-categories"
+                                >0</span
+                              >
+                              <span class="stat-label">In Progress</span>
+                            </div>
+                          </div>
+                          <div class="stat-item">
+                            <div class="stat-icon not-started">
+                              <i class="fas fa-circle"></i>
+                            </div>
+                            <div class="stat-info">
+                              <span class="stat-value" id="pending-categories"
+                                >0</span
+                              >
+                              <span class="stat-label">Not Started</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="categories-display" id="categories-display">
+                        <div class="loading-state">
+                          <div class="loading-spinner">
+                            <div class="spinner-ring"></div>
+                            <div class="spinner-ring"></div>
+                            <div class="spinner-ring"></div>
+                          </div>
+                          <span>Loading category data...</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Profile Settings Page -->
+          <div class="page" id="profile-page">
+            <div class="page-header">
+              <div class="page-title">
+                <h1>Profile Settings</h1>
+                <p>Manage your account and preferences</p>
+              </div>
+            </div>
+
+            <div class="profile-container">
+              <!-- Profile Information Card -->
+              <div class="profile-card">
+                <div class="profile-header">
+                  <div class="avatar-large">
                     <i class="fas fa-user"></i>
+                  </div>
+                  <div class="profile-info">
+                    <h2 id="profile-name">Loading...</h2>
+                    <p id="profile-email">Loading...</p>
+                    <span class="last-login" id="profile-last-login"
+                      >Last login: Loading...</span
+                    >
+                  </div>
                 </div>
-                <div class="user-info">
-                    <span class="username">Loading...</span>
-                    <span class="role">Loading...</span>
+
+                <form class="profile-form" id="profile-form">
+                  <div class="form-section">
+                    <h3>
+                      <i class="fas fa-user-circle"></i> Personal Information
+                    </h3>
+                    <div class="form-row">
+                      <div class="form-group">
+                        <label>School Name</label>
+                        <input
+                          type="text"
+                          name="school_name"
+                          id="school_name"
+                          placeholder="Loading..."
+                          readonly
+                        />
+                      </div>
+                      <div class="form-group">
+                        <label>Email</label>
+                        <input
+                          type="email"
+                          name="email"
+                          id="email"
+                          placeholder="Loading..."
+                        />
+                      </div>
+                    </div>
+                    <div class="form-row">
+                      <div class="form-group">
+                        <label>Region</label>
+                        <input
+                          type="text"
+                          name="region"
+                          id="region"
+                          placeholder="Loading..."
+                          readonly
+                        />
+                      </div>
+                      <div class="form-group">
+                        <label>Division</label>
+                        <input
+                          type="text"
+                          name="division"
+                          id="division"
+                          placeholder="Loading..."
+                          readonly
+                        />
+                      </div>
+                    </div>
+                    <div class="form-row">
+                      <div class="form-group">
+                        <label>District</label>
+                        <input
+                          type="text"
+                          name="district"
+                          id="district"
+                          placeholder="Loading..."
+                          readonly
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="form-section">
+                    <h3><i class="fas fa-lock"></i> Security</h3>
+                    <div class="form-row">
+                      <div class="form-group">
+                        <label>Current Password</label>
+                        <input
+                          type="password"
+                          name="current_password"
+                          id="current_password"
+                          placeholder="Enter current password"
+                        />
+                      </div>
+                    </div>
+                    <div class="form-row">
+                      <div class="form-group">
+                        <label>New Password</label>
+                        <input
+                          type="password"
+                          name="new_password"
+                          id="new_password"
+                          placeholder="Enter new password"
+                        />
+                      </div>
+                      <div class="form-group">
+                        <label>Confirm Password</label>
+                        <input
+                          type="password"
+                          name="confirm_password"
+                          id="confirm_password"
+                          placeholder="Confirm new password"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="form-actions">
+                    <button
+                      type="button"
+                      class="btn secondary"
+                      id="cancel-profile-btn"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      id="save-profile-btn"
+                      class="btn primary"
+                    >
+                      <i class="fas fa-save"></i> Save Changes
+                    </button>
+                  </div>
+                </form>
+              </div>
+
+              <!-- Security & Sessions Card -->
+              <div class="security-card">
+                <h3><i class="fas fa-shield-alt"></i> Security & Sessions</h3>
+
+                <!-- Last Login Info -->
+                <div class="security-section">
+                  <h4>Last Login Information</h4>
+                  <div class="login-info">
+                    <div class="info-item">
+                      <i class="fas fa-clock"></i>
+                      <span id="last-login-time">Loading...</span>
+                    </div>
+                    <div class="info-item">
+                      <i class="fas fa-map-marker-alt"></i>
+                      <span id="last-login-location">Loading...</span>
+                    </div>
+                    <div class="info-item">
+                      <i class="fas fa-desktop"></i>
+                      <span id="last-login-device">Loading...</span>
+                    </div>
+                  </div>
                 </div>
+
+                <!-- Active Sessions -->
+                <div class="security-section">
+                  <div class="section-header">
+                    <h4>Active Sessions</h4>
+                    <button
+                      class="btn secondary small"
+                      id="refresh-sessions-btn"
+                    >
+                      <i class="fas fa-sync-alt"></i> Refresh
+                    </button>
+                  </div>
+                  <div class="sessions-list" id="sessions-list">
+                    <div class="session-loading">
+                      <i class="fas fa-spinner fa-spin"></i> Loading sessions...
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Login History -->
+                <div class="security-section">
+                  <div class="section-header">
+                    <h4>Recent Login History</h4>
+                    <button
+                      class="btn secondary small"
+                      id="view-all-logins-btn"
+                    >
+                      <i class="fas fa-history"></i> View All
+                    </button>
+                  </div>
+                  <div class="login-history" id="login-history">
+                    <div class="history-loading">
+                      <i class="fas fa-spinner fa-spin"></i> Loading history...
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Audit Logs Card -->
+              <div class="audit-card">
+                <h3><i class="fas fa-clipboard-list"></i> Audit Logs</h3>
+
+                <div class="audit-controls">
+                  <div class="filter-group">
+                    <label>Filter by:</label>
+                    <select id="audit-filter">
+                      <option value="all">All Activities</option>
+                      <option value="category">Category Changes</option>
+                      <option value="subsection">Subsection Changes</option>
+                      <option value="topic">Topic Changes</option>
+                      <option value="question">Question Changes</option>
+                      <option value="sub_question">Sub-question Changes</option>
+                    </select>
+                  </div>
+                  <div class="export-group">
+                    <button class="btn secondary small" id="export-local-btn">
+                      <i class="fas fa-download"></i> Export Local
+                    </button>
+                    <button class="btn secondary small" id="export-db-btn">
+                      <i class="fas fa-database"></i> Save to DB
+                    </button>
+                  </div>
+                </div>
+
+                <div class="audit-logs" id="audit-logs">
+                  <div class="audit-loading">
+                    <i class="fas fa-spinner fa-spin"></i> Loading audit logs...
+                  </div>
+                </div>
+              </div>
+
+              <!-- Preferences Card -->
+              <div class="settings-card">
+                <h3><i class="fas fa-cog"></i> Preferences</h3>
+                <div class="setting-item">
+                  <div class="setting-info">
+                    <i class="fas fa-bell"></i>
+                    <div>
+                      <h4>Email Notifications</h4>
+                      <p>Receive important updates via email</p>
+                    </div>
+                  </div>
+                  <label class="switch">
+                    <input type="checkbox" id="email-notifications" checked />
+                    <span class="slider"></span>
+                  </label>
+                </div>
+
+                <!-- Dark mode setting removed - project does not support dark mode -->
+              </div>
             </div>
-            <div class="sidebar-footer">
-                <a href="#" class="menu-item" id="logout-btn">
-                    <i class="fas fa-sign-out-alt"></i>
-                    <span>Sign Out</span>
-                </a>
-            </div>
+          </div>
         </div>
-
-        <!-- Main Content -->
-        <div class="main-content">
-            <!-- Header -->
-            <div class="header">
-                <div class="header-left">
-                    <div class="hamburger" id="sidebar-toggle">
-                        <i class="fas fa-bars"></i>
-                    </div>
-                    <div class="breadcrumb">
-                        <span class="breadcrumb-item" data-page="dashboard">Dashboard</span>
-                        <i class="fas fa-chevron-right breadcrumb-separator"></i>
-                        <span class="breadcrumb-current">Overview</span>
-                    </div>
-                </div>
-                <div class="header-center">
-                    <div class="search-bar">
-                        <i class="fas fa-search"></i>
-                        <input type="text" placeholder="Search forms, sections, or questions...">
-                    </div>
-                </div>
-                <div class="header-actions">
-                    <div class="notification">
-                        <i class="fas fa-bell"></i>
-                        <span class="badge">2</span>
-                    </div>
-
-                    <div class="user-menu">
-                        <div class="user-avatar">
-                            <i class="fas fa-user"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Page Content -->
-            <div class="content">
-                <!-- Dashboard Page (default) -->
-                <div class="page active" id="dashboard-page">
-                    <!-- Welcome Section -->
-                    <div class="welcome-section">
-                        <div class="welcome-content">
-                            <h1>Welcome back!</h1>
-                            <p>Track your form progress and stay on top of your submissions</p>
-                        </div>
-                        <div class="deadline-card">
-                            <div class="deadline-icon">
-                                <i class="fas fa-clock"></i>
-                            </div>
-                            <div class="deadline-info">
-                                <h3>Submission Deadline</h3>
-                                <p class="deadline-text">3 days remaining</p>
-                                <div class="deadline-progress">
-                                    <div class="deadline-bar">
-                                        <div class="deadline-fill" style="width: 75%"></div>
-                                    </div>
-                                    <span class="deadline-percentage">75% of time used</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Quick Actions -->
-                    <div class="quick-actions">
-                        <button id="batch-submit" class="action-btn primary">
-                            <i class="fas fa-save"></i>
-                            <span>Save All Progress</span>
-                        </button>
-                        <button id="export-data" class="action-btn secondary">
-                            <i class="fas fa-download"></i>
-                            <span>Export Data</span>
-                        </button>
-                        <button id="import-data-btn" class="action-btn secondary">
-                            <i class="fas fa-upload"></i>
-                            <span>Import Data</span>
-                        </button>
-                        <button id="clear-data" class="action-btn danger">
-                            <i class="fas fa-trash"></i>
-                            <span>Clear Data</span>
-                        </button>
-                    </div>
-
-                    <!-- Main Progress Section -->
-                    <div class="main-progress-section">
-                        <div class="progress-overview">
-                            <div class="progress-circle-large">
-                                <canvas id="mainProgressChart" width="200" height="200"></canvas>
-                                <div class="progress-center">
-                                    <span class="progress-percentage">0%</span>
-                                    <small>Complete</small>
-                                </div>
-                            </div>
-                            <div class="progress-stats">
-                                <div class="stat-card">
-                                    <div class="stat-icon">
-                                        <i class="fas fa-check-circle"></i>
-                                    </div>
-                                    <div class="stat-content">
-                                        <h3 id="answered-count">0</h3>
-                                        <p>Questions Answered</p>
-                                    </div>
-                                </div>
-                                <div class="stat-card">
-                                    <div class="stat-icon">
-                                        <i class="fas fa-save"></i>
-                                    </div>
-                                    <div class="stat-content">
-                                        <h3 id="saved-count">0</h3>
-                                        <p>Saved Locally</p>
-                                    </div>
-                                </div>
-                                <div class="stat-card">
-                                    <div class="stat-icon">
-                                        <i class="fas fa-database"></i>
-                                    </div>
-                                    <div class="stat-content">
-                                        <h3 id="database-count">0</h3>
-                                        <p>In Database</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Analytics Grid -->
-                    <div class="analytics-grid">
-
-
-                        <!-- Recent Activity -->
-                        <div class="analytics-card">
-                            <div class="card-header">
-                                <h3>Recent Activity</h3>
-                                <div class="card-actions">
-                                    <button class="btn-icon" title="View All">
-                                        <i class="fas fa-list"></i>
-                                    </button>
-                                </div>
-                            </div>
-                            <div class="card-content">
-                                <div class="activity-list">
-                                    <div class="activity-item">
-                                        <div class="activity-icon">
-                                            <i class="fas fa-edit"></i>
-                                        </div>
-                                        <div class="activity-content">
-                                            <h4>Question answered</h4>
-                                            <p>School Infrastructure - Basic Facilities</p>
-                                            <span class="activity-time">2 hours ago</span>
-                                        </div>
-                                    </div>
-                                    <div class="activity-item">
-                                        <div class="activity-icon">
-                                            <i class="fas fa-save"></i>
-                                        </div>
-                                        <div class="activity-content">
-                                            <h4>Form saved</h4>
-                                            <p>Student Performance - Academic Achievement</p>
-                                            <span class="activity-time">1 day ago</span>
-                                        </div>
-                                    </div>
-                                    <div class="activity-item">
-                                        <div class="activity-icon">
-                                            <i class="fas fa-check-circle"></i>
-                                        </div>
-                                        <div class="activity-content">
-                                            <h4>Section completed</h4>
-                                            <p>Teacher Quality - Professional Development</p>
-                                            <span class="activity-time">3 days ago</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-
-                    </div>
-                </div>
-
-                <!-- Form Page -->
-                <div class="page" id="form-page">
-                    <div class="page-header">
-                        <div class="page-title">
-                            <h1>Application Form</h1>
-                            <p>Complete your application step by step</p>
-                        </div>
-                        <div class="page-actions">
-                            <div class="deadline-indicator">
-                                <i class="fas fa-clock"></i>
-                                <span>3 days left to complete</span>
-                            </div>
-                            <button id="save-progress-btn" class="btn primary">
-                                <i class="fas fa-save"></i> Save Progress
-                            </button>
-                            <button id="submit-to-district-btn" class="btn secondary">
-                                <i class="fas fa-paper-plane"></i> Submit to District
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="form-container">
-                        <div class="loading-message">
-                            <i class="fas fa-spinner fa-spin"></i>
-                            <p>Loading form sections...</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Analytics Page -->
-                <div class="page" id="analytics-page">
-                    <div class="page-header">
-                        <div class="page-title">
-                            <h1>Analytics & Insights</h1>
-                            <p>Detailed analysis of your form progress and performance</p>
-                        </div>
-                    </div>
-                    
-                    <div class="analytics-container">
-                        <!-- Analytics Header -->
-                        <div class="analytics-header">
-                            <div class="analytics-title">
-                                <h2>Analytics Overview</h2>
-                                <p>Track your progress and performance insights</p>
-                            </div>
-                            <div class="analytics-actions">
-                                <button class="btn-secondary" id="refresh-analytics">
-                                    <i class="fas fa-sync-alt"></i>
-                                    Refresh
-                                </button>
-                                <button class="btn-primary" id="export-analytics">
-                                    <i class="fas fa-download"></i>
-                                    Export
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Analytics Grid -->
-                        <div class="analytics-grid">
-                            <!-- Progress Timeline -->
-                            <div class="analytics-card timeline-card">
-                                <div class="card-header">
-                                    <div class="card-title">
-                                        <i class="fas fa-chart-line"></i>
-                                        <h3>Progress Timeline</h3>
-                                    </div>
-                                    <div class="card-subtitle">Last 30 days activity</div>
-                                </div>
-                                <div class="card-content">
-                                    <div class="chart-container">
-                                        <canvas id="timelineChart"></canvas>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <!-- Question Progress section removed as requested -->
-                            
-                            <!-- Form Status by Category - Modern Design -->
-                            <div class="analytics-card category-status-card full-width">
-                                <div class="card-header">
-                                    <div class="card-title">
-                                        <i class="fas fa-chart-pie"></i>
-                                        <h3>Form Status by Category</h3>
-                                    </div>
-                                    <div class="card-subtitle">Interactive completion overview across all categories</div>
-                                    <div class="card-actions">
-                                        <button class="btn-icon view-toggle" data-view="grid" title="Grid View">
-                                            <i class="fas fa-th"></i>
-                                        </button>
-                                        <button class="btn-icon view-toggle active" data-view="cards" title="Card View">
-                                            <i class="fas fa-th-large"></i>
-                                        </button>
-                                        <button class="btn-icon" id="refresh-status" title="Refresh Data">
-                                            <i class="fas fa-sync-alt"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                                <div class="card-content">
-                                    <div class="category-status-container">
-                                        <div class="status-overview">
-                                            <div class="overview-stats">
-                                                <div class="stat-item">
-                                                    <div class="stat-icon completed">
-                                                        <i class="fas fa-check-circle"></i>
-                                                    </div>
-                                                    <div class="stat-info">
-                                                        <span class="stat-value" id="completed-categories">0</span>
-                                                        <span class="stat-label">Completed</span>
-                                                    </div>
-                                                </div>
-                                                <div class="stat-item">
-                                                    <div class="stat-icon in-progress">
-                                                        <i class="fas fa-clock"></i>
-                                                    </div>
-                                                    <div class="stat-info">
-                                                        <span class="stat-value" id="progress-categories">0</span>
-                                                        <span class="stat-label">In Progress</span>
-                                                    </div>
-                                                </div>
-                                                <div class="stat-item">
-                                                    <div class="stat-icon not-started">
-                                                        <i class="fas fa-circle"></i>
-                                                    </div>
-                                                    <div class="stat-info">
-                                                        <span class="stat-value" id="pending-categories">0</span>
-                                                        <span class="stat-label">Not Started</span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="categories-display" id="categories-display">
-                                            <div class="loading-state">
-                                                <div class="loading-spinner">
-                                                    <div class="spinner-ring"></div>
-                                                    <div class="spinner-ring"></div>
-                                                    <div class="spinner-ring"></div>
-                                                </div>
-                                                <span>Loading category data...</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Profile Settings Page -->
-                <div class="page" id="profile-page">
-                    <div class="page-header">
-                        <div class="page-title">
-                            <h1>Profile Settings</h1>
-                            <p>Manage your account and preferences</p>
-                        </div>
-                    </div>
-
-                    <div class="profile-container">
-                        <!-- Profile Information Card -->
-                        <div class="profile-card">
-                            <div class="profile-header">
-                                <div class="avatar-large">
-                                    <i class="fas fa-user"></i>
-                                </div>
-                                <div class="profile-info">
-                                    <h2 id="profile-name">Loading...</h2>
-                                    <p id="profile-email">Loading...</p>
-                                    <span class="last-login" id="profile-last-login">Last login: Loading...</span>
-                                </div>
-                            </div>
-                            
-                            <form class="profile-form" id="profile-form">
-                                <div class="form-section">
-                                    <h3><i class="fas fa-user-circle"></i> Personal Information</h3>
-                                    <div class="form-row">
-                                        <div class="form-group">
-                                            <label>School Name</label>
-                                            <input type="text" name="school_name" id="school_name" placeholder="Loading..." readonly>
-                                        </div>
-                                        <div class="form-group">
-                                            <label>Email</label>
-                                            <input type="email" name="email" id="email" placeholder="Loading...">
-                                        </div>
-                                    </div>
-                                    <div class="form-row">
-                                        <div class="form-group">
-                                            <label>Region</label>
-                                            <input type="text" name="region" id="region" placeholder="Loading..." readonly>
-                                        </div>
-                                        <div class="form-group">
-                                            <label>Division</label>
-                                            <input type="text" name="division" id="division" placeholder="Loading..." readonly>
-                                        </div>
-                                    </div>
-                                    <div class="form-row">
-                                        <div class="form-group">
-                                            <label>District</label>
-                                            <input type="text" name="district" id="district" placeholder="Loading..." readonly>
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <div class="form-section">
-                                    <h3><i class="fas fa-lock"></i> Security</h3>
-                                    <div class="form-row">
-                                        <div class="form-group">
-                                            <label>Current Password</label>
-                                            <input type="password" name="current_password" id="current_password" placeholder="Enter current password">
-                                        </div>
-                                    </div>
-                                    <div class="form-row">
-                                        <div class="form-group">
-                                            <label>New Password</label>
-                                            <input type="password" name="new_password" id="new_password" placeholder="Enter new password">
-                                        </div>
-                                        <div class="form-group">
-                                            <label>Confirm Password</label>
-                                            <input type="password" name="confirm_password" id="confirm_password" placeholder="Confirm new password">
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <div class="form-actions">
-                                    <button type="button" class="btn secondary" id="cancel-profile-btn">
-                                        Cancel
-                                    </button>
-                                    <button type="submit" id="save-profile-btn" class="btn primary">
-                                        <i class="fas fa-save"></i> Save Changes
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
-                        
-                        <!-- Security & Sessions Card -->
-                        <div class="security-card">
-                            <h3><i class="fas fa-shield-alt"></i> Security & Sessions</h3>
-                            
-                            <!-- Last Login Info -->
-                            <div class="security-section">
-                                <h4>Last Login Information</h4>
-                                <div class="login-info">
-                                    <div class="info-item">
-                                        <i class="fas fa-clock"></i>
-                                        <span id="last-login-time">Loading...</span>
-                                    </div>
-                                    <div class="info-item">
-                                        <i class="fas fa-map-marker-alt"></i>
-                                        <span id="last-login-location">Loading...</span>
-                                    </div>
-                                    <div class="info-item">
-                                        <i class="fas fa-desktop"></i>
-                                        <span id="last-login-device">Loading...</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Active Sessions -->
-                            <div class="security-section">
-                                <div class="section-header">
-                                    <h4>Active Sessions</h4>
-                                    <button class="btn secondary small" id="refresh-sessions-btn">
-                                        <i class="fas fa-sync-alt"></i> Refresh
-                                    </button>
-                                </div>
-                                <div class="sessions-list" id="sessions-list">
-                                    <div class="session-loading">
-                                        <i class="fas fa-spinner fa-spin"></i> Loading sessions...
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Login History -->
-                            <div class="security-section">
-                                <div class="section-header">
-                                    <h4>Recent Login History</h4>
-                                    <button class="btn secondary small" id="view-all-logins-btn">
-                                        <i class="fas fa-history"></i> View All
-                                    </button>
-                                </div>
-                                <div class="login-history" id="login-history">
-                                    <div class="history-loading">
-                                        <i class="fas fa-spinner fa-spin"></i> Loading history...
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Audit Logs Card -->
-                        <div class="audit-card">
-                            <h3><i class="fas fa-clipboard-list"></i> Audit Logs</h3>
-                            
-                            <div class="audit-controls">
-                                <div class="filter-group">
-                                    <label>Filter by:</label>
-                                    <select id="audit-filter">
-                                        <option value="all">All Activities</option>
-                                        <option value="category">Category Changes</option>
-                                        <option value="subsection">Subsection Changes</option>
-                                        <option value="topic">Topic Changes</option>
-                                        <option value="question">Question Changes</option>
-                                        <option value="sub_question">Sub-question Changes</option>
-                                    </select>
-                                </div>
-                                <div class="export-group">
-                                    <button class="btn secondary small" id="export-local-btn">
-                                        <i class="fas fa-download"></i> Export Local
-                                    </button>
-                                    <button class="btn secondary small" id="export-db-btn">
-                                        <i class="fas fa-database"></i> Save to DB
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div class="audit-logs" id="audit-logs">
-                                <div class="audit-loading">
-                                    <i class="fas fa-spinner fa-spin"></i> Loading audit logs...
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Preferences Card -->
-                        <div class="settings-card">
-                            <h3><i class="fas fa-cog"></i> Preferences</h3>
-                            <div class="setting-item">
-                                <div class="setting-info">
-                                    <i class="fas fa-bell"></i>
-                                    <div>
-                                        <h4>Email Notifications</h4>
-                                        <p>Receive important updates via email</p>
-                                    </div>
-                                </div>
-                                <label class="switch">
-                                    <input type="checkbox" id="email-notifications" checked>
-                                    <span class="slider"></span>
-                                </label>
-                            </div>
-
-                            <!-- Dark mode setting removed - project does not support dark mode -->
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+      </div>
     </div>
 
     <!-- Logout Modal -->
     <div class="modal" id="logout-modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Confirm Sign Out</h3>
-                <button class="close-modal">&times;</button>
-            </div>
-            <div class="modal-body">
-                <p>Are you sure you want to sign out? Any unsaved changes will be lost.</p>
-            </div>
-            <div class="modal-footer">
-                <button class="btn secondary close-modal">Cancel</button>
-                <button class="btn primary" id="confirm-logout">Sign Out</button>
-            </div>
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>Confirm Sign Out</h3>
+          <button class="close-modal">&times;</button>
         </div>
+        <div class="modal-body">
+          <p>
+            Are you sure you want to sign out? Any unsaved changes will be lost.
+          </p>
+        </div>
+        <div class="modal-footer">
+          <button class="btn secondary close-modal">Cancel</button>
+          <button class="btn primary" id="confirm-logout">Sign Out</button>
+        </div>
+      </div>
     </div>
 
-    <script src="{% static 'user_dash/responsive.js' %}"></script>
-</body>
+    <script src="{% static 'dashboard/js/responsive.js' %}"></script>
+  </body>
 </html>

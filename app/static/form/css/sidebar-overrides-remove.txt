@@ -1,0 +1,15 @@
+Lines to remove from main_form.css to ensure sidebar uniformity:
+
+Lines 1918-1946: Mobile sidebar media query conflicting with shared responsive.css
+Lines 1962-1964: Sidebar box-shadow override
+Lines 1969-1995: Sidebar-toggle and body.sidebar-open rules (conflicts with shared)
+Lines 2706-2720: Sidebar-close button (not needed with shared component)
+Lines 2732-2782: Complete sidebar responsive fixes section (conflicts with shared)
+Lines 2799-2806: Sidebar padding and menu-item margin overrides
+
+These should all be removed as the sidebar is now a shared component
+controlled by:
+- app/static/shared/css/sidebar.css
+- app/static/shared/css/responsive.css
+
+

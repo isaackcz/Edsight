@@ -1,0 +1,303 @@
+/**
+ * Edit Question Modal CSS
+ * Modal styles for editing questions - matches EdSight design system
+ */
+
+/* Modal Overlay */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(30, 30, 36, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  animation: fadeIn 0.22s ease-out;
+  backdrop-filter: blur(4px);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Modal Content */
+.modal-content {
+  background: var(--white);
+  border-radius: var(--border-radius);
+  box-shadow: var(--soft-shadow);
+  width: 90%;
+  max-width: 600px;
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: slideIn 0.3s ease-out;
+  border: 1px solid rgba(30, 30, 36, 0.08);
+}
+
+@keyframes slideIn {
+  from { 
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  to { 
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Modal Header */
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px 28px;
+  border-bottom: 1px solid rgba(30, 30, 36, 0.08);
+  background: var(--antiflash-white);
+  border-radius: var(--border-radius) var(--border-radius) 0 0;
+}
+
+.modal-header h3 {
+  margin: 0;
+  color: var(--black);
+  font-size: 1.4rem;
+  font-weight: var(--font-weight-bold);
+  font-family: var(--base-font-family);
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: var(--silver);
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 8px;
+  transition: var(--transition);
+  line-height: 1;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-close:hover {
+  background: rgba(30, 30, 36, 0.08);
+  color: var(--black);
+}
+
+/* Modal Body */
+.modal-body {
+  padding: 28px;
+}
+
+/* Form Groups */
+.form-group {
+  margin-bottom: 24px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--black);
+  font-weight: var(--font-weight-medium);
+  font-size: 0.9rem;
+  font-family: var(--base-font-family);
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+  width: 100%;
+  padding: 14px 18px;
+  border: 1px solid rgba(30, 30, 36, 0.08);
+  border-radius: 12px;
+  font-size: 0.95rem;
+  transition: var(--transition);
+  background: var(--white);
+  font-family: var(--base-font-family);
+  color: var(--black);
+}
+
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: var(--bice-blue);
+  box-shadow: 0 0 0 3px var(--focus-outline);
+}
+
+/* Error states */
+.form-group input.error,
+.form-group textarea.error,
+.form-group select.error {
+  border-color: var(--danger);
+  box-shadow: 0 0 0 3px rgba(244, 67, 54, 0.16);
+}
+
+.form-group .error-message {
+  color: var(--danger);
+  font-size: 0.8rem;
+  margin-top: 4px;
+  display: none;
+}
+
+.form-group.error .error-message {
+  display: block;
+}
+
+.form-group textarea {
+  resize: vertical;
+  min-height: 100px;
+  font-family: inherit;
+  line-height: 1.5;
+}
+
+/* Checkbox Label */
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  margin-bottom: 0;
+  font-family: var(--base-font-family);
+  font-weight: var(--font-weight-medium);
+  color: var(--black);
+  font-size: 0.9rem;
+  position: relative;
+  padding-left: 32px;
+}
+
+.checkbox-label input[type="checkbox"] {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+  height: 0;
+  width: 0;
+}
+
+.checkmark {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 20px;
+  width: 20px;
+  background-color: var(--white);
+  border: 2px solid rgba(30, 30, 36, 0.08);
+  border-radius: 6px;
+  transition: var(--transition);
+}
+
+.checkbox-label:hover input ~ .checkmark {
+  border-color: var(--bice-blue);
+}
+
+.checkbox-label input:checked ~ .checkmark {
+  background-color: var(--bice-blue);
+  border-color: var(--bice-blue);
+}
+
+.checkmark:after {
+  content: "";
+  position: absolute;
+  display: none;
+}
+
+.checkbox-label input:checked ~ .checkmark:after {
+  display: block;
+}
+
+.checkbox-label .checkmark:after {
+  left: 6px;
+  top: 2px;
+  width: 6px;
+  height: 10px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+/* Modal Footer */
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 16px;
+  padding: 24px 28px;
+  border-top: 1px solid rgba(30, 30, 36, 0.08);
+  background: var(--antiflash-white);
+  border-radius: 0 0 var(--border-radius) var(--border-radius);
+}
+
+/* Button Styles */
+.btn {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: var(--transition);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--base-font-family);
+  min-width: 120px;
+  justify-content: center;
+}
+
+.btn.primary {
+  background: var(--bice-blue);
+  color: var(--white);
+  box-shadow: var(--subtle-shadow);
+}
+
+.btn.primary:hover:not(:disabled) {
+  background: var(--polynesian-blue);
+  transform: translateY(-1px);
+  box-shadow: var(--soft-shadow);
+}
+
+.btn.secondary {
+  background: var(--white);
+  color: var(--black);
+  border: 1px solid rgba(30, 30, 36, 0.08);
+}
+
+.btn.secondary:hover:not(:disabled) {
+  background: var(--antiflash-white);
+  border-color: var(--silver);
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .modal-content {
+    width: 95%;
+    margin: 20px;
+    max-height: calc(100vh - 40px);
+  }
+  
+  .modal-header,
+  .modal-body,
+  .modal-footer {
+    padding: 20px;
+  }
+  
+  .modal-footer {
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+

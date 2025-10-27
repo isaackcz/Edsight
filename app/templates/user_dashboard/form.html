@@ -1,0 +1,255 @@
+{% extends 'user_dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Form Management{% endblock %}
+{% block breadcrumb %}Form Management{% endblock %}
+
+{% block extra_css %}
+<!-- Custom focus styles for question text fields -->
+<style>
+  /* Remove the strong blue focus ring for question text fields only.
+     Keep other focus outlines (e.g., keyboard focus for accessibility)
+     intact elsewhere. This targets both input.question-text and
+     textarea.question-text used in the questions UI. */
+  .question-text:focus {
+    outline: none !important;
+    box-shadow: none !important;
+    border-color: rgba(0, 0, 0, 0.08) !important; /* keep subtle border */
+  }
+  /* Also ensure the inline error state doesn't reintroduce a colored outline */
+  .question-text.input-error:focus,
+  .question-text.input-error {
+    outline: none !important;
+    box-shadow: none !important;
+  }
+</style>
+
+<!-- Form-specific CSS from existing form module -->
+<link rel="stylesheet" href="{% static 'form/css/main_form.css' %}" />
+<link rel="stylesheet" href="{% static 'form/css/tree-view.css' %}" />
+<link rel="stylesheet" href="{% static 'form/css/tabs.css' %}" />
+<link rel="stylesheet" href="{% static 'form/css/edit-question-modal.css' %}" />
+<link rel="stylesheet" href="{% static 'form/css/form-responsive.css' %}" />
+
+<!-- Sidebar Reset - Ensures uniformity with shared sidebar component -->
+<link rel="stylesheet" href="{% static 'form/css/sidebar-reset.css' %}" />
+
+<!-- Overrides: ensure cards do not move on hover -->
+<style>
+  /* Strong, specific overrides loaded after other CSS files */
+  .form-section,
+  .form-section:hover,
+  .modern-card,
+  .modern-card:hover,
+  .modern-section,
+  .modern-section:hover,
+  .draft-col,
+  .draft-col:hover,
+  .question-card,
+  .question-card:hover {
+    transform: none !important;
+    transition: none !important;
+    box-shadow: none !important;
+  }
+  /* Also prevent subtle shift caused by translateZ/translateY on children */
+  .form-section *,
+  .modern-card * {
+    transition: none !important;
+  }
+  /* Make answer-type selects match the Category select design, but
+     remove the terminal chevron/triangle so they appear plain */
+  select.answer-type {
+    width: 100%;
+    padding: 12px 16px !important; /* no right padding for an icon */
+    border-radius: var(--border-radius) !important;
+    border: 1.5px solid #e2e8f0 !important;
+    background: #fff !important;
+    font-size: 15px !important;
+    appearance: none !important;
+    -webkit-appearance: none !important;
+  }
+  select.answer-type:focus {
+    outline: none !important;
+    border-color: var(--light) !important;
+    background: #f7fafd !important;
+    box-shadow: 0 0 0 3px rgba(171, 199, 214, 0.18) !important;
+  }
+</style>
+
+<!-- Skeleton Loader Component -->
+<link rel="stylesheet" href="{% static 'components/skeleton-loader/skeleton-loader.css' %}">
+
+<!-- Fade Animations Component -->
+<link rel="stylesheet" href="{% static 'components/animations/fade-animations.css' %}">
+{% endblock %}
+
+{% block extra_js %}
+<!-- Skeleton Loader Component Scripts -->
+<script src="{% static 'components/skeleton-loader/skeleton-loader.js' %}"></script>
+<script src="{% static 'components/skeleton-loader/crud-loader-utils.js' %}"></script>
+<script src="{% static 'components/skeleton-loader/loader-integration.js' %}"></script>
+
+<!-- Fade Animations Component Scripts -->
+<script src="{% static 'components/animations/fade-animations.js' %}"></script>
+<script src="{% static 'components/animations/animation-integration.js' %}"></script>
+
+<!-- Modular form JavaScript files -->
+<script src="{% static 'form/js/tab-manager.js' %}"></script>
+<script src="{% static 'form/js/question-manager.js' %}"></script>
+<script src="{% static 'form/js/draft-manager.js' %}"></script>
+<script src="{% static 'form/js/ui-manager.js' %}"></script>
+<script type="module" src="{% static 'form/js/form.js' %}"></script>
+
+<!-- Form initialization script -->
+<script>
+  // Initialize the enhanced UI
+  document.addEventListener("DOMContentLoaded", function () {
+    // Initialize modern UI enhancements
+    if (typeof initModernUI === 'function') {
+      initModernUI();
+    }
+
+    // Add smooth scrolling for better UX
+    document.documentElement.style.scrollBehavior = "smooth";
+
+    // Add loading states to buttons
+    const buttons = document.querySelectorAll(".btn");
+    buttons.forEach((button) => {
+      button.addEventListener("click", function () {
+        if (
+          this.classList.contains("primary") ||
+          this.classList.contains("modern-btn")
+        ) {
+          this.style.transform = "scale(0.98)";
+          setTimeout(() => {
+            this.style.transform = "";
+          }, 150);
+        }
+      });
+    });
+
+    // Add focus indicators for better accessibility
+    const focusableElements = document.querySelectorAll(
+      "input, select, button, textarea"
+    );
+    focusableElements.forEach((element) => {
+      // Do not apply the JS focus outline to question inputs/textareas;
+      // these are handled by CSS overrides to keep visual consistency.
+      if (
+        element.classList &&
+        element.classList.contains("question-text")
+      ) {
+        return;
+      }
+      element.addEventListener("focus", function () {
+        this.style.outline = "2px solid var(--primary)";
+        this.style.outlineOffset = "2px";
+      });
+
+      element.addEventListener("blur", function () {
+        this.style.outline = "";
+        this.style.outlineOffset = "";
+      });
+    });
+
+    // Add hover effects to cards
+    const cards = document.querySelectorAll(
+      ".modern-card, .modern-section"
+    );
+    cards.forEach((card) => {
+      card.addEventListener("mouseenter", function () {
+        this.style.transform = "translateY(-2px)";
+      });
+
+      card.addEventListener("mouseleave", function () {
+        this.style.transform = "translateY(0)";
+      });
+    });
+
+    // Update context display when selections change
+    const categorySelect = document.getElementById("category");
+    const categoryDisplay = document.getElementById("category-display");
+
+    if (categorySelect && categoryDisplay) {
+      categorySelect.addEventListener("change", function () {
+        categoryDisplay.textContent = this.value || "Not selected";
+        categoryDisplay.style.color = this.value
+          ? "var(--primary)"
+          : "var(--accent)";
+      });
+    }
+
+    // Move to next step: show questions section
+    document
+      .getElementById("next-to-questions")
+      ?.addEventListener("click", function () {
+        document.getElementById("topic-section").style.display = "none";
+        document.getElementById("questions-section").style.display =
+          "block";
+      });
+
+    // Back to topic
+    document
+      .getElementById("back-to-topic")
+      ?.addEventListener("click", function () {
+        document.getElementById("questions-section").style.display = "none";
+        document.getElementById("topic-section").style.display = "block";
+      });
+
+    // Finish topic -> show confirmation
+    document
+      .getElementById("finish-topic")
+      ?.addEventListener("click", function () {
+        document.getElementById("questions-section").style.display = "none";
+        document.getElementById("confirmation-section").style.display =
+          "block";
+      });
+
+    // Add another topic -> show topic section
+    document
+      .getElementById("add-another-topic")
+      ?.addEventListener("click", function () {
+        document.getElementById("confirmation-section").style.display =
+          "none";
+        document.getElementById("topic-section").style.display = "block";
+      });
+
+    // Finish process -> redirect
+    document
+      .getElementById("finish-process")
+      ?.addEventListener("click", function () {
+        // Redirect to dashboard or show completion state
+        window.location.href = "/user/dashboard/";
+      });
+  });
+
+  function initModernUI() {
+    console.log("Modern UI initialized");
+    // Additional initialization can be added here
+  }
+</script>
+{% endblock %}
+
+{% block content %}
+<!-- Page Title -->
+<div class="page-header">
+  <h1>Form Management</h1>
+  <p>Manage your questionnaire categories, topics, and questions</p>
+</div>
+
+<!-- Enhanced Drafted Questionnaires Section -->
+<div class="drafts-section modern-section">
+  <div class="section-header">
+    <div class="section-title">
+      <h3>Drafted Questionnaires</h3>
+      <p class="section-description">
+        Manage your existing questionnaire drafts and templates.
+      </p>
+    </div>
+  </div>
+  <div class="drafts-container modern-grid">
+    <!-- Categories will be added here -->
+  </div>
+</div>
+{% endblock %}
+

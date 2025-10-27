@@ -1,0 +1,409 @@
+/* form_responsive.css */
+/* Mobile-First Design - Base styles are in main CSS */
+
+/* Ultra-wide screens (min-width: 1920px) */
+@media (min-width: 1920px) {
+  .dashboard-container {
+    padding: 32px;
+    gap: 40px;
+  }
+  .drafts-container {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .form-row {
+    flex-direction: row;
+    gap: 40px;
+  }
+  .form-section {
+    padding: 60px;
+  }
+  .modern-card {
+    padding: 60px;
+  }
+}
+
+/* Large screens (min-width: 1281px) */
+@media (min-width: 1281px) {
+  .dashboard-container {
+    padding: 28px;
+    gap: 32px;
+  }
+  .drafts-container {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .form-row {
+    flex-direction: row;
+    gap: 32px;
+  }
+  .questions-container {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 25px;
+  }
+  .form-section {
+    padding: 48px;
+  }
+  .modern-card {
+    padding: 48px;
+  }
+}
+
+/* Standard desktops (max-width: 1280px) */
+@media (max-width: 1280px) {
+  .dashboard-container {
+    padding: 24px;
+    gap: 28px;
+  }
+  .sidebar {
+    width: 220px;
+  }
+  .drafts-container {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .form-row {
+    flex-direction: row;
+    gap: 25px;
+  }
+  .form-section {
+    padding: 40px;
+  }
+  .modern-card {
+    padding: 40px;
+  }
+}
+
+/* Small laptops (max-width: 1024px) */
+@media (max-width: 1024px) {
+  .dashboard-container {
+    padding: 20px;
+    gap: 24px;
+  }
+  .drafts-container {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 25px;
+  }
+  .draft-col:last-child {
+    grid-column: span 2;
+  }
+  .form-row {
+    flex-direction: column;
+    gap: 20px;
+  }
+  .questions-container {
+    grid-template-columns: 1fr;
+  }
+  .form-section {
+    padding: 32px;
+  }
+  .modern-card {
+    padding: 32px;
+  }
+}
+
+/* Tablets (max-width: 768px) */
+@media (max-width: 768px) {
+  .dashboard-container {
+    flex-direction: column;
+    padding: 16px;
+    gap: 20px;
+  }
+  .sidebar {
+    width: 100%;
+    height: auto;
+    flex-direction: row;
+    padding: 10px;
+    align-items: center;
+  }
+  .logo {
+    padding: 0;
+    border: none;
+    margin-right: 15px;
+  }
+  .logo span {
+    display: none;
+  }
+  .menu {
+    display: flex;
+    flex: 1;
+    padding: 0;
+    justify-content: space-around;
+  }
+  .menu-item {
+    flex-direction: column;
+    padding: 8px 5px;
+    margin: 0;
+    border-left: none;
+    border-top: 3px solid transparent;
+  }
+  .menu-item.active {
+    border-top: 3px solid var(--light);
+    border-left: none;
+  }
+  .menu-item span {
+    font-size: 12px;
+  }
+  .user-profile {
+    border: none;
+    padding: 0;
+    margin-left: 15px;
+  }
+  .user-info {
+    display: none;
+  }
+  .header {
+    padding: 15px;
+  }
+  .drafts-container {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  .draft-col:last-child {
+    grid-column: span 1;
+  }
+  .content {
+    padding: 16px;
+    width: 100%;
+  }
+  .progress-indicator {
+    padding: 0 20px;
+  }
+  .progress-indicator::before {
+    left: 40px;
+    right: 40px;
+  }
+  .form-section {
+    padding: 24px;
+    width: 100%;
+  }
+  .modern-card {
+    padding: 24px;
+    width: 100%;
+  }
+  .confirmation-card {
+    flex-direction: column;
+    text-align: center;
+  }
+  .confirmation-content {
+    text-align: center;
+  }
+  .option-buttons {
+    flex-direction: column;
+  }
+  .btn {
+    width: 100%;
+  }
+}
+
+/* Small phones (max-width: 480px) */
+@media (max-width: 480px) {
+  html {
+    font-size: 14px;
+  }
+  .dashboard-container {
+    padding: 12px;
+    gap: 16px;
+  }
+  .menu-item span {
+    display: none;
+  }
+  .menu-item i {
+    font-size: 20px;
+    margin: 0;
+  }
+  .header {
+    flex-direction: column;
+    gap: 15px;
+    align-items: stretch;
+  }
+  .header-actions {
+    justify-content: space-between;
+  }
+  .progress-indicator {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 0;
+    gap: 20px;
+  }
+  .progress-indicator::before,
+  .progress-indicator::after {
+    display: none;
+  }
+  .step {
+    flex-direction: row;
+    align-items: center;
+    gap: 15px;
+  }
+  .step-number {
+    margin-bottom: 0;
+  }
+  .drafts-container {
+    grid-template-columns: 1fr;
+  }
+  .content {
+    padding: 12px;
+    width: 100%;
+  }
+  .form-section {
+    padding: 16px;
+    width: 100%;
+  }
+  .modern-card {
+    padding: 16px;
+    width: 100%;
+  }
+  .question-card {
+    padding: 15px;
+  }
+  .question-details {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+  .grouped-meta {
+    flex-direction: column;
+    gap: 15px;
+  }
+  .form-actions {
+    flex-direction: column;
+    gap: 10px;
+  }
+  .btn {
+    width: 100%;
+  }
+  .confirmation-card {
+    padding: 20px;
+  }
+  .confirmation-icon {
+    width: 50px;
+    height: 50px;
+    font-size: 24px;
+  }
+  .option-buttons {
+    flex-direction: column;
+    gap: 10px;
+  }
+}
+
+/* Tablet landscape and smaller desktop adjustments */
+@media (max-width: 1024px) and (min-width: 769px) {
+  .sidebar {
+    width: 80px;
+  }
+  .logo span,
+  .menu-item span,
+  .user-info {
+    display: none;
+  }
+  .logo {
+    justify-content: center;
+    padding: 0 10px 20px;
+  }
+  .menu-item {
+    justify-content: center;
+    padding: 14px 0;
+  }
+  .user-profile {
+    justify-content: center;
+    padding: 20px 0;
+  }
+}
+
+/* Special adjustments for form elements */
+@media (max-width: 768px) {
+  .question-details {
+    grid-template-columns: 1fr;
+  }
+  .grouped-meta {
+    flex-direction: column;
+  }
+  .meta-field {
+    width: 100%;
+  }
+  .answer-preview-box {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+/* Sidebar toggle adjustments for mobile */
+@media (max-width: 768px) {
+  .sidebar {
+    position: fixed;
+    left: -260px;
+    top: 0;
+    bottom: 0;
+    width: 260px;
+    z-index: 1000;
+    transition: left 0.3s ease;
+  }
+  .sidebar.active {
+    left: 0;
+  }
+  .sidebar-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+  }
+  .sidebar-overlay.active {
+    display: block;
+  }
+  .sidebar-toggle {
+    display: block;
+  }
+}
+
+/* Form section adjustments for smaller screens */
+@media (max-width: 1024px) {
+  .form-section {
+    margin-bottom: 20px;
+    width: 100%;
+    max-width: none;
+  }
+  .drafts-section {
+    margin-top: 30px;
+  }
+  .modern-card {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+/* Confirmation section adjustments */
+@media (max-width: 768px) {
+  #confirmation-section {
+    padding: 25px;
+  }
+  .confirmation-card {
+    flex-direction: column;
+    text-align: center;
+  }
+  .confirmation-content {
+    text-align: center;
+  }
+}
+
+/* Drafted questionnaires section adjustments */
+@media (max-width: 480px) {
+  .draft-col {
+    padding: 15px;
+  }
+  .category-header,
+  .sub-section-item,
+  .topic-card {
+    padding: 10px 12px;
+  }
+}
+
+/* Defensive: hide any stepper/progress visuals if referenced elsewhere */
+.progress-indicator,
+.progress-container,
+.step,
+.step::before,
+.step::after {
+  display: none !important;
+  opacity: 0 !important;
+  transform: none !important;
+}

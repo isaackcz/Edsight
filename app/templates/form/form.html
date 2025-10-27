@@ -1,290 +1,462 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Admin Panel - Question Creation</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="{% static 'dashboard/dashboard.css' %}">
-    <link rel="stylesheet" href="{% static 'dashboard/dash_responsive.css' %}">
-    <link rel="stylesheet" href="{% static 'form/form.css' %}">
-    <link rel="icon" type="image/png" href="{% static 'auth/img/logo_big.png' %}">
-</head>
-<body>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <!-- Phosphor Icons (CDN preferred) with local static fallback -->
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.2/dist/phosphor.css"
+    />
+
+    <link rel="icon" type="image/png" href="{% static 'auth/img/logo.png' %}" />
+    <!-- Phosphor icons and typography (from dashboard layout) -->
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.2/src/bold/style.css"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Shared dashboard CSS tokens and layout styles -->
+    <style>
+
+    </style>
+    <style>
+      /* Remove the strong blue focus ring for question text fields only.
+         Keep other focus outlines (e.g., keyboard focus for accessibility)
+         intact elsewhere. This targets both input.question-text and
+         textarea.question-text used in the questions UI. */
+      .question-text:focus {
+        outline: none !important;
+        box-shadow: none !important;
+        border-color: rgba(0, 0, 0, 0.08) !important; /* keep subtle border */
+      }
+      /* Also ensure the inline error state doesn't reintroduce a colored outline */
+      .question-text.input-error:focus,
+      .question-text.input-error {
+        outline: none !important;
+        box-shadow: none !important;
+      }
+    </style>
+    <link rel="stylesheet" href="{% static 'form/css/main_form.css' %}"/>
+    <link rel="stylesheet" href="{% static 'form/css/tree-view.css' %}"/>
+    <link rel="stylesheet" href="{% static 'form/css/tabs.css' %}"/>
+    <link rel="stylesheet" href="{% static 'form/css/edit-question-modal.css' %}"/>
+    <link rel="stylesheet" href="{% static 'shared/css/sidebar.css' %}" />
+    <link rel="stylesheet" href="{% static 'shared/css/header.css' %}" />
+    <link rel="stylesheet" href="{% static 'shared/css/main-content.css' %}" />
+    <link rel="stylesheet" href="{% static 'shared/css/responsive.css' %}" />
+    <!-- Overrides: ensure cards do not move on hover -->
+    <style>
+      /* Strong, specific overrides loaded after other CSS files */
+      .form-section,
+      .form-section:hover,
+      .modern-card,
+      .modern-card:hover,
+      .modern-section,
+      .modern-section:hover,
+      .draft-col,
+      .draft-col:hover,
+      .question-card,
+      .question-card:hover {
+        transform: none !important;
+        transition: none !important;
+        box-shadow: none !important;
+      }
+      /* Also prevent subtle shift caused by translateZ/translateY on children */
+      .form-section *,
+      .modern-card * {
+        transition: none !important;
+      }
+      /* Make answer-type selects match the Category select design, but
+         remove the terminal chevron/triangle so they appear plain */
+      select.answer-type {
+        width: 100%;
+        padding: 12px 16px !important; /* no right padding for an icon */
+        border-radius: var(--border-radius) !important;
+        border: 1.5px solid #e2e8f0 !important;
+        background: #fff !important;
+        font-size: 15px !important;
+        appearance: none !important;
+        -webkit-appearance: none !important;
+      }
+      select.answer-type:focus {
+        outline: none !important;
+        border-color: var(--light) !important;
+        background: #f7fafd !important;
+        box-shadow: 0 0 0 3px rgba(171, 199, 214, 0.18) !important;
+      }
+    </style>
+  </head>
+  <body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
     <div class="dashboard-container">
-        <!-- Sidebar (copied from dashboard.html) -->
-        <div class="sidebar">
-            <div class="logo">
-                <i class="fas fa-chart-line"></i>
-                <span>Form Analytics</span>
-            </div>
-            <div class="menu">
-                <a href="/dashboard/" class="menu-item">
-                    <i class="fas fa-home"></i>
-                    <span>Dashboard</span>
-                </a>
-                <a href="/form/" class="menu-item active">
-                    <i class="fas fa-database"></i>
-                    <span>Form</span>
-                </a>
-                <a href="/form-management/" class="menu-item">
-                    <i class="fas fa-clipboard-check"></i>
-                    <span>Form Management</span>
-                </a>
-                <a href="/report/" class="menu-item">
-                    <i class="fas fa-chart-pie"></i>
-                    <span>Analytics</span>
-                </a>
-                <div class="menu-item">
-                    <i class="fas fa-cog"></i>
-                    <span>Settings</span>
-                </div>
-                <a href="{% url 'logout' %}" class="menu-item logout-btn">
-                    <i class="fas fa-sign-out-alt"></i>
-                    <span>Sign Out</span>
-                </a>
-            </div>
-            <div class="user-profile">
-                <div class="avatar">
-                    <i class="fas fa-user"></i>
-                </div>
-                <div class="user-info">
-                    <span class="username">Admin User</span>
-                    <span class="role">Administrator</span>
-                </div>
-            </div>
+      <!-- Sidebar (copied from dashboard.html for consistent UI) -->
+      <div class="sidebar">
+        <div class="logo">
+          <span>edz</span>
         </div>
+        <div class="menu">
+          <a href="/dashboard/" class="menu-item">
+            <i class="ph-bold ph-house"></i>
+            <span>Dashboard</span>
+          </a>
+          <a href="/form/" class="menu-item active">
+            <i class="ph-bold ph-database"></i>
+            <span>Form</span>
+          </a>
+          <a href="/form-management/" class="menu-item">
+            <i class="ph-bold ph-clipboard-text"></i>
+            <span>Form Mgmt.</span>
+          </a>
+          <a href="/reports/" class="menu-item">
+            <i class="ph-bold ph-chart-pie"></i>
+            <span>Reports</span>
+          </a>
+        </div>
+      </div>
 
-        <!-- Main Content -->
-        <div class="main-content">
-            <!-- Header (dashboard style with search + notifications) -->
-            <div class="header">
-                <div class="search-bar">
-                    <i class="fas fa-search"></i>
-                    <input type="text" placeholder="Search forms, topics...">
+      <!-- Main Content -->
+      <div class="main-content">
+        <!-- Header (dashboard-style: hamburger, notifications, profile) -->
+        <div class="header">
+          <div class="header-left">
+            <button class="hamburger" aria-label="Open menu" title="Menu">
+              <i class="ph-bold ph-list"></i>
+            </button>
+          </div>
+          <div class="header-actions">
+            <div class="notification" title="Notifications">
+              <i class="ph-bold ph-bell"></i>
+              <span class="notif-badge">3</span>
+
+              <!-- Notifications panel -->
+              <div class="notifications-panel" aria-hidden="true">
+                <div class="panel-header">
+                  <div class="panel-title">Notifications</div>
+                  <button class="btn-icon" title="Notifications settings">
+                    <i class="ph-bold ph-gear"></i>
+                  </button>
                 </div>
-                <div class="header-actions">
-                    <div class="notification">
-                        <i class="fas fa-bell"></i>
-                        <span class="badge">2</span>
+                <div class="panel-body">
+                  <!-- Sample notification items -->
+                  <div class="notif-item">
+                    <div class="notif-avatar">
+                      <img
+                        src="{% static 'auth/img/default-profile.jpg' %}"
+                        alt="u"
+                      />
                     </div>
+                    <div class="notif-content">
+                      <div class="notif-title">
+                        <div class="notif-name">Jackie Monroe</div>
+                        <div class="notif-message">
+                          requests permission to change
+                          <strong>Design System</strong>
+                        </div>
+                      </div>
+                      <div class="notif-meta">Project • 5 min ago</div>
+                    </div>
+                  </div>
+                  <div class="notif-item">
+                    <div class="notif-avatar">
+                      <img
+                        src="{% static 'auth/img/default-profile.jpg' %}"
+                        alt="u"
+                      />
+                    </div>
+                    <div class="notif-content">
+                      <div class="notif-title">
+                        <div class="notif-name">Chris Graham</div>
+                        <div class="notif-message">
+                          has added a new employee
+                        </div>
+                      </div>
+                      <div class="notif-meta">Employee • 28 min ago</div>
+                    </div>
+                  </div>
+                  <div class="notif-item">
+                    <div class="notif-avatar">
+                      <img
+                        src="{% static 'auth/img/default-profile.jpg' %}"
+                        alt="u"
+                      />
+                    </div>
+                    <div class="notif-content">
+                      <div class="notif-title">
+                        <div class="notif-name">Paul Miller</div>
+                        <div class="notif-message">
+                          has added a new project <strong>Mobile App</strong>
+                        </div>
+                      </div>
+                      <div class="notif-meta">Project • 12 hours ago</div>
+                    </div>
+                  </div>
                 </div>
+              </div>
             </div>
 
-            <!-- Form Content -->
-            <div class="content">
-                <!-- Enhanced Progress Indicator -->
-                <div class="progress-container">
-                    <div class="progress-indicator" data-step="1">
-                        <div class="step active">
-                            <div class="step-circle">
-                                <div class="step-number">1</div>
-                                <div class="step-check"><i class="fas fa-check"></i></div>
-                            </div>
-                            <div class="step-content">
-                                <div class="step-label">Set Topic</div>
-                                <div class="step-description">Choose category and create topic</div>
-                            </div>
-                        </div>
-                        <div class="step">
-                            <div class="step-circle">
-                                <div class="step-number">2</div>
-                                <div class="step-check"><i class="fas fa-check"></i></div>
-                            </div>
-                            <div class="step-content">
-                                <div class="step-label">Add Questions</div>
-                                <div class="step-description">Create and configure questions</div>
-                            </div>
-                        </div>
-                        <div class="step">
-                            <div class="step-circle">
-                                <div class="step-number">3</div>
-                                <div class="step-check"><i class="fas fa-check"></i></div>
-                            </div>
-                            <div class="step-content">
-                                <div class="step-label">Confirm</div>
-                                <div class="step-description">Review and finalize</div>
-                            </div>
-                        </div>
+            <!-- Avatar / Profile -->
+            <div class="profile">
+              <button
+                class="avatar-btn"
+                aria-haspopup="true"
+                aria-expanded="false"
+                aria-label="Open profile menu"
+              >
+                <span class="avatar">
+                  <img
+                    src="{% static 'auth/img/default-profile.jpg' %}"
+                    alt="Default profile"
+                  />
+                </span>
+              </button>
+              <div
+                class="profile-dropdown"
+                role="menu"
+                aria-label="Profile menu"
+              >
+                <div class="profile-header">
+                  <div
+                    class="avatar"
+                    style="width: 40px; height: 40px; flex: 0 0 auto"
+                  >
+                    <img
+                      src="{% static 'auth/img/default-profile.jpg' %}"
+                      alt="Profile"
+                    />
+                  </div>
+                  <div>
+                    <div class="name">
+                      {% if user and user.is_authenticated %} {{
+                      user.get_full_name|default:user.username }} {% else %}
+                      John Doe {% endif %}
                     </div>
+                    <div class="subtext">
+                      {% if user and user.is_authenticated %}{{
+                      user.email|default:'' }}{% else %}Administrator{% endif %}
+                    </div>
+                  </div>
                 </div>
 
-                <!-- Enhanced Topic Section -->
-                <div class="form-section modern-card" id="topic-section">
-                    <div class="section-header">
-                        <div class="section-icon">
-                            <i class="fas fa-plus-circle"></i>
-                        </div>
-                        <div class="section-title">
-                            <h3>Create a New Topic</h3>
-                            <p class="section-description">Select a category and sub-section, then name your new topic to get started.</p>
-                        </div>
-                    </div>
-                    
-                    <div class="context-info-card">
-                        <div class="context-item">
-                            <i class="fas fa-folder"></i>
-                            <span class="context-label">Category:</span>
-                            <span id="category-display" class="context-value">Not selected</span>
-                        </div>
-                        <div class="context-separator"></div>
-                        <div class="context-item">
-                            <i class="fas fa-layer-group"></i>
-                            <span class="context-label">Sub-section:</span>
-                            <span id="subsection-display" class="context-value">Not selected</span>
-                        </div>
-                    </div>
-
-                    <div class="form-grid">
-                        <div class="form-group modern-input">
-                            <label for="category" class="modern-label">
-                                Category
-                            </label>
-                            <div class="select-wrapper modern-select">
-                                <select id="category" name="category" required>
-                                    <option value="">Choose a category</option>
-                                </select>
-                            </div>
-                        </div>
-                        
-                        <div class="form-group modern-input">
-                            <label for="sub-section" class="modern-label">
-                                Sub-section
-                            </label>
-                            <div class="select-wrapper modern-select">
-                                <select id="sub-section" name="sub-section" required>
-                                    <option value="">Choose a sub-section</option>
-                                </select>
-                            </div>
-                        </div>
-                        
-                        <div class="form-group modern-input full-width">
-                            <label for="topic" class="modern-label">
-                                Topic Name
-                            </label>
-                            <div class="input-wrapper modern-input-field" style="position:relative;">
-                                <input type="text" id="topic" name="topic" placeholder="Enter or select topic name" autocomplete="off" required>
-                                <div id="topic-suggestions" class="autocomplete-suggestions modern-dropdown"></div>
-                            </div>
-                            <div class="input-hint">
-                                Start typing to select an existing topic or create a new one
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div id="topic-area"></div>
-                    
-                    <div class="form-actions modern-actions">
-                        <button type="button" id="next-to-questions" class="btn primary modern-btn">
-                            <span>Next: Add Questions</span>
-                            <i class="fas fa-arrow-right"></i>
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Questions Section (Hidden Initially) -->
-                <div class="form-section" id="questions-section" style="display: none;">
-                    <div class="section-header">
-                        <h3><i class="fas fa-question-circle"></i> Add Questions to Topic</h3>
-                        <div class="topic-info">
-                            <span id="current-topic-name"></span>
-                            <span class="topic-meta"></span>
-                        </div>
-                    </div>
-                    <div class="questions-container" id="questions-container">
-                        <!-- Questions will be added here -->
-                    </div>
-                    <button type="button" id="add-question" class="btn secondary">
-                        <i class="fas fa-plus"></i> Add Another Question
+                <a href="/profile/"
+                  ><i class="ph-bold ph-user"></i>View profile</a
+                >
+                <a href="/settings/"><i class="ph-bold ph-gear"></i>Settings</a>
+                <div class="dropdown-logout">
+                  <form method="post" action="/logout/">
+                    {% csrf_token %}
+                    <button type="submit">
+                      <i class="ph-bold ph-sign-out"></i>Logout
                     </button>
-                    <div class="form-actions">
-                        <button type="button" id="back-to-topic" class="btn outline">
-                            <i class="fas fa-arrow-left"></i> Back to Topic
-                        </button>
-                        <button type="button" id="finish-topic" class="btn primary">
-                            Finish Topic <i class="fas fa-check"></i>
-                        </button>
-                    </div>
+                  </form>
                 </div>
-
-                <!-- Confirmation Section (Hidden Initially) -->
-                <div class="form-section modern-card" id="confirmation-section" style="display: none;">
-                    <div class="section-header">
-                        <div class="section-icon">
-                            <i class="fas fa-check-circle"></i>
-                        </div>
-                        <div class="section-title">
-                            <h3>Topic Created Successfully!</h3>
-                            <p class="section-description">Your topic and questions have been saved successfully.</p>
-                        </div>
-                    </div>
-                    <div class="confirmation-card">
-                        <div class="confirmation-icon">
-                            <i class="fas fa-check"></i>
-                        </div>
-                        <div class="confirmation-content">
-                            <p>You've successfully created the topic:</p>
-                            <h4 id="confirmed-topic-name">Classroom Safety</h4>
-                            <p class="topic-meta">(Infrastructure > Classrooms)</p>
-                            <div class="questions-summary">
-                                <p><i class="fas fa-question"></i> <span id="questions-count">3</span> questions added</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="confirmation-options">
-                        <h4>What would you like to do next?</h4>
-                        <div class="option-buttons">
-                            <button type="button" id="add-another-topic" class="btn primary">
-                                <i class="fas fa-plus"></i> Add Another Topic
-                            </button>
-                            <button type="button" id="finish-process" class="btn outline">
-                                <i class="fas fa-home"></i> Return to Dashboard
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                <!-- Enhanced Drafted Questionnaires Section -->
-                <div class="drafts-section modern-section">
-                    <div class="section-header">
-                        <div class="section-icon">
-                            <i class="fas fa-file-alt"></i>
-                        </div>
-                        <div class="section-title">
-                            <h3>Drafted Questionnaires</h3>
-                            <p class="section-description">Manage your existing questionnaire drafts and templates.</p>
-                        </div>
-                    </div>
-                    <div class="drafts-container modern-grid">
-                        <!-- Categories will be added here -->
-                    </div>
-                </div>
+              </div>
             </div>
+          </div>
         </div>
+
+        <!-- Form Content -->
+        <div class="content" id="main-content">
+          <!-- Page Title -->
+          <div class="page-header">
+            <h1>Form Management</h1>
+            <p>Manage your questionnaire categories, topics, and questions</p>
+          </div>
+
+
+          <!-- Enhanced Drafted Questionnaires Section -->
+          <div class="drafts-section modern-section">
+            <div class="section-header">
+              <div class="section-title">
+                <h3>Drafted Questionnaires</h3>
+                <p class="section-description">
+                  Manage your existing questionnaire drafts and templates.
+                </p>
+              </div>
+            </div>
+            <div class="drafts-container modern-grid">
+              <!-- Categories will be added here -->
+            </div>
+          </div>
+        </div>
+        <!-- Footer (copied from dashboard layout for consistent UI) -->
+        <div class="site-footer">
+          <div>© <span id="year"></span> EdSight — All rights reserved</div>
+        </div>
+      </div>
     </div>
-    <script type="module" src="{% static 'form/form.js' %}"></script>
-        <style>
-.sidebar .menu a.menu-item {
-    text-decoration: none !important;
-    color: inherit !important;
-    display: flex;
-    align-items: center;
-}
-.sidebar .menu a.menu-item i {
-    color: inherit !important;
-}
-.sidebar .menu a.menu-item.active {
-    font-weight: bold;
-}
-.topic-context-info {
-    font-size: 14px;
-    color: #666;
-    margin-bottom: 15px;
-    padding: 8px 12px;
-    background-color: #f8f9fa;
-    border-radius: 4px;
-    border-left: 3px solid #4e73df;
-}
-</style>
-</body>
+
+    <!-- Internal JS required for header/sidebar interactions -->
+    <script src="{% static 'shared/js/sidebar.js' %}"></script>
+    <script src="{% static 'shared/js/header.js' %}"></script>
+    
+    <!-- Skeleton Loader Component -->
+    <link rel="stylesheet" href="{% static 'components/skeleton-loader/skeleton-loader.css' %}">
+    <script src="{% static 'components/skeleton-loader/skeleton-loader.js' %}"></script>
+    <script src="{% static 'components/skeleton-loader/crud-loader-utils.js' %}"></script>
+    <script src="{% static 'components/skeleton-loader/loader-integration.js' %}"></script>
+    
+    <!-- Fade Animations Component -->
+    <link rel="stylesheet" href="{% static 'components/animations/fade-animations.css' %}">
+    <script src="{% static 'components/animations/fade-animations.js' %}"></script>
+    <script src="{% static 'components/animations/animation-integration.js' %}"></script>
+    
+    <!-- Modular form JavaScript files -->
+    <script src="{% static 'form/js/tab-manager.js' %}"></script>
+    <script src="{% static 'form/js/question-manager.js' %}"></script>
+    <script src="{% static 'form/js/draft-manager.js' %}"></script>
+    <script src="{% static 'form/js/ui-manager.js' %}"></script>
+    <script type="module" src="{% static 'form/js/form.js' %}"></script>
+    <script>
+      // Initialize the enhanced UI
+      document.addEventListener("DOMContentLoaded", function () {
+        // Set current year in footer
+        document.getElementById("year").textContent = new Date().getFullYear();
+
+        // Initialize modern UI enhancements
+        initModernUI();
+
+        // Add smooth scrolling for better UX
+        document.documentElement.style.scrollBehavior = "smooth";
+
+        // Add loading states to buttons
+        const buttons = document.querySelectorAll(".btn");
+        buttons.forEach((button) => {
+          button.addEventListener("click", function () {
+            if (
+              this.classList.contains("primary") ||
+              this.classList.contains("modern-btn")
+            ) {
+              this.style.transform = "scale(0.98)";
+              setTimeout(() => {
+                this.style.transform = "";
+              }, 150);
+            }
+          });
+        });
+
+        // Add focus indicators for better accessibility
+        const focusableElements = document.querySelectorAll(
+          "input, select, button, textarea"
+        );
+        focusableElements.forEach((element) => {
+          // Do not apply the JS focus outline to question inputs/textareas;
+          // these are handled by CSS overrides to keep visual consistency.
+          if (
+            element.classList &&
+            element.classList.contains("question-text")
+          ) {
+            return;
+          }
+          element.addEventListener("focus", function () {
+            this.style.outline = "2px solid var(--primary)";
+            this.style.outlineOffset = "2px";
+          });
+
+          element.addEventListener("blur", function () {
+            this.style.outline = "";
+            this.style.outlineOffset = "";
+          });
+        });
+
+        // Add hover effects to cards
+        const cards = document.querySelectorAll(
+          ".modern-card, .modern-section"
+        );
+        cards.forEach((card) => {
+          card.addEventListener("mouseenter", function () {
+            this.style.transform = "translateY(-2px)";
+          });
+
+          card.addEventListener("mouseleave", function () {
+            this.style.transform = "translateY(0)";
+          });
+        });
+
+        // Update context display when selections change
+        const categorySelect = document.getElementById("category");
+        const categoryDisplay = document.getElementById("category-display");
+
+        if (categorySelect && categoryDisplay) {
+          categorySelect.addEventListener("change", function () {
+            categoryDisplay.textContent = this.value || "Not selected";
+            categoryDisplay.style.color = this.value
+              ? "var(--primary)"
+              : "var(--accent)";
+          });
+        }
+
+        
+
+        // progress indicator removed — no observer needed
+
+        // Stepper functionality removed (no stepper present).
+        // Navigation handlers remain but the progress indicator updates were
+        // removed to avoid errors when the stepper DOM is absent.
+
+        // Move to next step: show questions section
+        document
+          .getElementById("next-to-questions")
+          ?.addEventListener("click", function () {
+            document.getElementById("topic-section").style.display = "none";
+            document.getElementById("questions-section").style.display =
+              "block";
+          });
+
+        // Back to topic
+        document
+          .getElementById("back-to-topic")
+          ?.addEventListener("click", function () {
+            document.getElementById("questions-section").style.display = "none";
+            document.getElementById("topic-section").style.display = "block";
+          });
+
+        // Finish topic -> show confirmation
+        document
+          .getElementById("finish-topic")
+          ?.addEventListener("click", function () {
+            document.getElementById("questions-section").style.display = "none";
+            document.getElementById("confirmation-section").style.display =
+              "block";
+          });
+
+        // Add another topic -> show topic section
+        document
+          .getElementById("add-another-topic")
+          ?.addEventListener("click", function () {
+            document.getElementById("confirmation-section").style.display =
+              "none";
+            document.getElementById("topic-section").style.display = "block";
+          });
+
+        // Finish process -> redirect
+        document
+          .getElementById("finish-process")
+          ?.addEventListener("click", function () {
+            // Redirect to dashboard or show completion state
+            window.location.href = "/dashboard/";
+          });
+      });
+
+      function initModernUI() {
+        console.log("Modern UI initialized");
+        // Additional initialization can be added here
+      }
+    </script>
+
+  </body>
 </html>

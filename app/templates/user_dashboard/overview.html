@@ -1,0 +1,155 @@
+{% extends 'user_dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Overview{% endblock %}
+{% block breadcrumb %}Overview{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'components/user_dash/css/overview.css' %}" />
+<link rel="stylesheet" href="{% static 'components/user_dash/css/overview-responsive.css' %}" />
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'components/user_dash/js/api.js' %}" defer></script>
+<script src="{% static 'components/user_dash/js/overview.js' %}" defer></script>
+{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="page-header">
+    <h1 class="page-title">Welcome back, {{ user.username|default:"User" }}!</h1>
+    <p class="page-subtitle">Track your form progress and stay on top of your submissions</p>
+</div>
+
+<!-- Stats Cards Row -->
+<div class="stats-cards-row">
+    <div class="stat-card">
+        <div class="stat-card-header">
+            <div class="stat-icon success">
+                <i class="ph-bold ph-check-circle"></i>
+            </div>
+        </div>
+        <div class="stat-content">
+            <p class="stat-label">Questions Answered</p>
+            <h2 class="stat-value" data-stat="questions-answered">0</h2>
+            <div class="stat-trend positive">
+                <i class="ph-bold ph-arrow-up"></i>
+                <span>12% from last week</span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-card-header">
+            <div class="stat-icon info">
+                <i class="ph-bold ph-floppy-disk"></i>
+            </div>
+        </div>
+        <div class="stat-content">
+            <p class="stat-label">Saved Locally</p>
+            <h2 class="stat-value" data-stat="saved-locally">0</h2>
+            <div class="stat-trend positive">
+                <i class="ph-bold ph-arrow-up"></i>
+                <span>5 new today</span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-card-header">
+            <div class="stat-icon primary">
+                <i class="ph-bold ph-database"></i>
+            </div>
+        </div>
+        <div class="stat-content">
+            <p class="stat-label">In Database</p>
+            <h2 class="stat-value" data-stat="in-database">0</h2>
+            <div class="stat-trend positive">
+                <i class="ph-bold ph-arrow-up"></i>
+                <span>Synced 2 hours ago</span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-card-header">
+            <div class="stat-icon warning">
+                <i class="ph-bold ph-chart-line"></i>
+            </div>
+        </div>
+        <div class="stat-content">
+            <p class="stat-label">Completion Rate</p>
+            <h2 class="stat-value" data-stat="completion-rate">0%</h2>
+            <div class="stat-trend positive">
+                <i class="ph-bold ph-arrow-up"></i>
+                <span>On track</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Deadline Card -->
+<div class="deadline-card">
+    <div class="deadline-header">
+        <h3 class="deadline-title">
+            <i class="ph-bold ph-clock"></i>
+            Submission Deadline
+        </h3>
+        <span class="deadline-date">Due: December 31, 2024</span>
+    </div>
+    <div class="progress-bar-container">
+        <div class="progress-bar-fill" style="width: 75%"></div>
+    </div>
+    <p class="progress-text">75% of time elapsed - 3 days remaining</p>
+</div>
+
+<!-- Quick Actions Row -->
+<div class="quick-actions-row">
+    <button class="action-button primary" data-action="save-all">
+        <i class="ph-bold ph-floppy-disk"></i>
+        Save All Progress
+    </button>
+    <button class="action-button secondary" data-action="export">
+        <i class="ph-bold ph-download-simple"></i>
+        Export Data
+    </button>
+    <button class="action-button secondary" data-action="import">
+        <i class="ph-bold ph-upload-simple"></i>
+        Import Data
+    </button>
+    <button class="action-button danger" data-action="clear">
+        <i class="ph-bold ph-trash"></i>
+        Clear Local Data
+    </button>
+</div>
+
+<!-- Charts Row -->
+<div class="charts-row">
+    <!-- Completion Chart -->
+    <div class="chart-card">
+        <div class="chart-header">
+            <h3 class="chart-title">Completion Status</h3>
+            <button class="chart-refresh" title="Refresh">
+                <i class="ph-bold ph-arrows-clockwise"></i>
+            </button>
+        </div>
+        <div class="chart-container">
+            <canvas id="completionChart"></canvas>
+        </div>
+    </div>
+    
+    <!-- Recent Activity -->
+    <div class="chart-card">
+        <div class="chart-header">
+            <h3 class="chart-title">Recent Activity</h3>
+            <button class="chart-refresh" title="Refresh">
+                <i class="ph-bold ph-arrows-clockwise"></i>
+            </button>
+        </div>
+        <div class="activity-timeline">
+            <!-- Activity items will be populated by JavaScript -->
+        </div>
+    </div>
+</div>
+{% endblock %}
+

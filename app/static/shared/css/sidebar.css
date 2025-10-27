@@ -1,0 +1,133 @@
+.sidebar {
+  width: 220px;
+  /* Sidebar as structure (30%) using a soft UI surface */
+  background: var(--white);
+  color: var(--black);
+  display: flex;
+  flex-direction: column;
+  padding: 20px 18px;
+  transition: var(--transition);
+  box-shadow: var(--subtle-shadow);
+  border-radius: 14px;
+  height: calc(100vh - 48px);
+  position: sticky; /* keep sidebar in view while scrolling */
+  top: 24px; /* required for sticky to take effect */
+  align-self: flex-start; /* ensure it sticks within the flex row */
+  z-index: 2; /* sit above content when overlapping */
+  overflow: visible; /* allow shadows and children to render correctly */
+}
+
+/* Collapsed sidebar state: visually slide/hide the sidebar and let
+   the main content expand. We use transitions on width and padding so
+   the collapse feels smooth. */
+.dashboard-container.sidebar-collapsed .sidebar {
+  width: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border-radius: 0 !important;
+  opacity: 0; /* fade out content */
+  overflow: hidden; /* hide inner content during transition */
+  transition: width 0.22s ease, padding 0.22s ease, opacity 0.22s ease;
+}
+
+/* Hide inner elements so they don't remain focusable when collapsed */
+.dashboard-container.sidebar-collapsed .sidebar .logo,
+.dashboard-container.sidebar-collapsed .sidebar .menu {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Ensure main content expands to take the freed space */
+.dashboard-container.sidebar-collapsed {
+  --dashboard-gap: 0px;
+}
+
+.dashboard-container.sidebar-collapsed .main-content {
+  flex: 1 1 100%;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 6px 14px 6px;
+  margin-bottom: 12px;
+  /* subtle divider between logo and menu */
+  border-bottom: 1px solid rgba(30, 30, 36, 0.04);
+  justify-content: center;
+}
+
+.logo i {
+  font-size: 20px;
+  /* icon uses UI color (blue) with subtle pumpkin tint behind for brand */
+  color: var(--bice-blue);
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+}
+
+.logo span {
+  color: var(--black);
+  letter-spacing: 0.5px;
+  display: inline-block;
+  line-height: 1;
+}
+
+.menu {
+  padding: 8px 0;
+  flex: 1;
+}
+
+/* Ensure sidebar links look like menu items (no underlines) */
+.menu a {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  padding: 12px 10px;
+  margin: 6px 0;
+  gap: 12px;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.menu-item i {
+  font-size: 16px;
+  margin-right: 8px;
+  width: 30px;
+  text-align: center;
+  color: var(--black); /* icons default to black */
+  opacity: 0.95;
+}
+
+.menu-item:hover {
+  background: rgba(0, 78, 152, 0.06);
+}
+
+.menu-item.active {
+  border-left: 0;
+  color: var(--polynesian-blue);
+}
+
+.menu-item.active i {
+  color: var(--polynesian-blue); /* active icon color */
+}
+
+/* Hide focus outline for interactions that are not keyboard-driven (modern browsers) */
+.dashboard-container :focus:not(:focus-visible) {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* Provide a subtle visible ring for keyboard focus where supported */
+.dashboard-container :focus-visible {
+  outline: 3px solid rgba(0, 123, 255, 0.18);
+  outline-offset: 2px;
+}

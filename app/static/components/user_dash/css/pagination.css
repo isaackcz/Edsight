@@ -1,0 +1,586 @@
+/* Topic Pagination Styles */
+.topic-pagination {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 24px 32px;
+    margin-top: 32px;
+    background: #ffffff;
+    border: 1px solid #e1e5e9;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    gap: 16px;
+    position: sticky;
+    bottom: 16px;
+    z-index: 10;
+}
+
+.topic-nav-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 20px;
+    border: 1px solid #e1e5e9;
+    border-radius: 6px;
+    background: #ffffff;
+    color: #293440;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-width: 140px;
+    justify-content: center;
+}
+
+.topic-nav-btn:hover:not(:disabled) {
+    background: #f8f9fa;
+    border-color: #abc7d6;
+    color: #293440;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.topic-nav-btn:active:not(:disabled) {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.topic-nav-btn:disabled {
+    background: #f1f3f4;
+    color: #9aa0a6;
+    border-color: #f1f3f4;
+    cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
+}
+
+.topic-nav-btn i {
+    font-size: 12px;
+}
+
+.topic-pagination-status {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    flex: 1;
+    min-height: 44px;
+    justify-content: center;
+}
+
+.topic-position {
+    font-size: 14px;
+    font-weight: 600;
+    color: #293440;
+    margin-bottom: 2px;
+}
+
+.topic-name {
+    font-size: 13px;
+    color: #5f6368;
+    font-weight: 400;
+    max-width: 300px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .topic-pagination {
+        flex-direction: column;
+        gap: 12px;
+        padding: 16px;
+    }
+    
+    .topic-nav-btn {
+        width: 100%;
+        min-width: auto;
+    }
+    
+    .topic-pagination-status {
+        order: -1;
+        margin-bottom: 8px;
+    }
+    
+    .topic-name {
+        max-width: 250px;
+    }
+}
+
+@media (max-width: 480px) {
+    .topic-pagination {
+        position: relative;
+        bottom: auto;
+        margin: 16px 0;
+    }
+    
+    .topic-nav-btn {
+        padding: 10px 16px;
+        font-size: 13px;
+    }
+    
+    .topic-nav-btn i {
+        display: none;
+    }
+}
+
+/* Loading and Transition States */
+.topic-pagination.loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.topic-pagination.loading .topic-nav-btn {
+    background: #f1f3f4;
+    color: #9aa0a6;
+}
+
+/* Enhanced Focus States */
+.topic-nav-btn:focus-visible {
+    outline: 2px solid #1a73e8;
+    outline-offset: 2px;
+    border-color: #1a73e8;
+}
+
+/* Keyboard Navigation Indicators */
+.topic-pagination[data-keyboard-active="true"] .topic-nav-btn:focus {
+    background: #e3f2fd;
+    border-color: #1976d2;
+    box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.12);
+}
+
+/* Animation for smooth topic transitions */
+@keyframes fadeInTopic {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.questions-container {
+    animation: fadeInTopic 0.3s ease-out;
+}
+
+/* Pagination progress indicator */
+.topic-pagination::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #e1e5e9 0%, #abc7d6 50%, #e1e5e9 100%);
+    border-radius: 8px 8px 0 0;
+}
+
+.topic-pagination[data-progress]::before {
+    background: linear-gradient(90deg, 
+        #4caf50 0%, 
+        #4caf50 var(--progress, 0%), 
+        #e1e5e9 var(--progress, 0%), 
+        #e1e5e9 100%);
+}
+
+/* ===== SIMPLE TOPIC LIST DESIGN ===== */
+
+/* Topic Rail Layout */
+.content-with-rail {
+    display: grid;
+    grid-template-columns: 1fr 200px;
+    gap: 24px;
+    align-items: start;
+}
+
+/* Simple sticky right sidebar */
+.topic-rail {
+    position: sticky;
+    top: 88px;
+    height: calc(100vh - 100px);
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0;
+    padding: 16px 0;
+    background: transparent;
+    box-shadow: none;
+    z-index: 10;
+}
+
+/* Hide the line completely */
+.topic-rail-line {
+    display: none;
+}
+
+/* Simple list container with scrollbar */
+.topic-dots {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    width: 100%;
+    padding: 0;
+    max-height: calc(100vh - 200px);
+    overflow-y: auto;
+    z-index: 11;
+    /* Custom scrollbar styling */
+    scrollbar-width: thin;
+    scrollbar-color: #d1d5db #f8f9fa;
+}
+
+/* Webkit scrollbar styling for topic list */
+.topic-dots::-webkit-scrollbar {
+    width: 6px;
+}
+
+.topic-dots::-webkit-scrollbar-track {
+    background: #f8f9fa;
+    border-radius: 3px;
+}
+
+.topic-dots::-webkit-scrollbar-thumb {
+    background: #d1d5db;
+    border-radius: 3px;
+}
+
+.topic-dots::-webkit-scrollbar-thumb:hover {
+    background: #9ca3af;
+}
+
+/* Simple clickable list item */
+.topic-dot {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 8px 0;
+    outline: none;
+    transition: all 0.2s ease;
+    text-align: left;
+    font-size: 14px;
+    color: #5f6368;
+    line-height: 1.4;
+    border-radius: 4px;
+}
+
+/* Simple bullet point using CSS */
+.topic-dot::before {
+    content: '•';
+    color: #5f6368;
+    font-size: 16px;
+    flex-shrink: 0;
+    transition: color 0.2s ease;
+}
+
+/* Hide the old dot-progress element */
+.topic-dot .dot-progress {
+    display: none;
+}
+
+/* Topic text with truncation */
+.topic-dot .dot-tooltip {
+    position: static;
+    display: inline-block;
+    background: transparent;
+    color: inherit;
+    padding: 0;
+    margin: 0;
+    font-size: inherit;
+    font-weight: 500;
+    line-height: inherit;
+    white-space: nowrap;
+    box-shadow: none;
+    opacity: 1;
+    visibility: visible;
+    transform: none;
+    max-width: 160px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: all 0.2s ease;
+}
+
+/* Enhanced Active state with background highlight */
+.topic-dot.active {
+    color: #3b4a5c;
+    font-weight: 600;
+    background: #e8f0fe;
+    padding-left: 8px;
+    padding-right: 8px;
+    margin: 0 -8px;
+}
+
+.topic-dot.active::before {
+    color: #3b4a5c;
+}
+
+.topic-dot.active .dot-tooltip {
+    color: #3b4a5c;
+    font-weight: 600;
+}
+
+/* Hover state */
+.topic-dot:hover {
+    color: #3b4a5c;
+    background: #f1f5f9;
+    padding-left: 8px;
+    padding-right: 8px;
+    margin: 0 -8px;
+}
+
+.topic-dot:hover::before {
+    color: #3b4a5c;
+}
+
+.topic-dot:hover .dot-tooltip {
+    color: #3b4a5c;
+}
+
+/* Focus state for accessibility */
+.topic-dot:focus-visible {
+    outline: 2px solid #3b4a5c;
+    outline-offset: 2px;
+    border-radius: 4px;
+}
+
+/* Remove all tooltip styling */
+.topic-dot .dot-tooltip::before,
+.topic-dot .dot-tooltip::after {
+    content: none !important;
+}
+
+/* Sub-sections panel with scrollbar (simplified) */
+.sub-sections-panel {
+    width: 180px;
+    background: #ffffff;
+    border: 1px solid #e1e5e9;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    padding: 16px;
+    margin-top: 16px;
+    transition: all 0.2s ease;
+    max-height: 300px;
+    overflow-y: auto;
+    /* Custom scrollbar styling */
+    scrollbar-width: thin;
+    scrollbar-color: #d1d5db #f8f9fa;
+}
+
+/* Webkit scrollbar styling for sub-sections panel */
+.sub-sections-panel::-webkit-scrollbar {
+    width: 6px;
+}
+
+.sub-sections-panel::-webkit-scrollbar-track {
+    background: #f8f9fa;
+    border-radius: 3px;
+}
+
+.sub-sections-panel::-webkit-scrollbar-thumb {
+    background: #d1d5db;
+    border-radius: 3px;
+}
+
+.sub-sections-panel::-webkit-scrollbar-thumb:hover {
+    background: #9ca3af;
+}
+
+.sub-sections-panel.hidden {
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-8px);
+    pointer-events: none;
+}
+
+.sub-sections-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #3b4a5c;
+    margin: 0 0 12px 0;
+}
+
+.sub-sections-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.sub-section-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    background: #f8f9fa;
+    color: #293440;
+    border: 1px solid #e1e5e9;
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.sub-section-item:hover {
+    background: #e8f0fe;
+    border-color: #3b4a5c;
+    transform: translateY(-1px);
+}
+
+.sub-section-name {
+    font-weight: 600;
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.sub-section-count {
+    color: #5f6368;
+    font-weight: 500;
+    font-size: 11px;
+    flex-shrink: 0;
+}
+
+/* Responsive design */
+@media (max-width: 1024px) {
+    .content-with-rail {
+        grid-template-columns: 1fr 180px;
+        gap: 20px;
+    }
+    
+    .topic-dot .dot-tooltip {
+        max-width: 140px;
+        font-size: 13px;
+    }
+}
+
+@media (max-width: 900px) {
+    .content-with-rail {
+        grid-template-columns: 1fr 160px;
+        gap: 16px;
+    }
+    
+    .topic-dot {
+        font-size: 13px;
+    }
+    
+    .topic-dot .dot-tooltip {
+        max-width: 120px;
+        font-size: 13px;
+    }
+}
+
+@media (max-width: 768px) {
+    .content-with-rail {
+        grid-template-columns: 1fr;
+    }
+    
+    .topic-rail {
+        position: fixed;
+        bottom: 20px;
+        left: 20px;
+        right: 20px;
+        top: auto;
+        height: auto;
+        flex-direction: row;
+        justify-content: flex-start;
+        padding: 12px 16px;
+        background: rgba(255, 255, 255, 0.95);
+        border: 1px solid #e1e5e9;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        backdrop-filter: blur(8px);
+        overflow-x: auto;
+    }
+    
+    .topic-dots {
+        flex-direction: row;
+        gap: 16px;
+        overflow-x: auto;
+        padding: 0;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+    }
+    
+    .topic-dots::-webkit-scrollbar {
+        display: none;
+    }
+    
+    .topic-dot {
+        flex-direction: column;
+        gap: 4px;
+        min-width: auto;
+        flex-shrink: 0;
+        padding: 4px 8px;
+        text-align: center;
+        font-size: 12px;
+    }
+    
+    .topic-dot::before {
+        display: none;
+    }
+    
+    .topic-dot .dot-tooltip {
+        font-size: 11px;
+        max-width: 60px;
+        text-align: center;
+    }
+    
+    .sub-sections-panel {
+        position: fixed;
+        bottom: 80px;
+        right: 20px;
+        left: 20px;
+        width: auto;
+        max-width: 300px;
+        margin: 0 auto;
+    }
+}
+
+@media (max-width: 480px) {
+    .topic-rail {
+        left: 16px;
+        right: 16px;
+        bottom: 16px;
+        padding: 8px 12px;
+    }
+    
+    .topic-dots {
+        gap: 12px;
+    }
+    
+    .topic-dot {
+        font-size: 11px;
+        padding: 4px 6px;
+    }
+    
+    .topic-dot .dot-tooltip {
+        font-size: 10px;
+        max-width: 50px;
+    }
+    
+    .sub-sections-panel {
+        bottom: 64px;
+        left: 16px;
+        right: 16px;
+        padding: 12px;
+    }
+}
+
+/* Smooth animations for all state changes */
+* {
+    --material-duration-short: 0.15s;
+    --material-duration-medium: 0.25s;
+    --material-duration-long: 0.35s;
+    --material-easing-standard: cubic-bezier(0.2, 0, 0, 1);
+    --material-easing-decelerate: cubic-bezier(0, 0, 0, 1);
+    --material-easing-accelerate: cubic-bezier(0.3, 0, 1, 1);
+}

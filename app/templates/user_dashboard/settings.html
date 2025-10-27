@@ -1,0 +1,224 @@
+{% extends 'user_dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Settings{% endblock %}
+{% block breadcrumb %}Settings{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'components/user_dash/css/settings.css' %}" />
+<link rel="stylesheet" href="{% static 'components/user_dash/css/settings-responsive.css' %}" />
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'components/user_dash/js/api.js' %}" defer></script>
+<script src="{% static 'components/user_dash/js/settings.js' %}" defer></script>
+{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="page-header">
+    <h1 class="page-title">Settings</h1>
+    <p class="page-subtitle">Manage your account and preferences</p>
+</div>
+
+<!-- Settings Container -->
+<div class="settings-container">
+    
+    <!-- Profile Information Section -->
+    <div class="settings-section">
+        <div class="section-header">
+            <i class="section-icon ph-bold ph-user-circle"></i>
+            <h2 class="section-title">Profile Information</h2>
+        </div>
+        <p class="section-description">Update your personal information and contact details</p>
+        
+        <form class="settings-form" id="profileForm">
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">School Name</label>
+                    <input type="text" class="form-input" id="schoolName" value="{{ user.school_name|default:'' }}" readonly />
+                    <span class="form-help-text">This field cannot be modified</span>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Email <span class="required-indicator">*</span></label>
+                    <input type="email" class="form-input" id="email" value="{{ user.email|default:'' }}" required />
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Region</label>
+                    <input type="text" class="form-input" id="region" value="{{ user.region|default:'' }}" readonly />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Division</label>
+                    <input type="text" class="form-input" id="division" value="{{ user.division|default:'' }}" readonly />
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">District</label>
+                    <input type="text" class="form-input" id="district" value="{{ user.district|default:'' }}" readonly />
+                </div>
+            </div>
+            
+            <div class="button-group">
+                <button type="submit" class="btn btn-primary">
+                    <i class="ph-bold ph-floppy-disk"></i>
+                    Save Changes
+                </button>
+            </div>
+        </form>
+    </div>
+    
+    <!-- Security Section -->
+    <div class="settings-section">
+        <div class="section-header">
+            <i class="section-icon ph-bold ph-lock"></i>
+            <h2 class="section-title">Security</h2>
+        </div>
+        <p class="section-description">Update your password and manage security settings</p>
+        
+        <form class="settings-form" id="securityForm">
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Current Password <span class="required-indicator">*</span></label>
+                    <input type="password" class="form-input" id="currentPassword" placeholder="Enter current password" required />
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">New Password <span class="required-indicator">*</span></label>
+                    <input type="password" class="form-input" id="newPassword" placeholder="Enter new password" required />
+                    <span class="form-help-text">Must be at least 8 characters long</span>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Confirm Password <span class="required-indicator">*</span></label>
+                    <input type="password" class="form-input" id="confirmPassword" placeholder="Confirm new password" required />
+                </div>
+            </div>
+            
+            <div class="button-group">
+                <button type="submit" class="btn btn-primary">
+                    <i class="ph-bold ph-lock"></i>
+                    Update Password
+                </button>
+            </div>
+        </form>
+    </div>
+    
+    <!-- Active Sessions Section -->
+    <div class="settings-section">
+        <div class="section-header">
+            <i class="section-icon ph-bold ph-devices"></i>
+            <h2 class="section-title">Active Sessions</h2>
+        </div>
+        <p class="section-description">Manage your active login sessions across devices</p>
+        
+        <table class="sessions-table">
+            <thead>
+                <tr>
+                    <th>Device</th>
+                    <th>Location</th>
+                    <th>Last Active</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Sessions will be populated by JavaScript -->
+                <tr>
+                    <td colspan="4" style="text-align: center; padding: 40px;">
+                        <i class="ph-bold ph-spinner" style="font-size: 32px; animation: spin 1s linear infinite;"></i>
+                        <p style="margin-top: 12px;">Loading sessions...</p>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    
+    <!-- Preferences Section -->
+    <div class="settings-section">
+        <div class="section-header">
+            <i class="section-icon ph-bold ph-sliders"></i>
+            <h2 class="section-title">Preferences</h2>
+        </div>
+        <p class="section-description">Customize your dashboard experience</p>
+        
+        <div class="settings-form">
+            <div class="toggle-group">
+                <div class="toggle-label-group">
+                    <span class="toggle-title">Email Notifications</span>
+                    <span class="toggle-description">Receive important updates via email</span>
+                </div>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="emailNotifications" checked />
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+            
+            <div class="toggle-group">
+                <div class="toggle-label-group">
+                    <span class="toggle-title">Auto-save Progress</span>
+                    <span class="toggle-description">Automatically save form progress every 5 minutes</span>
+                </div>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="autoSave" checked />
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+            
+            <div class="toggle-group">
+                <div class="toggle-label-group">
+                    <span class="toggle-title">Show Completion Tips</span>
+                    <span class="toggle-description">Display helpful tips while filling out forms</span>
+                </div>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="showTips" checked />
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Audit Logs Section -->
+    <div class="settings-section">
+        <div class="section-header">
+            <i class="section-icon ph-bold ph-clipboard-text"></i>
+            <h2 class="section-title">Audit Logs</h2>
+        </div>
+        <p class="section-description">View your recent account activity</p>
+        
+        <div class="logs-container">
+            <div class="logs-filter">
+                <select class="filter-select" id="auditLogFilter">
+                    <option value="all">All Activities</option>
+                    <option value="login">Login Events</option>
+                    <option value="profile">Profile Changes</option>
+                    <option value="security">Security Events</option>
+                    <option value="data">Data Operations</option>
+                </select>
+                <button class="btn btn-secondary" id="exportLogsBtn">
+                    <i class="ph-bold ph-download-simple"></i>
+                    Export Logs
+                </button>
+            </div>
+            
+            <div class="logs-list">
+                <!-- Logs will be populated by JavaScript -->
+            </div>
+        </div>
+    </div>
+    
+</div>
+
+<!-- Spinner Animation CSS -->
+<style>
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+</style>
+{% endblock %}
+

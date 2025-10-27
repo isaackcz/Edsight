@@ -1,0 +1,29 @@
+/* Placeholder phosphor.css
+   This placeholder prevents 404s and provides basic visual fallback until you download the real Phosphor CSS.
+   Run fetch_phosphor.ps1 to download the official CSS from jsDelivr into this folder. */
+
+.ph {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  vertical-align: middle;
+  text-align: center;
+  font-style: normal;
+  font-weight: 400;
+  color: currentColor;
+}
+
+/* Provide a simple fallback glyph by using pseudo-element content for common icons */
+.ph.ph-house::before { content: "🏠"; }
+.ph.ph-bell::before { content: "🔔"; }
+.ph.ph-magnifying-glass::before { content: "🔍"; }
+.ph.ph-chart-line::before { content: "📈"; }
+.ph.ph-download::before { content: "⬇️"; }
+.ph.ph-calendar::before { content: "📅"; }
+.ph.ph-user::before { content: "👤"; }
+.ph.ph-sign-out::before { content: "↩️"; }
+.ph.ph-arrow-up::before { content: "⬆️"; }
+.ph.ph-arrow-down::before { content: "⬇️"; }
+
+/* Minor sizing adjustments */
+.ph::before { font-size: 0.95em; line-height: 1; }

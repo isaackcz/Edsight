@@ -259,8 +259,31 @@ class Migration(migrations.Migration):
         migrations.RunSQL(
             sql="""
                 -- Remove old indexes if they exist
-                DROP INDEX IF EXISTS audit_logs_user_id_88267f_idx ON audit_logs;
-                DROP INDEX IF EXISTS form_user_id_idx ON forms;
+                SELECT COUNT(*) INTO @idx_exists FROM information_schema.statistics 
+                WHERE table_schema = DATABASE() 
+                AND table_name = 'audit_logs' 
+                AND index_name = 'audit_logs_user_id_88267f_idx';
+                
+                SET @sql = IF(@idx_exists > 0,
+                    'DROP INDEX audit_logs_user_id_88267f_idx ON audit_logs',
+                    'SELECT ''Index audit_logs_user_id_88267f_idx does not exist'' AS message'
+                );
+                PREPARE stmt FROM @sql;
+                EXECUTE stmt;
+                DEALLOCATE PREPARE stmt;
+                
+                SELECT COUNT(*) INTO @idx_exists FROM information_schema.statistics 
+                WHERE table_schema = DATABASE() 
+                AND table_name = 'forms' 
+                AND index_name = 'form_user_id_idx';
+                
+                SET @sql = IF(@idx_exists > 0,
+                    'DROP INDEX form_user_id_idx ON forms',
+                    'SELECT ''Index form_user_id_idx does not exist'' AS message'
+                );
+                PREPARE stmt FROM @sql;
+                EXECUTE stmt;
+                DEALLOCATE PREPARE stmt;
                 
                 -- Add new indexes if they don't exist
                 SELECT COUNT(*) INTO @idx_exists FROM information_schema.statistics 
@@ -316,11 +339,58 @@ class Migration(migrations.Migration):
                 DEALLOCATE PREPARE stmt;
             """,
             reverse_sql="""
-                -- Reverse: restore old indexes
-                DROP INDEX IF EXISTS audit_logs_admin_id_88267f_idx ON audit_logs;
-                DROP INDEX IF EXISTS form_admin_id_idx ON forms;
-                DROP INDEX IF EXISTS form_workflow_status_idx ON forms;
-                DROP INDEX IF EXISTS form_school_workflow_idx ON forms;
+                -- Reverse: restore old indexes (with proper MySQL syntax)
+                SELECT COUNT(*) INTO @idx_exists FROM information_schema.statistics 
+                WHERE table_schema = DATABASE() 
+                AND table_name = 'audit_logs' 
+                AND index_name = 'audit_logs_admin_id_88267f_idx';
+                
+                SET @sql = IF(@idx_exists > 0,
+                    'DROP INDEX audit_logs_admin_id_88267f_idx ON audit_logs',
+                    'SELECT ''Index does not exist'' AS message'
+                );
+                PREPARE stmt FROM @sql;
+                EXECUTE stmt;
+                DEALLOCATE PREPARE stmt;
+                
+                SELECT COUNT(*) INTO @idx_exists FROM information_schema.statistics 
+                WHERE table_schema = DATABASE() 
+                AND table_name = 'forms' 
+                AND index_name = 'form_admin_id_idx';
+                
+                SET @sql = IF(@idx_exists > 0,
+                    'DROP INDEX form_admin_id_idx ON forms',
+                    'SELECT ''Index does not exist'' AS message'
+                );
+                PREPARE stmt FROM @sql;
+                EXECUTE stmt;
+                DEALLOCATE PREPARE stmt;
+                
+                SELECT COUNT(*) INTO @idx_exists FROM information_schema.statistics 
+                WHERE table_schema = DATABASE() 
+                AND table_name = 'forms' 
+                AND index_name = 'form_workflow_status_idx';
+                
+                SET @sql = IF(@idx_exists > 0,
+                    'DROP INDEX form_workflow_status_idx ON forms',
+                    'SELECT ''Index does not exist'' AS message'
+                );
+                PREPARE stmt FROM @sql;
+                EXECUTE stmt;
+                DEALLOCATE PREPARE stmt;
+                
+                SELECT COUNT(*) INTO @idx_exists FROM information_schema.statistics 
+                WHERE table_schema = DATABASE() 
+                AND table_name = 'forms' 
+                AND index_name = 'form_school_workflow_idx';
+                
+                SET @sql = IF(@idx_exists > 0,
+                    'DROP INDEX form_school_workflow_idx ON forms',
+                    'SELECT ''Index does not exist'' AS message'
+                );
+                PREPARE stmt FROM @sql;
+                EXECUTE stmt;
+                DEALLOCATE PREPARE stmt;
             """
         ),
         

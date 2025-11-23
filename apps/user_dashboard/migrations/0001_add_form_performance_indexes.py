@@ -199,7 +199,7 @@ class Migration(migrations.Migration):
             """
         ),
         
-        # Add indexes to forms table for faster user lookups
+        # Add indexes to forms table for faster admin user lookups
         migrations.RunSQL(
             sql="""
             SELECT COUNT(*) INTO @idx_exists FROM information_schema.statistics 
@@ -208,7 +208,7 @@ class Migration(migrations.Migration):
             AND index_name = 'idx_forms_user_school';
             
             SET @sql = IF(@idx_exists = 0,
-                'CREATE INDEX idx_forms_user_school ON forms(user_id, school_id)',
+                'CREATE INDEX idx_forms_user_school ON forms(admin_id, school_id)',
                 'SELECT ''Index idx_forms_user_school already exists'' AS message'
             );
             PREPARE stmt FROM @sql;

@@ -74,6 +74,7 @@ COPY . /app
 
 # Create necessary directories, set permissions, and make entrypoint scripts executable
 RUN mkdir -p /vol/static /app/logs && \
+    sed -i 's/\r$//' /app/entrypoint.django.sh && \
     chmod +x /app/entrypoint.django.sh && \
     chown -R appuser:appuser /app /vol/static
 

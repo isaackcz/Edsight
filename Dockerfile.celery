@@ -63,6 +63,7 @@ COPY --from=base /usr/local/bin /usr/local/bin
 COPY . /app
 
 RUN mkdir -p /app/logs && \
+    sed -i 's/\r$//' /app/entrypoint.celery.sh && \
     chmod +x /app/entrypoint.celery.sh && \
     chown -R appuser:appuser /app
 

@@ -126,7 +126,20 @@ def migrate_auditlog_user_to_admin(apps, schema_editor):
                 WHERE user_id IS NOT NULL AND admin_id IS NULL
             """)
             
-            # Remove user_id column after data is copied
+            # Find and drop foreign key constraint on user_id before dropping the column
+            cursor.execute("""
+                SELECT CONSTRAINT_NAME FROM information_schema.table_constraints 
+                WHERE table_schema = DATABASE() 
+                AND table_name = 'audit_logs' 
+                AND constraint_type = 'FOREIGN KEY'
+                AND constraint_name LIKE '%user_id%'
+            """)
+            fk_result = cursor.fetchone()
+            if fk_result:
+                fk_name = fk_result[0]
+                cursor.execute(f"ALTER TABLE audit_logs DROP FOREIGN KEY {fk_name}")
+            
+            # Remove user_id column after foreign key is dropped
             cursor.execute("ALTER TABLE audit_logs DROP COLUMN user_id")
 
 

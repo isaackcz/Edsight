@@ -63,7 +63,8 @@ COPY --from=base /usr/local/bin /usr/local/bin
 COPY --chown=appuser:appuser . /app
 
 RUN mkdir -p /app/logs && \
-    chown -R appuser:appuser /app
+    chown -R appuser:appuser /app && \
+    chmod +x /app/entrypoint.celery.sh
 
 USER appuser
 

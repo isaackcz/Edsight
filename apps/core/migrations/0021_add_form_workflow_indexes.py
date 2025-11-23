@@ -7,6 +7,30 @@ from django.db import migrations
 def add_indexes(apps, schema_editor):
     """Add indexes using raw SQL"""
     with schema_editor.connection.cursor() as cursor:
+        # First, check if workflow_status column exists, if not add it
+        cursor.execute("""
+            SELECT COUNT(*) FROM information_schema.columns 
+            WHERE table_schema = DATABASE() 
+            AND table_name = 'forms' 
+            AND column_name = 'workflow_status'
+        """)
+        if cursor.fetchone()[0] == 0:
+            # Add the workflow_status column
+            cursor.execute("""
+                ALTER TABLE forms 
+                ADD COLUMN workflow_status VARCHAR(20) DEFAULT 'draft' 
+                AFTER status
+            """)
+            # Update existing rows
+            cursor.execute("""
+                UPDATE forms SET workflow_status = CASE 
+                    WHEN status = 'draft' THEN 'draft'
+                    WHEN status = 'in-progress' THEN 'draft'
+                    WHEN status = 'completed' THEN 'completed'
+                    ELSE 'draft'
+                END
+            """)
+        
         # Check if indexes already exist before creating
         cursor.execute("""
             SELECT COUNT(*) FROM information_schema.statistics 

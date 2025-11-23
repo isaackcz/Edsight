@@ -13,69 +13,253 @@ class Migration(migrations.Migration):
         # Add indexes to answers table for faster lookups
         migrations.RunSQL(
             sql="""
-            CREATE INDEX IF NOT EXISTS idx_answers_form_question 
-            ON answers(form_id, question_id);
+            SELECT COUNT(*) INTO @idx_exists FROM information_schema.statistics 
+            WHERE table_schema = DATABASE() 
+            AND table_name = 'answers' 
+            AND index_name = 'idx_answers_form_question';
+            
+            SET @sql = IF(@idx_exists = 0,
+                'CREATE INDEX idx_answers_form_question ON answers(form_id, question_id)',
+                'SELECT ''Index idx_answers_form_question already exists'' AS message'
+            );
+            PREPARE stmt FROM @sql;
+            EXECUTE stmt;
+            DEALLOCATE PREPARE stmt;
             """,
-            reverse_sql="DROP INDEX IF EXISTS idx_answers_form_question ON answers;"
+            reverse_sql="""
+            SELECT COUNT(*) INTO @idx_exists FROM information_schema.statistics 
+            WHERE table_schema = DATABASE() 
+            AND table_name = 'answers' 
+            AND index_name = 'idx_answers_form_question';
+            
+            SET @sql = IF(@idx_exists > 0,
+                'DROP INDEX idx_answers_form_question ON answers',
+                'SELECT ''Index does not exist'' AS message'
+            );
+            PREPARE stmt FROM @sql;
+            EXECUTE stmt;
+            DEALLOCATE PREPARE stmt;
+            """
         ),
         
         migrations.RunSQL(
             sql="""
-            CREATE INDEX IF NOT EXISTS idx_answers_form_id 
-            ON answers(form_id);
+            SELECT COUNT(*) INTO @idx_exists FROM information_schema.statistics 
+            WHERE table_schema = DATABASE() 
+            AND table_name = 'answers' 
+            AND index_name = 'idx_answers_form_id';
+            
+            SET @sql = IF(@idx_exists = 0,
+                'CREATE INDEX idx_answers_form_id ON answers(form_id)',
+                'SELECT ''Index idx_answers_form_id already exists'' AS message'
+            );
+            PREPARE stmt FROM @sql;
+            EXECUTE stmt;
+            DEALLOCATE PREPARE stmt;
             """,
-            reverse_sql="DROP INDEX IF EXISTS idx_answers_form_id ON answers;"
+            reverse_sql="""
+            SELECT COUNT(*) INTO @idx_exists FROM information_schema.statistics 
+            WHERE table_schema = DATABASE() 
+            AND table_name = 'answers' 
+            AND index_name = 'idx_answers_form_id';
+            
+            SET @sql = IF(@idx_exists > 0,
+                'DROP INDEX idx_answers_form_id ON answers',
+                'SELECT ''Index does not exist'' AS message'
+            );
+            PREPARE stmt FROM @sql;
+            EXECUTE stmt;
+            DEALLOCATE PREPARE stmt;
+            """
         ),
         
         # Add indexes to questions table for faster topic lookups
         migrations.RunSQL(
             sql="""
-            CREATE INDEX IF NOT EXISTS idx_questions_topic_id 
-            ON questions(topic_id);
+            SELECT COUNT(*) INTO @idx_exists FROM information_schema.statistics 
+            WHERE table_schema = DATABASE() 
+            AND table_name = 'questions' 
+            AND index_name = 'idx_questions_topic_id';
+            
+            SET @sql = IF(@idx_exists = 0,
+                'CREATE INDEX idx_questions_topic_id ON questions(topic_id)',
+                'SELECT ''Index idx_questions_topic_id already exists'' AS message'
+            );
+            PREPARE stmt FROM @sql;
+            EXECUTE stmt;
+            DEALLOCATE PREPARE stmt;
             """,
-            reverse_sql="DROP INDEX IF EXISTS idx_questions_topic_id ON questions;"
+            reverse_sql="""
+            SELECT COUNT(*) INTO @idx_exists FROM information_schema.statistics 
+            WHERE table_schema = DATABASE() 
+            AND table_name = 'questions' 
+            AND index_name = 'idx_questions_topic_id';
+            
+            SET @sql = IF(@idx_exists > 0,
+                'DROP INDEX idx_questions_topic_id ON questions',
+                'SELECT ''Index does not exist'' AS message'
+            );
+            PREPARE stmt FROM @sql;
+            EXECUTE stmt;
+            DEALLOCATE PREPARE stmt;
+            """
         ),
         
         migrations.RunSQL(
             sql="""
-            CREATE INDEX IF NOT EXISTS idx_questions_topic_order 
-            ON questions(topic_id, display_order);
+            SELECT COUNT(*) INTO @idx_exists FROM information_schema.statistics 
+            WHERE table_schema = DATABASE() 
+            AND table_name = 'questions' 
+            AND index_name = 'idx_questions_topic_order';
+            
+            SET @sql = IF(@idx_exists = 0,
+                'CREATE INDEX idx_questions_topic_order ON questions(topic_id, display_order)',
+                'SELECT ''Index idx_questions_topic_order already exists'' AS message'
+            );
+            PREPARE stmt FROM @sql;
+            EXECUTE stmt;
+            DEALLOCATE PREPARE stmt;
             """,
-            reverse_sql="DROP INDEX IF EXISTS idx_questions_topic_order ON questions;"
+            reverse_sql="""
+            SELECT COUNT(*) INTO @idx_exists FROM information_schema.statistics 
+            WHERE table_schema = DATABASE() 
+            AND table_name = 'questions' 
+            AND index_name = 'idx_questions_topic_order';
+            
+            SET @sql = IF(@idx_exists > 0,
+                'DROP INDEX idx_questions_topic_order ON questions',
+                'SELECT ''Index does not exist'' AS message'
+            );
+            PREPARE stmt FROM @sql;
+            EXECUTE stmt;
+            DEALLOCATE PREPARE stmt;
+            """
         ),
         
         # Add indexes to topics table for faster category lookups
         migrations.RunSQL(
             sql="""
-            CREATE INDEX IF NOT EXISTS idx_topics_category_id 
-            ON topics(category_id);
+            SELECT COUNT(*) INTO @idx_exists FROM information_schema.statistics 
+            WHERE table_schema = DATABASE() 
+            AND table_name = 'topics' 
+            AND index_name = 'idx_topics_category_id';
+            
+            SET @sql = IF(@idx_exists = 0,
+                'CREATE INDEX idx_topics_category_id ON topics(category_id)',
+                'SELECT ''Index idx_topics_category_id already exists'' AS message'
+            );
+            PREPARE stmt FROM @sql;
+            EXECUTE stmt;
+            DEALLOCATE PREPARE stmt;
             """,
-            reverse_sql="DROP INDEX IF EXISTS idx_topics_category_id ON topics;"
+            reverse_sql="""
+            SELECT COUNT(*) INTO @idx_exists FROM information_schema.statistics 
+            WHERE table_schema = DATABASE() 
+            AND table_name = 'topics' 
+            AND index_name = 'idx_topics_category_id';
+            
+            SET @sql = IF(@idx_exists > 0,
+                'DROP INDEX idx_topics_category_id ON topics',
+                'SELECT ''Index does not exist'' AS message'
+            );
+            PREPARE stmt FROM @sql;
+            EXECUTE stmt;
+            DEALLOCATE PREPARE stmt;
+            """
         ),
         
         migrations.RunSQL(
             sql="""
-            CREATE INDEX IF NOT EXISTS idx_topics_category_order 
-            ON topics(category_id, display_order);
+            SELECT COUNT(*) INTO @idx_exists FROM information_schema.statistics 
+            WHERE table_schema = DATABASE() 
+            AND table_name = 'topics' 
+            AND index_name = 'idx_topics_category_order';
+            
+            SET @sql = IF(@idx_exists = 0,
+                'CREATE INDEX idx_topics_category_order ON topics(category_id, display_order)',
+                'SELECT ''Index idx_topics_category_order already exists'' AS message'
+            );
+            PREPARE stmt FROM @sql;
+            EXECUTE stmt;
+            DEALLOCATE PREPARE stmt;
             """,
-            reverse_sql="DROP INDEX IF EXISTS idx_topics_category_order ON topics;"
+            reverse_sql="""
+            SELECT COUNT(*) INTO @idx_exists FROM information_schema.statistics 
+            WHERE table_schema = DATABASE() 
+            AND table_name = 'topics' 
+            AND index_name = 'idx_topics_category_order';
+            
+            SET @sql = IF(@idx_exists > 0,
+                'DROP INDEX idx_topics_category_order ON topics',
+                'SELECT ''Index does not exist'' AS message'
+            );
+            PREPARE stmt FROM @sql;
+            EXECUTE stmt;
+            DEALLOCATE PREPARE stmt;
+            """
         ),
         
         # Add indexes to forms table for faster user lookups
         migrations.RunSQL(
             sql="""
-            CREATE INDEX IF NOT EXISTS idx_forms_user_school 
-            ON forms(user_id, school_id);
+            SELECT COUNT(*) INTO @idx_exists FROM information_schema.statistics 
+            WHERE table_schema = DATABASE() 
+            AND table_name = 'forms' 
+            AND index_name = 'idx_forms_user_school';
+            
+            SET @sql = IF(@idx_exists = 0,
+                'CREATE INDEX idx_forms_user_school ON forms(user_id, school_id)',
+                'SELECT ''Index idx_forms_user_school already exists'' AS message'
+            );
+            PREPARE stmt FROM @sql;
+            EXECUTE stmt;
+            DEALLOCATE PREPARE stmt;
             """,
-            reverse_sql="DROP INDEX IF EXISTS idx_forms_user_school ON forms;"
+            reverse_sql="""
+            SELECT COUNT(*) INTO @idx_exists FROM information_schema.statistics 
+            WHERE table_schema = DATABASE() 
+            AND table_name = 'forms' 
+            AND index_name = 'idx_forms_user_school';
+            
+            SET @sql = IF(@idx_exists > 0,
+                'DROP INDEX idx_forms_user_school ON forms',
+                'SELECT ''Index does not exist'' AS message'
+            );
+            PREPARE stmt FROM @sql;
+            EXECUTE stmt;
+            DEALLOCATE PREPARE stmt;
+            """
         ),
         
         # Add index for required questions (commonly filtered)
         migrations.RunSQL(
             sql="""
-            CREATE INDEX IF NOT EXISTS idx_questions_required 
-            ON questions(topic_id, is_required);
+            SELECT COUNT(*) INTO @idx_exists FROM information_schema.statistics 
+            WHERE table_schema = DATABASE() 
+            AND table_name = 'questions' 
+            AND index_name = 'idx_questions_required';
+            
+            SET @sql = IF(@idx_exists = 0,
+                'CREATE INDEX idx_questions_required ON questions(topic_id, is_required)',
+                'SELECT ''Index idx_questions_required already exists'' AS message'
+            );
+            PREPARE stmt FROM @sql;
+            EXECUTE stmt;
+            DEALLOCATE PREPARE stmt;
             """,
-            reverse_sql="DROP INDEX IF EXISTS idx_questions_required ON questions;"
+            reverse_sql="""
+            SELECT COUNT(*) INTO @idx_exists FROM information_schema.statistics 
+            WHERE table_schema = DATABASE() 
+            AND table_name = 'questions' 
+            AND index_name = 'idx_questions_required';
+            
+            SET @sql = IF(@idx_exists > 0,
+                'DROP INDEX idx_questions_required ON questions',
+                'SELECT ''Index does not exist'' AS message'
+            );
+            PREPARE stmt FROM @sql;
+            EXECUTE stmt;
+            DEALLOCATE PREPARE stmt;
+            """
         ),
     ]

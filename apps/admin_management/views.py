@@ -28,6 +28,40 @@ from .utils import (
     require_admin_permission, require_admin_level, log_admin_activity
 )
 from apps.utils.enhanced_logging import EnhancedSystemLogger
+from apps.core.decorators import session_required, only_admin_users, only_division_and_central
+
+
+def create_audit_log(admin_user, action_type, resource_type, description, request, success=True, error_message=None, metadata=None, severity='low'):
+    """Helper function to create audit log entries."""
+    try:
+        # Get IP address
+        ip_address = request.META.get('HTTP_X_FORWARDED_FOR')
+        if ip_address:
+            ip_address = ip_address.split(',')[0]
+        else:
+            ip_address = request.META.get('REMOTE_ADDR')
+        
+        # Get user agent
+        user_agent = request.META.get('HTTP_USER_AGENT', '')
+        
+        # Get session ID
+        session_id = request.session.session_key if hasattr(request.session, 'session_key') else None
+        
+        AuditLog.objects.create(
+            admin=admin_user,
+            session_id=session_id,
+            action_type=action_type,
+            resource_type=resource_type,
+            description=description,
+            ip_address=ip_address,
+            user_agent=user_agent,
+            severity=severity,
+            success=success,
+            error_message=error_message,
+            metadata=metadata or {}
+        )
+    except Exception as e:
+        print(f"Error creating audit log: {e}")
 
 
 def get_admin_division_filter(request):
@@ -61,46 +95,6 @@ def get_admin_context(request):
         return None
     
     try:
-        # DEVELOPMENT BYPASS - Create mock admin scope for development
-        from django.conf import settings
-        if getattr(settings, 'DEBUG', False) and admin_id == 2:
-            return {
-                'admin_scope': {
-                    'admin_level': 'central',
-                    'admin_id': 2,
-                    'username': 'admin',
-                    'permissions': {
-                        'can_create_users': True,
-                        'can_manage_users': True,
-                        'can_set_deadlines': True,
-                        'can_approve_submissions': True,
-                        'can_view_system_logs': True,
-                    },
-                    'scope': 'nationwide',
-                    'coverage': 'All regions, divisions, districts, and schools (Development Mode)',
-                    'geographic_scope': {
-                        'region_id': None,
-                        'division_id': None,
-                        'district_id': None,
-                        'school_id': None,
-                        'accessible_regions': [],
-                        'accessible_divisions': [],
-                        'accessible_districts': [],
-                        'accessible_schools': []
-                    }
-                },
-                'admin_id': 2,
-                'admin_level': 'central',
-                'permissions': {
-                    'can_create_users': True,
-                    'can_manage_users': True,
-                    'can_set_deadlines': True,
-                    'can_approve_submissions': True,
-                    'can_view_system_logs': True,
-                },
-                'coverage': 'All regions, divisions, districts, and schools (Development Mode)',
-            }
-        
         admin_scope = AdminUserManager.get_user_access_scope(admin_id)
         return {
             'admin_scope': admin_scope,
@@ -113,7 +107,8 @@ def get_admin_context(request):
         return None
 
 
-@require_admin_level(blocked_levels=['district'])
+@session_required
+@only_admin_users
 def admin_page(request):
     """Enhanced admin dashboard with role-based content"""
     context = get_admin_context(request)
@@ -194,6 +189,8 @@ def admin_page(request):
 
 @require_admin_level(blocked_levels=['district'])
 @require_admin_permission('manage_users')
+@session_required
+@only_division_and_central
 def user_management_page(request):
     """User management page with scope-based filtering"""
     context = get_admin_context(request)
@@ -231,8 +228,8 @@ def user_management_page(request):
     return render(request, 'admin/user_management.html', context)
 
 
-@require_admin_level(blocked_levels=['district'])
-@require_admin_permission('manage_users')
+@session_required
+@only_division_and_central
 def role_page(request):
     """Role and permissions management page"""
     context = get_admin_context(request)
@@ -353,7 +350,8 @@ def role_page(request):
     return render(request, 'admin/role.html', context)
 
 
-@require_admin_permission('view_system_logs')
+@session_required
+@only_admin_users
 def logs_page(request):
     """System logs and audit trail page with real database data"""
     context = get_admin_context(request)
@@ -815,21 +813,20 @@ def export_logs_csv(request):
     return response
 
 
+@session_required
+@only_admin_users
 def profile_page(request):
     """Admin profile/settings page - accessible to all admin levels including District"""
     context = get_admin_context(request)
     if not context:
         return redirect('/auth/login/')
 
-    admin_scope = context.get('admin_scope') or {}
-    if admin_scope.get('admin_level') == 'school':
-        return redirect('user-dashboard:overview')
-
     # Minimal context - APIs will handle data loading
     return render(request, 'admin/profile.html', context)
 
 
-@require_admin_level(blocked_levels=['district'])
+@session_required
+@only_admin_users
 def settings_page(request):
     """Admin settings and configuration page"""
     context = get_admin_context(request)
@@ -1021,6 +1018,43 @@ def api_create_admin_user(request):
                     
                     print(f"DEBUG: User created successfully with ID: {new_admin.admin_id}")
                     
+                    # Get admin user for audit logging
+                    admin_user_obj = None
+                    try:
+                        if admin_id:
+                            try:
+                                admin_user_obj = AdminUser.objects.get(admin_id=admin_id)
+                            except AdminUser.DoesNotExist:
+                                pass
+                    except Exception:
+                        pass
+                    
+                    # Create audit log for successful user creation
+                    if admin_user_obj:
+                        create_audit_log(
+                            admin_user=admin_user_obj,
+                            action_type='create',
+                            resource_type='admin_user',
+                            description=f'Created admin user {new_admin.username}',
+                            request=request,
+                            success=True,
+                            metadata={
+                                'new_user_id': new_admin.admin_id,
+                                'username': new_admin.username,
+                                'email': new_admin.email,
+                                'admin_level': new_admin.admin_level,
+                                'status': new_admin.status,
+                                'permissions': {
+                                    'can_create_users': new_admin.can_create_users,
+                                    'can_manage_users': new_admin.can_manage_users,
+                                    'can_set_deadlines': new_admin.can_set_deadlines,
+                                    'can_approve_submissions': new_admin.can_approve_submissions,
+                                    'can_view_system_logs': new_admin.can_view_system_logs,
+                                }
+                            },
+                            severity='high'
+                        )
+                    
                     return JsonResponse({
                         'success': True,
                         'admin_id': new_admin.admin_id,
@@ -1029,12 +1063,63 @@ def api_create_admin_user(request):
                     })
                     
             except json.JSONDecodeError as e:
+                # Create audit log for failed user creation (invalid JSON)
+                admin_user_obj = None
+                try:
+                    admin_id = request.session.get('admin_id')
+                    if admin_id:
+                        try:
+                            admin_user_obj = AdminUser.objects.get(admin_id=admin_id)
+                        except AdminUser.DoesNotExist:
+                            pass
+                except Exception:
+                    pass
+
+                if admin_user_obj:
+                    create_audit_log(
+                        admin_user=admin_user_obj,
+                        action_type='create',
+                        resource_type='admin_user',
+                        description='Failed to create admin user - invalid JSON',
+                        request=request,
+                        success=False,
+                        error_message=str(e),
+                        metadata={'error': str(e)},
+                        severity='medium'
+                    )
+
                 return JsonResponse({
                     'success': False,
                     'error': f'Invalid JSON data: {str(e)}'
                 }, status=400)
             except Exception as e:
                 print(f"DEBUG: Error creating user: {str(e)}")
+                
+                # Create audit log for failed user creation
+                admin_user_obj = None
+                try:
+                    admin_id = request.session.get('admin_id')
+                    if admin_id:
+                        try:
+                            admin_user_obj = AdminUser.objects.get(admin_id=admin_id)
+                        except AdminUser.DoesNotExist:
+                            pass
+                except Exception:
+                    pass
+
+                if admin_user_obj:
+                    create_audit_log(
+                        admin_user=admin_user_obj,
+                        action_type='create',
+                        resource_type='admin_user',
+                        description='Failed to create admin user',
+                        request=request,
+                        success=False,
+                        error_message=str(e),
+                        metadata={'error': str(e)},
+                        severity='high'
+                    )
+
                 return JsonResponse({
                     'success': False,
                     'error': f'Failed to create user: {str(e)}'
@@ -1060,6 +1145,43 @@ def api_create_admin_user(request):
             user_agent=request.META.get('HTTP_USER_AGENT')
         )
         
+        # Get admin user for audit logging
+        admin_user_obj = None
+        try:
+            if admin_id:
+                try:
+                    admin_user_obj = AdminUser.objects.get(admin_id=admin_id)
+                except AdminUser.DoesNotExist:
+                    pass
+        except Exception:
+            pass
+        
+        # Create audit log for successful user creation
+        if admin_user_obj:
+            create_audit_log(
+                admin_user=admin_user_obj,
+                action_type='create',
+                resource_type='admin_user',
+                description=f'Created admin user {new_admin.username}',
+                request=request,
+                success=True,
+                metadata={
+                    'new_user_id': new_admin.admin_id,
+                    'username': new_admin.username,
+                    'email': new_admin.email,
+                    'admin_level': new_admin.admin_level,
+                    'status': new_admin.status,
+                    'permissions': {
+                        'can_create_users': new_admin.can_create_users,
+                        'can_manage_users': new_admin.can_manage_users,
+                        'can_set_deadlines': new_admin.can_set_deadlines,
+                        'can_approve_submissions': new_admin.can_approve_submissions,
+                        'can_view_system_logs': new_admin.can_view_system_logs,
+                    }
+                },
+                severity='high'
+            )
+        
         return JsonResponse({
             'success': True,
             'admin_id': new_admin.admin_id,
@@ -1068,6 +1190,31 @@ def api_create_admin_user(request):
         })
         
     except Exception as e:
+        # Create audit log for failed user creation
+        admin_user_obj = None
+        try:
+            admin_id = request.session.get('admin_id')
+            if admin_id:
+                try:
+                    admin_user_obj = AdminUser.objects.get(admin_id=admin_id)
+                except AdminUser.DoesNotExist:
+                    pass
+        except Exception:
+            pass
+
+        if admin_user_obj:
+            create_audit_log(
+                admin_user=admin_user_obj,
+                action_type='create',
+                resource_type='admin_user',
+                description='Failed to create admin user',
+                request=request,
+                success=False,
+                error_message=str(e),
+                metadata={'error': str(e)},
+                severity='high'
+            )
+
         return JsonResponse({
             'success': False,
             'error': str(e)
@@ -1569,6 +1716,24 @@ def api_set_deadline(request):
                     ip_address=request.META.get('REMOTE_ADDR')
                 )
                 action = 'updated'
+                
+                # Create audit log for successful deadline update
+                create_audit_log(
+                    admin_user=admin_user,
+                    action_type='update',
+                    resource_type='form_deadline',
+                    description=f'Updated deadline for {form_type} form type',
+                    request=request,
+                    success=True,
+                    metadata={
+                        'deadline_id': deadline.deadline_id,
+                        'form_type': deadline.form_type,
+                        'deadline_date': deadline.deadline_date.isoformat(),
+                        'region_id': deadline.region_id,
+                        'description': deadline.description
+                    },
+                    severity='medium'
+                )
             else:
                 # Create new deadline
                 deadline = DeadlineManager.set_deadline(
@@ -1577,6 +1742,24 @@ def api_set_deadline(request):
                     ip_address=request.META.get('REMOTE_ADDR')
                 )
                 action = 'created'
+                
+                # Create audit log for successful deadline creation
+                create_audit_log(
+                    admin_user=admin_user,
+                    action_type='create',
+                    resource_type='form_deadline',
+                    description=f'Created deadline for {form_type} form type',
+                    request=request,
+                    success=True,
+                    metadata={
+                        'deadline_id': deadline.deadline_id,
+                        'form_type': deadline.form_type,
+                        'deadline_date': deadline.deadline_date.isoformat(),
+                        'region_id': deadline.region_id,
+                        'description': deadline.description
+                    },
+                    severity='medium'
+                )
         
         return JsonResponse({
             'success': True,
@@ -1589,16 +1772,73 @@ def api_set_deadline(request):
         })
         
     except PermissionDenied as e:
+        # Create audit log for failed deadline operation (permission denied)
+        admin_id = request.session.get('admin_id')
+        if admin_id:
+            try:
+                admin_user_obj = AdminUser.objects.get(admin_id=admin_id, status='active')
+                create_audit_log(
+                    admin_user=admin_user_obj,
+                    action_type='create',
+                    resource_type='form_deadline',
+                    description='Failed to set deadline - permission denied',
+                    request=request,
+                    success=False,
+                    error_message=str(e),
+                    metadata={'error': str(e)},
+                    severity='high'
+                )
+            except AdminUser.DoesNotExist:
+                pass
+        
         return JsonResponse({
             'success': False,
             'error': str(e)
         }, status=403)
     except json.JSONDecodeError:
+        # Create audit log for failed deadline operation (invalid JSON)
+        admin_id = request.session.get('admin_id')
+        if admin_id:
+            try:
+                admin_user_obj = AdminUser.objects.get(admin_id=admin_id, status='active')
+                create_audit_log(
+                    admin_user=admin_user_obj,
+                    action_type='create',
+                    resource_type='form_deadline',
+                    description='Failed to set deadline - invalid JSON data',
+                    request=request,
+                    success=False,
+                    error_message='Invalid JSON data',
+                    metadata={'error': 'Invalid JSON data'},
+                    severity='medium'
+                )
+            except AdminUser.DoesNotExist:
+                pass
+        
         return JsonResponse({
             'success': False,
             'error': 'Invalid JSON data'
         }, status=400)
     except Exception as e:
+        # Create audit log for failed deadline operation
+        admin_id = request.session.get('admin_id')
+        if admin_id:
+            try:
+                admin_user_obj = AdminUser.objects.get(admin_id=admin_id, status='active')
+                create_audit_log(
+                    admin_user=admin_user_obj,
+                    action_type='create',
+                    resource_type='form_deadline',
+                    description='Failed to set deadline',
+                    request=request,
+                    success=False,
+                    error_message=str(e),
+                    metadata={'error': str(e)},
+                    severity='high'
+                )
+            except AdminUser.DoesNotExist:
+                pass
+        
         return JsonResponse({
             'success': False,
             'error': str(e)
@@ -1652,6 +1892,17 @@ def api_delete_deadline(request, deadline_id):
                 'error': 'You can only delete deadlines within your region.'
             }, status=403)
 
+        # Store deadline details before deletion for audit log
+        deadline_details = {
+            'deadline_id': deadline.deadline_id,
+            'form_type': deadline.form_type,
+            'deadline_date': deadline.deadline_date.isoformat(),
+            'region_id': deadline.region_id,
+            'division_id': deadline.division_id,
+            'district_id': deadline.district_id,
+            'description': deadline.description
+        }
+
         deadline.is_active = False
         deadline.save(update_fields=['is_active', 'updated_at'])
 
@@ -1669,6 +1920,18 @@ def api_delete_deadline(request, deadline_id):
             },
             ip_address=request.META.get('REMOTE_ADDR')
         )
+        
+        # Create audit log for successful deadline deletion
+        create_audit_log(
+            admin_user=admin_user,
+            action_type='delete',
+            resource_type='form_deadline',
+            description=f'Deleted deadline for {deadline.form_type} form type',
+            request=request,
+            success=True,
+            metadata=deadline_details,
+            severity='medium'
+        )
 
         return JsonResponse({
             'success': True,
@@ -1676,11 +1939,49 @@ def api_delete_deadline(request, deadline_id):
         })
 
     except PermissionDenied as e:
+        # Create audit log for failed deadline deletion (permission denied)
+        admin_id = request.session.get('admin_id')
+        if admin_id:
+            try:
+                admin_user_obj = AdminUser.objects.get(admin_id=admin_id, status='active')
+                create_audit_log(
+                    admin_user=admin_user_obj,
+                    action_type='delete',
+                    resource_type='form_deadline',
+                    description='Failed to delete deadline - permission denied',
+                    request=request,
+                    success=False,
+                    error_message=str(e),
+                    metadata={'deadline_id': deadline_id, 'error': str(e)},
+                    severity='high'
+                )
+            except AdminUser.DoesNotExist:
+                pass
+        
         return JsonResponse({
             'success': False,
             'error': str(e)
         }, status=403)
     except Exception as e:
+        # Create audit log for failed deadline deletion
+        admin_id = request.session.get('admin_id')
+        if admin_id:
+            try:
+                admin_user_obj = AdminUser.objects.get(admin_id=admin_id, status='active')
+                create_audit_log(
+                    admin_user=admin_user_obj,
+                    action_type='delete',
+                    resource_type='form_deadline',
+                    description='Failed to delete deadline',
+                    request=request,
+                    success=False,
+                    error_message=str(e),
+                    metadata={'deadline_id': deadline_id, 'error': str(e)},
+                    severity='high'
+                )
+            except AdminUser.DoesNotExist:
+                pass
+        
         return JsonResponse({
             'success': False,
             'error': str(e)
@@ -2113,15 +2414,119 @@ def api_edit_admin_user(request, user_id):
             # Set updated_by
             user_to_edit.updated_by_id = admin_id
             
+            # Store old values for audit log before saving
+            old_values = {
+                'full_name': user_to_edit.full_name,
+                'email': user_to_edit.email,
+                'status': user_to_edit.status,
+                'admin_level': user_to_edit.admin_level,
+                'region_id': user_to_edit.region_id,
+                'division_id': user_to_edit.division_id,
+                'district_id': user_to_edit.district_id,
+                'school_id': user_to_edit.school_id,
+                'can_create_users': user_to_edit.can_create_users,
+                'can_manage_users': user_to_edit.can_manage_users,
+                'can_set_deadlines': user_to_edit.can_set_deadlines,
+                'can_approve_submissions': user_to_edit.can_approve_submissions,
+                'can_view_system_logs': user_to_edit.can_view_system_logs,
+            }
+            
             # Save the user with validation
             try:
                 user_to_edit.full_clean()  # Validate model fields
                 user_to_edit.save()
             except Exception as save_error:
+                # Create audit log for failed user update (validation error)
+                admin_user_obj = None
+                try:
+                    if admin_id:
+                        try:
+                            admin_user_obj = AdminUser.objects.get(admin_id=admin_id)
+                        except AdminUser.DoesNotExist:
+                            pass
+                except Exception:
+                    pass
+
+                if admin_user_obj:
+                    create_audit_log(
+                        admin_user=admin_user_obj,
+                        action_type='update',
+                        resource_type='admin_user',
+                        description='Failed to update admin user - validation error',
+                        request=request,
+                        success=False,
+                        error_message=str(save_error),
+                        metadata={'user_id': user_id, 'error': str(save_error)},
+                        severity='medium'
+                    )
+
                 return JsonResponse({
                     'success': False,
                     'error': f'Validation error: {str(save_error)}'
                 }, status=400)
+            
+            # Get admin user for audit logging
+            admin_user_obj = None
+            try:
+                if admin_id:
+                    try:
+                        admin_user_obj = AdminUser.objects.get(admin_id=admin_id)
+                    except AdminUser.DoesNotExist:
+                        pass
+            except Exception:
+                pass
+            
+            # Track changes for audit log
+            changes = {}
+            if 'full_name' in data and old_values['full_name'] != user_to_edit.full_name:
+                changes['full_name'] = {'old': old_values['full_name'], 'new': user_to_edit.full_name}
+            if 'email' in data and old_values['email'] != user_to_edit.email:
+                changes['email'] = {'old': old_values['email'], 'new': user_to_edit.email}
+            if 'status' in data and old_values['status'] != user_to_edit.status:
+                changes['status'] = {'old': old_values['status'], 'new': user_to_edit.status}
+            if 'admin_level' in data and old_values['admin_level'] != user_to_edit.admin_level:
+                changes['admin_level'] = {'old': old_values['admin_level'], 'new': user_to_edit.admin_level}
+            if 'region_id' in data and old_values['region_id'] != user_to_edit.region_id:
+                changes['region_id'] = {'old': old_values['region_id'], 'new': user_to_edit.region_id}
+            if 'division_id' in data and old_values['division_id'] != user_to_edit.division_id:
+                changes['division_id'] = {'old': old_values['division_id'], 'new': user_to_edit.division_id}
+            if 'district_id' in data and old_values['district_id'] != user_to_edit.district_id:
+                changes['district_id'] = {'old': old_values['district_id'], 'new': user_to_edit.district_id}
+            if 'school_id' in data and old_values['school_id'] != user_to_edit.school_id:
+                changes['school_id'] = {'old': old_values['school_id'], 'new': user_to_edit.school_id}
+            
+            # Track permission changes
+            permission_changes = {}
+            if 'can_create_users' in data and old_values['can_create_users'] != user_to_edit.can_create_users:
+                permission_changes['can_create_users'] = {'old': old_values['can_create_users'], 'new': user_to_edit.can_create_users}
+            if 'can_manage_users' in data and old_values['can_manage_users'] != user_to_edit.can_manage_users:
+                permission_changes['can_manage_users'] = {'old': old_values['can_manage_users'], 'new': user_to_edit.can_manage_users}
+            if 'can_set_deadlines' in data and old_values['can_set_deadlines'] != user_to_edit.can_set_deadlines:
+                permission_changes['can_set_deadlines'] = {'old': old_values['can_set_deadlines'], 'new': user_to_edit.can_set_deadlines}
+            if 'can_approve_submissions' in data and old_values['can_approve_submissions'] != user_to_edit.can_approve_submissions:
+                permission_changes['can_approve_submissions'] = {'old': old_values['can_approve_submissions'], 'new': user_to_edit.can_approve_submissions}
+            if 'can_view_system_logs' in data and old_values['can_view_system_logs'] != user_to_edit.can_view_system_logs:
+                permission_changes['can_view_system_logs'] = {'old': old_values['can_view_system_logs'], 'new': user_to_edit.can_view_system_logs}
+            
+            if permission_changes:
+                changes['permissions'] = permission_changes
+            
+            # Create audit log for successful user update
+            if admin_user_obj:
+                create_audit_log(
+                    admin_user=admin_user_obj,
+                    action_type='update',
+                    resource_type='admin_user',
+                    description=f'Updated admin user {user_to_edit.username}',
+                    request=request,
+                    success=True,
+                    metadata={
+                        'user_id': user_id,
+                        'username': user_to_edit.username,
+                        'changes': changes
+                    },
+                    severity='high'
+                )
             
             return JsonResponse({
                 'success': True,
@@ -2136,6 +2541,31 @@ def api_edit_admin_user(request, user_id):
             })
             
     except Exception as e:
+        # Create audit log for failed user update
+        admin_user_obj = None
+        try:
+            admin_id = request.session.get('admin_id')
+            if admin_id:
+                try:
+                    admin_user_obj = AdminUser.objects.get(admin_id=admin_id)
+                except AdminUser.DoesNotExist:
+                    pass
+        except Exception:
+            pass
+
+        if admin_user_obj:
+            create_audit_log(
+                admin_user=admin_user_obj,
+                action_type='update',
+                resource_type='admin_user',
+                description='Failed to update admin user',
+                request=request,
+                success=False,
+                error_message=str(e),
+                metadata={'user_id': user_id if 'user_id' in locals() else None, 'error': str(e)},
+                severity='high'
+            )
+
         import traceback
         from django.conf import settings
         error_trace = traceback.format_exc()
@@ -2386,6 +2816,34 @@ def api_reset_admin_password(request, user_id):
         user_to_reset.updated_by_id = admin_id
         user_to_reset.save()
         
+        # Get admin user for audit logging
+        admin_user_obj = None
+        try:
+            if admin_id:
+                try:
+                    admin_user_obj = AdminUser.objects.get(admin_id=admin_id)
+                except AdminUser.DoesNotExist:
+                    pass
+        except Exception:
+            pass
+        
+        # Create audit log for successful password reset
+        if admin_user_obj:
+            create_audit_log(
+                admin_user=admin_user_obj,
+                action_type='update',
+                resource_type='admin_user',
+                description=f'Reset password for user {user_to_reset.username}',
+                request=request,
+                success=True,
+                metadata={
+                    'user_id': user_id,
+                    'username': user_to_reset.username,
+                    'reset_by': admin_id
+                },
+                severity='high'
+            )
+        
         return JsonResponse({
             'success': True,
             'message': f'Password reset successfully for {user_to_reset.username}',
@@ -2399,6 +2857,31 @@ def api_reset_admin_password(request, user_id):
         })
         
     except Exception as e:
+        # Create audit log for failed password reset
+        admin_user_obj = None
+        try:
+            admin_id = request.session.get('admin_id')
+            if admin_id:
+                try:
+                    admin_user_obj = AdminUser.objects.get(admin_id=admin_id)
+                except AdminUser.DoesNotExist:
+                    pass
+        except Exception:
+            pass
+
+        if admin_user_obj:
+            create_audit_log(
+                admin_user=admin_user_obj,
+                action_type='update',
+                resource_type='admin_user',
+                description='Failed to reset password',
+                request=request,
+                success=False,
+                error_message=str(e),
+                metadata={'user_id': user_id if 'user_id' in locals() else None, 'error': str(e)},
+                severity='high'
+            )
+
         return JsonResponse({
             'success': False,
             'error': str(e)
@@ -2631,8 +3114,21 @@ def api_delete_admin_user(request, user_id):
                 'error': 'Cannot delete your own account'
             }, status=400)
         
-        # Store username for response message before deletion
+        # Store user details for response message and audit log before deletion
         username = user_to_delete.username
+        email = user_to_delete.email
+        admin_level = user_to_delete.admin_level
+        
+        # Get admin user for audit logging
+        admin_user_obj = None
+        try:
+            if admin_id:
+                try:
+                    admin_user_obj = AdminUser.objects.get(admin_id=admin_id)
+                except AdminUser.DoesNotExist:
+                    pass
+        except Exception:
+            pass
         
         # Permanently delete the user
         # Related records will be handled by CASCADE or SET_NULL based on model definitions:
@@ -2641,12 +3137,55 @@ def api_delete_admin_user(request, user_id):
         # - created_by/updated_by: SET_NULL (will be set to NULL in related records)
         user_to_delete.delete()
         
+        # Create audit log for successful user deletion
+        if admin_user_obj:
+            create_audit_log(
+                admin_user=admin_user_obj,
+                action_type='delete',
+                resource_type='admin_user',
+                description=f'Deleted admin user {username}',
+                request=request,
+                success=True,
+                metadata={
+                    'deleted_user_id': user_id,
+                    'username': username,
+                    'email': email,
+                    'admin_level': admin_level
+                },
+                severity='critical'
+            )
+        
         return JsonResponse({
             'success': True,
             'message': f'User {username} deleted successfully'
         })
         
     except Exception as e:
+        # Create audit log for failed user deletion
+        admin_user_obj = None
+        try:
+            admin_id = request.session.get('admin_id')
+            if admin_id:
+                try:
+                    admin_user_obj = AdminUser.objects.get(admin_id=admin_id)
+                except AdminUser.DoesNotExist:
+                    pass
+        except Exception:
+            pass
+
+        if admin_user_obj:
+            create_audit_log(
+                admin_user=admin_user_obj,
+                action_type='delete',
+                resource_type='admin_user',
+                description='Failed to delete admin user',
+                request=request,
+                success=False,
+                error_message=str(e),
+                metadata={'user_id': user_id if 'user_id' in locals() else None, 'error': str(e)},
+                severity='critical'
+            )
+
         import traceback
         from django.conf import settings
         error_trace = traceback.format_exc()

@@ -11,8 +11,9 @@ from django.views.decorators.http import require_GET, require_POST
 from django.core.cache import cache
 from django.utils import timezone
 
-from apps.core.models import School, Form
+from apps.core.models import School, Form, AdminUser
 from .utils import get_admin_scope
+from apps.core.views import create_audit_log
 
 
 @csrf_exempt
@@ -97,9 +98,63 @@ def api_export_schools(request):
                 pending_forms
             ])
         
+        # Get admin user for audit logging
+        admin_user_obj = None
+        try:
+            admin_id = request.session.get('admin_id')
+            if admin_id:
+                try:
+                    admin_user_obj = AdminUser.objects.get(admin_id=admin_id)
+                except AdminUser.DoesNotExist:
+                    pass
+        except Exception:
+            pass
+
+        # Create audit log for successful export
+        if admin_user_obj:
+            create_audit_log(
+                admin_user=admin_user_obj,
+                action_type='export',
+                resource_type='school_export',
+                description=f'Exported {len(schools)} schools data to CSV',
+                request=request,
+                success=True,
+                metadata={
+                    'school_ids': school_ids,
+                    'school_count': len(schools),
+                    'admin_level': admin_level
+                },
+                severity='low'
+            )
+        
         return response
         
     except Exception as e:
+        # Create audit log for failed export
+        admin_user_obj = None
+        try:
+            admin_id = request.session.get('admin_id')
+            if admin_id:
+                try:
+                    admin_user_obj = AdminUser.objects.get(admin_id=admin_id)
+                except AdminUser.DoesNotExist:
+                    pass
+        except Exception:
+            pass
+
+        if admin_user_obj:
+            create_audit_log(
+                admin_user=admin_user_obj,
+                action_type='export',
+                resource_type='school_export',
+                description='Failed to export schools data',
+                request=request,
+                success=False,
+                error_message=str(e),
+                metadata={'error': str(e)},
+                severity='medium'
+            )
+
         return JsonResponse({
             'success': False,
             'error': str(e)

@@ -13,6 +13,7 @@ from django.conf import settings
 import os
 
 from apps.core.models import AdminUser, Form, Answer, Question, Category, Topic, FormNotification, FormDeadline
+from apps.core.decorators import session_required, only_school_users
 
 
 def get_user_context(request):
@@ -78,6 +79,8 @@ def get_user_context(request):
         return None
 
 
+@session_required
+@only_school_users
 def user_dashboard_overview(request):
     """
     User Dashboard Overview Page
@@ -106,6 +109,8 @@ def user_dashboard_overview(request):
     return render(request, 'user_dashboard/overview.html', context)
 
 
+@session_required
+@only_school_users
 def user_dashboard_form(request):
     """
     User Dashboard Form Page
@@ -138,6 +143,8 @@ def user_dashboard_form(request):
     return render(request, 'user_dashboard/form.html', context)
 
 
+@session_required
+@only_school_users
 def user_dashboard_analytics(request):
     """
     User Dashboard Analytics Page
@@ -159,6 +166,8 @@ def user_dashboard_analytics(request):
     return render(request, 'user_dashboard/analytics.html', context)
 
 
+@session_required
+@only_school_users
 def user_dashboard_settings(request):
     """
     User Dashboard Settings Page

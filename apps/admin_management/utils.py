@@ -565,38 +565,50 @@ def require_admin_permission(permission_type, resource_type=None):
     """Decorator to check admin permissions before executing a function"""
     def decorator(func):
         def wrapper(request, *args, **kwargs):
-            # DEVELOPMENT BYPASS - Remove this in production
-            from django.conf import settings
-            if getattr(settings, 'DEBUG', False):
-                # If admin_id is already in session, use it; otherwise create mock session
-                if not request.session.get('admin_id'):
-                    request.session['admin_id'] = 2  # Use existing admin ID from database
-                    request.session['admin_level'] = 'central'
-                    request.session['admin_username'] = 'admin'
-                # Don't override existing session - let the actual user's session persist
-                return func(request, *args, **kwargs)
+            from django.shortcuts import redirect, render
+            from django.http import JsonResponse
             
             admin_id = request.session.get('admin_id')
             if not admin_id:
-                raise PermissionDenied("Admin authentication required")
+                # Clear session if not authenticated
+                request.session.flush()
+                # Check if this is an API endpoint
+                if request.path.startswith('/api/'):
+                    return JsonResponse({'error': 'Not authenticated', 'status': 403}, status=403)
+                # For pages, redirect to login
+                return redirect('/auth/login/')
             
             # Get admin user and check permissions
             try:
                 admin = AdminUser.objects.get(admin_id=admin_id, status='active')
             except AdminUser.DoesNotExist:
-                raise PermissionDenied("Admin user not found or inactive")
+                # Clear session if admin user not found
+                request.session.flush()
+                if request.path.startswith('/api/'):
+                    return JsonResponse({'error': 'Admin user not found or inactive', 'status': 403}, status=403)
+                return redirect('/auth/login/')
             
             # Check specific permission
             if permission_type == 'create_users' and not admin.can_create_users:
-                raise PermissionDenied("User creation permission required")
+                if not request.path.startswith('/api/'):
+                    return render(request, 'errors/404.html', status=403)
+                return JsonResponse({'error': 'User creation permission required', 'status': 403}, status=403)
             elif permission_type == 'manage_users' and not admin.can_manage_users:
-                raise PermissionDenied("User management permission required")
+                if not request.path.startswith('/api/'):
+                    return render(request, 'errors/404.html', status=403)
+                return JsonResponse({'error': 'User management permission required', 'status': 403}, status=403)
             elif permission_type == 'set_deadlines' and not admin.can_set_deadlines:
-                raise PermissionDenied("Deadline setting permission required")
+                if not request.path.startswith('/api/'):
+                    return render(request, 'errors/404.html', status=403)
+                return JsonResponse({'error': 'Deadline setting permission required', 'status': 403}, status=403)
             elif permission_type == 'approve_submissions' and not admin.can_approve_submissions:
-                raise PermissionDenied("Submission approval permission required")
+                if not request.path.startswith('/api/'):
+                    return render(request, 'errors/404.html', status=403)
+                return JsonResponse({'error': 'Submission approval permission required', 'status': 403}, status=403)
             elif permission_type == 'view_system_logs' and not admin.can_view_system_logs:
-                raise PermissionDenied("System log viewing permission required")
+                if not request.path.startswith('/api/'):
+                    return render(request, 'errors/404.html', status=403)
+                return JsonResponse({'error': 'System log viewing permission required', 'status': 403}, status=403)
             
             return func(request, *args, **kwargs)
         return wrapper
@@ -645,28 +657,29 @@ def require_admin_level(allowed_levels=None, blocked_levels=None):
     """
     def decorator(func):
         def wrapper(request, *args, **kwargs):
-            from django.shortcuts import redirect
-            from django.http import HttpResponseForbidden
-            
-            # DEVELOPMENT BYPASS - Remove this in production
-            from django.conf import settings
-            if getattr(settings, 'DEBUG', False):
-                if not request.session.get('admin_id'):
-                    request.session['admin_id'] = 2
-                    request.session['admin_level'] = 'central'
-                    request.session['admin_username'] = 'admin'
-                return func(request, *args, **kwargs)
+            from django.shortcuts import redirect, render
+            from django.http import HttpResponseForbidden, JsonResponse
             
             admin_id = request.session.get('admin_id')
             if not admin_id:
-                raise PermissionDenied("Admin authentication required")
+                # Clear session if not authenticated
+                request.session.flush()
+                # Check if this is an API endpoint
+                if request.path.startswith('/api/'):
+                    return JsonResponse({'error': 'Not authenticated', 'status': 403}, status=403)
+                # For pages, redirect to login
+                return redirect('/auth/login/')
             
             # Get admin user and check level
             try:
                 admin = AdminUser.objects.get(admin_id=admin_id, status='active')
                 admin_level = admin.admin_level
             except AdminUser.DoesNotExist:
-                raise PermissionDenied("Admin user not found or inactive")
+                # Clear session if admin user not found
+                request.session.flush()
+                if request.path.startswith('/api/'):
+                    return JsonResponse({'error': 'Admin user not found or inactive', 'status': 403}, status=403)
+                return redirect('/auth/login/')
             
             # Check if level is blocked
             if blocked_levels and admin_level in blocked_levels:
@@ -683,14 +696,26 @@ def require_admin_level(allowed_levels=None, blocked_levels=None):
                     ip_address=request.META.get('REMOTE_ADDR'),
                     user_agent=request.META.get('HTTP_USER_AGENT')
                 )
-                # Redirect District to profile page, others get 403
+                # Redirect District to profile page, others get 404 error page
                 if admin_level == 'district':
                     return redirect('/admin/profile/')
-                raise PermissionDenied(f"Access denied for {admin_level} level")
+                # For pages, render 404 error page
+                if not request.path.startswith('/api/'):
+                    return render(request, 'errors/404.html', status=403)
+                return JsonResponse({
+                    'error': f'Access denied for {admin_level} level',
+                    'status': 403
+                }, status=403)
             
             # Check if level is allowed
             if allowed_levels and admin_level not in allowed_levels:
-                raise PermissionDenied(f"Access denied. Required level: {', '.join(allowed_levels)}")
+                # For pages, render 404 error page
+                if not request.path.startswith('/api/'):
+                    return render(request, 'errors/404.html', status=403)
+                return JsonResponse({
+                    'error': f'Access denied. Required level: {", ".join(allowed_levels)}',
+                    'status': 403
+                }, status=403)
             
             return func(request, *args, **kwargs)
         return wrapper

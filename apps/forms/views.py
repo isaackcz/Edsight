@@ -21,6 +21,7 @@ from apps.core.models import (
     Region, Division, District, School, Category, Topic, Question
 )
 from apps.admin_management.utils import require_admin_permission, log_admin_activity
+from apps.core.views import create_audit_log
 
 
 def get_admin_context(request):
@@ -494,6 +495,25 @@ def api_approve_form(request, form_id):
                 f"Approved form {form_id} for {form.school.school_name}",
                 {'form_id': form_id, 'next_level': next_level, 'comments': comments}
             )
+            
+            # Create audit log for successful form approval
+            create_audit_log(
+                admin_user=admin_user,
+                action_type='update',
+                resource_type='form',
+                description=f'Approved form {form_id} and moved to {next_level} level',
+                request=request,
+                success=True,
+                metadata={
+                    'form_id': form_id,
+                    'current_level': current_level,
+                    'next_level': next_level,
+                    'comments': comments,
+                    'school_name': form.school.school_name if form.school else None,
+                    'new_status': form.status
+                },
+                severity='medium'
+            )
         
         return JsonResponse({
             'success': True,
@@ -507,6 +527,31 @@ def api_approve_form(request, form_id):
             'message': 'Form not found'
         })
     except Exception as e:
+        # Create audit log for failed form approval
+        admin_user_obj = None
+        try:
+            admin_id = request.session.get('admin_id')
+            if admin_id:
+                try:
+                    admin_user_obj = AdminUser.objects.get(admin_id=admin_id)
+                except AdminUser.DoesNotExist:
+                    pass
+        except Exception:
+            pass
+
+        if admin_user_obj:
+            create_audit_log(
+                admin_user=admin_user_obj,
+                action_type='update',
+                resource_type='form',
+                description='Failed to approve form',
+                request=request,
+                success=False,
+                error_message=str(e),
+                metadata={'form_id': form_id, 'error': str(e)},
+                severity='high'
+            )
+
         return JsonResponse({
             'success': False,
             'message': f'Failed to approve form: {str(e)}'
@@ -585,6 +630,24 @@ def api_return_form(request, form_id):
                 f"Returned form {form_id} for {form.school.school_name}",
                 {'form_id': form_id, 'previous_level': previous_level, 'comments': comments}
             )
+            
+            # Create audit log for successful form return
+            create_audit_log(
+                admin_user=admin_user,
+                action_type='update',
+                resource_type='form',
+                description=f'Returned form {form_id} to {previous_level} level',
+                request=request,
+                success=True,
+                metadata={
+                    'form_id': form_id,
+                    'previous_level': previous_level,
+                    'comments': comments,
+                    'school_name': form.school.school_name if form.school else None,
+                    'new_status': form.status
+                },
+                severity='medium'
+            )
         
         return JsonResponse({
             'success': True,
@@ -598,6 +661,31 @@ def api_return_form(request, form_id):
             'message': 'Form not found'
         })
     except Exception as e:
+        # Create audit log for failed form return
+        admin_user_obj = None
+        try:
+            admin_id = request.session.get('admin_id')
+            if admin_id:
+                try:
+                    admin_user_obj = AdminUser.objects.get(admin_id=admin_id)
+                except AdminUser.DoesNotExist:
+                    pass
+        except Exception:
+            pass
+
+        if admin_user_obj:
+            create_audit_log(
+                admin_user=admin_user_obj,
+                action_type='update',
+                resource_type='form',
+                description='Failed to return form',
+                request=request,
+                success=False,
+                error_message=str(e),
+                metadata={'form_id': form_id, 'error': str(e)},
+                severity='high'
+            )
+
         return JsonResponse({
             'success': False,
             'message': f'Failed to return form: {str(e)}'
@@ -693,12 +781,53 @@ def api_bulk_approve(request):
             {'form_ids': form_ids, 'approved_count': approved_count, 'comments': comments}
         )
         
+        # Create audit log for successful bulk approval
+        create_audit_log(
+            admin_user=admin_user,
+            action_type='update',
+            resource_type='form',
+            description=f'Bulk approved {approved_count} forms',
+            request=request,
+            success=True,
+            metadata={
+                'form_ids': form_ids,
+                'approved_count': approved_count,
+                'comments': comments
+            },
+            severity='medium'
+        )
+        
         return JsonResponse({
             'success': True,
             'message': f'Successfully approved {approved_count} forms',
             'approved_count': approved_count,
         })
     except Exception as e:
+        # Create audit log for failed bulk approval
+        admin_user_obj = None
+        try:
+            admin_id = request.session.get('admin_id')
+            if admin_id:
+                try:
+                    admin_user_obj = AdminUser.objects.get(admin_id=admin_id)
+                except AdminUser.DoesNotExist:
+                    pass
+        except Exception:
+            pass
+
+        if admin_user_obj:
+            create_audit_log(
+                admin_user=admin_user_obj,
+                action_type='update',
+                resource_type='form',
+                description='Failed to bulk approve forms',
+                request=request,
+                success=False,
+                error_message=str(e),
+                metadata={'error': str(e)},
+                severity='high'
+            )
+
         return JsonResponse({
             'success': False,
             'message': f'Failed to bulk approve forms: {str(e)}'
@@ -781,12 +910,53 @@ def api_bulk_return(request):
             {'form_ids': form_ids, 'returned_count': returned_count, 'comments': comments}
         )
         
+        # Create audit log for successful bulk return
+        create_audit_log(
+            admin_user=admin_user,
+            action_type='update',
+            resource_type='form',
+            description=f'Bulk returned {returned_count} forms',
+            request=request,
+            success=True,
+            metadata={
+                'form_ids': form_ids,
+                'returned_count': returned_count,
+                'comments': comments
+            },
+            severity='medium'
+        )
+        
         return JsonResponse({
             'success': True,
             'message': f'Successfully returned {returned_count} forms',
             'returned_count': returned_count,
         })
     except Exception as e:
+        # Create audit log for failed bulk return
+        admin_user_obj = None
+        try:
+            admin_id = request.session.get('admin_id')
+            if admin_id:
+                try:
+                    admin_user_obj = AdminUser.objects.get(admin_id=admin_id)
+                except AdminUser.DoesNotExist:
+                    pass
+        except Exception:
+            pass
+
+        if admin_user_obj:
+            create_audit_log(
+                admin_user=admin_user_obj,
+                action_type='update',
+                resource_type='form',
+                description='Failed to bulk return forms',
+                request=request,
+                success=False,
+                error_message=str(e),
+                metadata={'error': str(e)},
+                severity='high'
+            )
+
         return JsonResponse({
             'success': False,
             'message': f'Failed to bulk return forms: {str(e)}'

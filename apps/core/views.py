@@ -31,6 +31,7 @@ from rest_framework.response import Response
 from datetime import datetime, timedelta
 from django.utils import timezone
 from django.db.models import Q
+from .decorators import session_required, only_admin_users
 
 def create_audit_log(admin_user, action_type, resource_type, description, request, success=True, error_message=None, metadata=None, severity='low'):
     """Helper function to create audit log entries."""
@@ -934,19 +935,18 @@ def login_view(request):
     # Return authentication failure if user not found in admin_user table
     return JsonResponse({'success': False, 'error': 'Invalid credentials'}, status=401)
 
+@session_required
+@only_admin_users
 def dashboard_page(request):
-    if request.session.get('user_type') != 'admin':
-        return redirect('/auth/login/')
     context = {
         'admin_level': request.session.get('admin_level'),
         'admin_username': request.session.get('admin_username'),
     }
     return render(request, 'dashboard/dashboard.html', context)
 
+@session_required
+@only_admin_users
 def form_page(request):
-    # Check if user is logged in
-    if not request.session.get('admin_id'):
-        return redirect('/auth/login/')
     context = {
         'admin_level': request.session.get('admin_level'),
         'admin_username': request.session.get('admin_username'),
@@ -2337,16 +2337,64 @@ def create_topic(request):
 @session_required
 def update_category(request, category_id):
     """Update a category name"""
+    admin_user_obj = None
     try:
+        # Get admin user for audit logging
+        admin_id = request.session.get('admin_id')
+        if admin_id:
+            try:
+                admin_user_obj = AdminUser.objects.get(admin_id=admin_id)
+            except AdminUser.DoesNotExist:
+                pass
+        
         data = json.loads(request.body)
         name = data.get('name')
         
         if not name:
             return JsonResponse({'success': False, 'error': 'Category name is required'}, status=400)
         
+        # Get old category name before update
+        try:
+            old_category = Category.objects.get(category_id=category_id)
+            old_name = old_category.name
+        except Category.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'Category not found'}, status=404)
+        
         Category.objects.filter(category_id=category_id).update(name=name)
+        
+        # Create audit log for successful category update
+        if admin_user_obj:
+            create_audit_log(
+                admin_user=admin_user_obj,
+                action_type='update',
+                resource_type='category',
+                description=f'Updated category "{old_name}" to "{name}"',
+                request=request,
+                success=True,
+                metadata={
+                    'category_id': category_id,
+                    'old_name': old_name,
+                    'new_name': name
+                },
+                severity='low'
+            )
+        
         return JsonResponse({'success': True})
     except Exception as e:
+        # Create audit log for failed category update
+        if admin_user_obj:
+            create_audit_log(
+                admin_user=admin_user_obj,
+                action_type='update',
+                resource_type='category',
+                description='Failed to update category',
+                request=request,
+                success=False,
+                error_message=str(e),
+                metadata={'category_id': category_id, 'error': str(e)},
+                severity='medium'
+            )
+        
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
 @csrf_exempt  
@@ -2354,10 +2402,57 @@ def update_category(request, category_id):
 @session_required
 def delete_category(request, category_id):
     """Delete a category and all its topics"""
+    admin_user_obj = None
     try:
+        # Get admin user for audit logging
+        admin_id = request.session.get('admin_id')
+        if admin_id:
+            try:
+                admin_user_obj = AdminUser.objects.get(admin_id=admin_id)
+            except AdminUser.DoesNotExist:
+                pass
+        
+        # Get category details before deletion
+        try:
+            category = Category.objects.get(category_id=category_id)
+            category_name = category.name
+        except Category.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'Category not found'}, status=404)
+        
         Category.objects.filter(category_id=category_id).delete()
+        
+        # Create audit log for successful category deletion
+        if admin_user_obj:
+            create_audit_log(
+                admin_user=admin_user_obj,
+                action_type='delete',
+                resource_type='category',
+                description=f'Deleted category "{category_name}"',
+                request=request,
+                success=True,
+                metadata={
+                    'category_id': category_id,
+                    'category_name': category_name
+                },
+                severity='medium'
+            )
+        
         return JsonResponse({'success': True})
     except Exception as e:
+        # Create audit log for failed category deletion
+        if admin_user_obj:
+            create_audit_log(
+                admin_user=admin_user_obj,
+                action_type='delete',
+                resource_type='category',
+                description='Failed to delete category',
+                request=request,
+                success=False,
+                error_message=str(e),
+                metadata={'category_id': category_id, 'error': str(e)},
+                severity='high'
+            )
+        
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
 @csrf_exempt
@@ -2365,7 +2460,16 @@ def delete_category(request, category_id):
 @session_required
 def update_topic(request, topic_id):
     """Update a topic name and can_skip flag"""
+    admin_user_obj = None
     try:
+        # Get admin user for audit logging
+        admin_id = request.session.get('admin_id')
+        if admin_id:
+            try:
+                admin_user_obj = AdminUser.objects.get(admin_id=admin_id)
+            except AdminUser.DoesNotExist:
+                pass
+        
         data = json.loads(request.body)
         name = data.get('name')
         can_skip = data.get('can_skip', False)
@@ -2373,9 +2477,60 @@ def update_topic(request, topic_id):
         if not name:
             return JsonResponse({'success': False, 'error': 'Topic name is required'}, status=400)
         
+        # Get old topic details before update
+        try:
+            old_topic = Topic.objects.get(topic_id=topic_id)
+            old_name = old_topic.name
+            old_can_skip = old_topic.can_skip
+            category_id = old_topic.category_id
+        except Topic.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'Topic not found'}, status=404)
+        
         Topic.objects.filter(topic_id=topic_id).update(name=name, can_skip=can_skip)
+        
+        # Create audit log for successful topic update
+        if admin_user_obj:
+            changes = {}
+            if old_name != name:
+                changes['name'] = {'old': old_name, 'new': name}
+            if old_can_skip != can_skip:
+                changes['can_skip'] = {'old': old_can_skip, 'new': can_skip}
+            
+            create_audit_log(
+                admin_user=admin_user_obj,
+                action_type='update',
+                resource_type='topic',
+                description=f'Updated topic "{old_name}" to "{name}"',
+                request=request,
+                success=True,
+                metadata={
+                    'topic_id': topic_id,
+                    'category_id': category_id,
+                    'old_name': old_name,
+                    'new_name': name,
+                    'old_can_skip': old_can_skip,
+                    'new_can_skip': can_skip,
+                    'changes': changes
+                },
+                severity='low'
+            )
+        
         return JsonResponse({'success': True})
     except Exception as e:
+        # Create audit log for failed topic update
+        if admin_user_obj:
+            create_audit_log(
+                admin_user=admin_user_obj,
+                action_type='update',
+                resource_type='topic',
+                description='Failed to update topic',
+                request=request,
+                success=False,
+                error_message=str(e),
+                metadata={'topic_id': topic_id, 'error': str(e)},
+                severity='medium'
+            )
+        
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
 @csrf_exempt
@@ -2383,18 +2538,83 @@ def update_topic(request, topic_id):
 @session_required  
 def delete_topic(request, topic_id):
     """Delete a topic and all its questions"""
+    admin_user_obj = None
     try:
+        # Get admin user for audit logging
+        admin_id = request.session.get('admin_id')
+        if admin_id:
+            try:
+                admin_user_obj = AdminUser.objects.get(admin_id=admin_id)
+            except AdminUser.DoesNotExist:
+                pass
+        
+        # Get topic details before deletion
+        try:
+            topic = Topic.objects.get(topic_id=topic_id)
+            topic_name = topic.name
+            category_id = topic.category_id
+        except Topic.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'Topic not found'}, status=404)
+        
         Topic.objects.filter(topic_id=topic_id).delete()
+        
+        # Create audit log for successful topic deletion
+        if admin_user_obj:
+            create_audit_log(
+                admin_user=admin_user_obj,
+                action_type='delete',
+                resource_type='topic',
+                description=f'Deleted topic "{topic_name}"',
+                request=request,
+                success=True,
+                metadata={
+                    'topic_id': topic_id,
+                    'topic_name': topic_name,
+                    'category_id': category_id
+                },
+                severity='medium'
+            )
+        
         return JsonResponse({'success': True})
     except Exception as e:
+        # Create audit log for failed topic deletion
+        if admin_user_obj:
+            create_audit_log(
+                admin_user=admin_user_obj,
+                action_type='delete',
+                resource_type='topic',
+                description='Failed to delete topic',
+                request=request,
+                success=False,
+                error_message=str(e),
+                metadata={'topic_id': topic_id, 'error': str(e)},
+                severity='high'
+            )
+        
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
 @csrf_exempt
 @require_http_methods(["PUT"])
 def update_question(request, question_id):
+    admin_user_obj = None
     try:
+        # Get admin user for audit logging
+        admin_id = request.session.get('admin_id')
+        if admin_id:
+            try:
+                admin_user_obj = AdminUser.objects.get(admin_id=admin_id)
+            except AdminUser.DoesNotExist:
+                pass
+        
         data = json.loads(request.body)
         question = Question.objects.get(pk=question_id)
+        
+        # Store old values for audit log
+        old_question_text = question.question_text
+        old_answer_type = question.answer_type
+        old_is_required = question.is_required
+        topic_id = question.topic_id
+        
         question_text = data.get('question_text')
         answer_type = data.get('answer_type')
         is_required = data.get('is_required', False)
@@ -2407,8 +2627,49 @@ def update_question(request, question_id):
         # Keep existing display_order - don't change it
         question.save()
         
+        # Create audit log for successful question update
+        if admin_user_obj:
+            changes = {}
+            if question_text and old_question_text != question_text:
+                changes['question_text'] = {'old': old_question_text[:100], 'new': question_text[:100]}
+            if answer_type and old_answer_type != answer_type:
+                changes['answer_type'] = {'old': old_answer_type, 'new': answer_type}
+            if old_is_required != is_required:
+                changes['is_required'] = {'old': old_is_required, 'new': is_required}
+            
+            create_audit_log(
+                admin_user=admin_user_obj,
+                action_type='update',
+                resource_type='question',
+                description=f'Updated question {question_id}',
+                request=request,
+                success=True,
+                metadata={
+                    'question_id': question_id,
+                    'topic_id': topic_id,
+                    'changes': changes
+                },
+                severity='low'
+            )
+        
         return JsonResponse({'success': True})
+    except Question.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Question not found'}, status=404)
     except Exception as e:
+        # Create audit log for failed question update
+        if admin_user_obj:
+            create_audit_log(
+                admin_user=admin_user_obj,
+                action_type='update',
+                resource_type='question',
+                description='Failed to update question',
+                request=request,
+                success=False,
+                error_message=str(e),
+                metadata={'question_id': question_id, 'error': str(e)},
+                severity='medium'
+            )
+        
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
 @csrf_exempt
@@ -2439,14 +2700,63 @@ def get_question(request, question_id):
 @require_http_methods(["DELETE"])
 def delete_question(request, question_id):
     from .models import Question, QuestionChoice
+    admin_user_obj = None
     try:
+        # Get admin user for audit logging
+        admin_id = request.session.get('admin_id')
+        if admin_id:
+            try:
+                admin_user_obj = AdminUser.objects.get(admin_id=admin_id)
+            except AdminUser.DoesNotExist:
+                pass
+        
+        # Get question details before deletion
+        try:
+            question = Question.objects.get(question_id=question_id)
+            question_text = question.question_text
+            topic_id = question.topic_id
+        except Question.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'Question not found'}, status=404)
+        
         # Delete choices first (if any)
         QuestionChoice.objects.filter(question_id=question_id).delete()
         deleted, _ = Question.objects.filter(question_id=question_id).delete()
         if deleted == 0:
             return JsonResponse({'success': False, 'error': 'Question not found'}, status=404)
+        
+        # Create audit log for successful question deletion
+        if admin_user_obj:
+            create_audit_log(
+                admin_user=admin_user_obj,
+                action_type='delete',
+                resource_type='question',
+                description=f'Deleted question: {question_text[:100]}...',
+                request=request,
+                success=True,
+                metadata={
+                    'question_id': question_id,
+                    'topic_id': topic_id,
+                    'question_text': question_text[:200]
+                },
+                severity='medium'
+            )
+        
         return JsonResponse({'success': True})
     except Exception as e:
+        # Create audit log for failed question deletion
+        if admin_user_obj:
+            create_audit_log(
+                admin_user=admin_user_obj,
+                action_type='delete',
+                resource_type='question',
+                description='Failed to delete question',
+                request=request,
+                success=False,
+                error_message=str(e),
+                metadata={'question_id': question_id, 'error': str(e)},
+                severity='high'
+            )
+        
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
 # --- Simple session-based rate limiting for AJAX validation endpoints ---
@@ -2625,6 +2935,8 @@ def get_questions(request, topic_id):
 
 # Report Page Views
 @session_or_login_required
+@session_required
+@only_admin_users
 def report_overview(request):
     """Overview/Dashboard report page with KPI cards and charts."""
     import time
@@ -2635,7 +2947,8 @@ def report_overview(request):
     }
     return render(request, 'report/overview.html', context)
 
-@session_or_login_required
+@session_required
+@only_admin_users
 def report_workflow(request):
     """Workflow Performance report page."""
     import time
@@ -2646,7 +2959,8 @@ def report_workflow(request):
     }
     return render(request, 'report/workflow.html', context)
 
-@session_or_login_required
+@session_required
+@only_admin_users
 def report_geographic(request):
     """Geographic Performance report page."""
     import time
@@ -2657,7 +2971,8 @@ def report_geographic(request):
     }
     return render(request, 'report/geographic.html', context)
 
-@session_or_login_required
+@session_required
+@only_admin_users
 def report_deadlines(request):
     """Deadline Compliance report page."""
     import time
@@ -2668,7 +2983,8 @@ def report_deadlines(request):
     }
     return render(request, 'report/deadlines.html', context)
 
-@session_or_login_required
+@session_required
+@only_admin_users
 def report_schools(request):
     """School Performance report page."""
     import time
@@ -2679,7 +2995,8 @@ def report_schools(request):
     }
     return render(request, 'report/schools.html', context)
 
-@session_or_login_required
+@session_required
+@only_admin_users
 def report_admin_activity(request):
     """Admin Activity report page."""
     import time
@@ -2690,7 +3007,8 @@ def report_admin_activity(request):
     }
     return render(request, 'report/admin_activity.html', context)
 
-@session_or_login_required
+@session_required
+@only_admin_users
 def report_security(request):
     """Security & Audit report page."""
     import time
@@ -2702,7 +3020,8 @@ def report_security(request):
     return render(request, 'report/security.html', context)
 
 
-@session_or_login_required
+@session_required
+@only_admin_users
 def report_category_topic(request):
     """Category & Topic Analysis report page."""
     import time
@@ -5358,5 +5677,29 @@ def api_schools_search(request):
             'error': str(e),
             'schools': []
         })
+
+
+def root_redirect(request):
+    """Root URL redirect - checks authentication and redirects appropriately"""
+    admin_id = request.session.get('admin_id')
+    if not admin_id:
+        request.session.flush()
+        return redirect('/auth/login/')
+    
+    admin_level = request.session.get('admin_level')
+    if admin_level == 'school':
+        return redirect('/user/dashboard/')
+    else:
+        return redirect('/dashboard/')
+
+
+def handler403(request, exception=None):
+    """Custom 403 Forbidden error handler"""
+    return render(request, 'errors/404.html', status=403)
+
+
+def handler404(request, exception=None):
+    """Custom 404 Not Found error handler"""
+    return render(request, 'errors/404.html', status=404)
 
 

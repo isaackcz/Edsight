@@ -43,8 +43,8 @@ from django.conf import settings
 from django.conf.urls.static import static
 
 urlpatterns = [
-    # Root URL - redirect to dashboard
-    path('', lambda request: redirect('/dashboard/'), name='root'),
+    # Root URL - redirect based on authentication
+    path('', views.root_redirect, name='root'),
     
     # Development tools
     path("__reload__/", include("django_browser_reload.urls")),
@@ -290,3 +290,7 @@ urlpatterns += [
 # Serve static files in development
 if settings.DEBUG:
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+
+# Error handlers
+handler403 = views.handler403
+handler404 = views.handler404

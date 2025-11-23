@@ -10,11 +10,13 @@ from django.views.decorators.http import require_GET
 from .services import RoleAnalyticsService
 from ..utils import require_admin_level
 from ..views import get_admin_context
+from apps.core.decorators import session_required, only_division_and_central
 
 
-@require_admin_level(allowed_levels=['central'])
+@session_required
+@only_division_and_central
 def role_analytics_page(request):
-    """Role analytics and statistics page - Central Office only"""
+    """Role analytics and statistics page - Division and Central Office only"""
     context = get_admin_context(request)
     if not context:
         return redirect('/auth/login/')

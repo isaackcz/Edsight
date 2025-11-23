@@ -10,6 +10,7 @@ from django.views.decorators.http import require_GET, require_POST, require_http
 
 from apps.core.models import Form, FormRemark, AdminUser
 from .utils import get_admin_scope
+from apps.core.views import create_audit_log
 
 
 @csrf_exempt
@@ -109,11 +110,65 @@ def api_clear_remarks(request, form_id):
 
         deleted_count, _ = remarks_qs.delete()
 
+        # Get admin user for audit logging
+        admin_user_obj = None
+        try:
+            admin_id = request.session.get('admin_id')
+            if admin_id:
+                try:
+                    admin_user_obj = AdminUser.objects.get(admin_id=admin_id)
+                except AdminUser.DoesNotExist:
+                    pass
+        except Exception:
+            pass
+
+        # Create audit log for successful remark clearing
+        if admin_user_obj:
+            create_audit_log(
+                admin_user=admin_user_obj,
+                action_type='delete',
+                resource_type='form_remark',
+                description=f'Cleared {deleted_count} remarks for form {form_id}',
+                request=request,
+                success=True,
+                metadata={
+                    'form_id': form_id,
+                    'scope': scope,
+                    'deleted_count': deleted_count
+                },
+                severity='low'
+            )
+
         return JsonResponse({'success': True, 'deleted': deleted_count})
 
     except Form.DoesNotExist:
         return JsonResponse({'success': False, 'error': 'Form not found'}, status=404)
     except Exception as e:
+        # Create audit log for failed remark clearing
+        admin_user_obj = None
+        try:
+            admin_id = request.session.get('admin_id')
+            if admin_id:
+                try:
+                    admin_user_obj = AdminUser.objects.get(admin_id=admin_id)
+                except AdminUser.DoesNotExist:
+                    pass
+        except Exception:
+            pass
+
+        if admin_user_obj:
+            create_audit_log(
+                admin_user=admin_user_obj,
+                action_type='delete',
+                resource_type='form_remark',
+                description='Failed to clear remarks',
+                request=request,
+                success=False,
+                error_message=str(e),
+                metadata={'form_id': form_id, 'error': str(e)},
+                severity='medium'
+            )
+
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
 
@@ -170,6 +225,24 @@ def api_create_remark(request, form_id):
             remark_text=remark_text
         )
         
+        # Create audit log for successful remark creation
+        create_audit_log(
+            admin_user=admin_user,
+            action_type='create',
+            resource_type='form_remark',
+            description=f'Created {remark_type} remark for form {form_id}',
+            request=request,
+            success=True,
+            metadata={
+                'form_id': form_id,
+                'remark_id': remark.remark_id,
+                'remark_type': remark_type,
+                'entity_id': entity_id,
+                'remark_text': remark_text[:200]
+            },
+            severity='low'
+        )
+        
         return JsonResponse({
             'success': True,
             'remark': {
@@ -191,6 +264,31 @@ def api_create_remark(request, form_id):
     except json.JSONDecodeError:
         return JsonResponse({'success': False, 'error': 'Invalid JSON'}, status=400)
     except Exception as e:
+        # Create audit log for failed remark creation
+        admin_user_obj = None
+        try:
+            admin_id = request.session.get('admin_id')
+            if admin_id:
+                try:
+                    admin_user_obj = AdminUser.objects.get(admin_id=admin_id)
+                except AdminUser.DoesNotExist:
+                    pass
+        except Exception:
+            pass
+
+        if admin_user_obj:
+            create_audit_log(
+                admin_user=admin_user_obj,
+                action_type='create',
+                resource_type='form_remark',
+                description='Failed to create remark',
+                request=request,
+                success=False,
+                error_message=str(e),
+                metadata={'form_id': form_id, 'error': str(e)},
+                severity='medium'
+            )
+
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
 
@@ -237,6 +335,25 @@ def api_upsert_remark(request, form_id):
             )
             action = 'created'
 
+        # Create audit log for successful remark upsert
+        create_audit_log(
+            admin_user=admin_user,
+            action_type='update' if action == 'updated' else 'create',
+            resource_type='form_remark',
+            description=f'{action.title()} {remark_type} remark for form {form_id}',
+            request=request,
+            success=True,
+            metadata={
+                'form_id': form_id,
+                'remark_id': remark.remark_id,
+                'remark_type': remark_type,
+                'entity_id': entity_id,
+                'action': action,
+                'remark_text': remark_text[:200]
+            },
+            severity='low'
+        )
+
         return JsonResponse({
             'success': True,
             'action': action,
@@ -258,5 +375,30 @@ def api_upsert_remark(request, form_id):
     except json.JSONDecodeError:
         return JsonResponse({'success': False, 'error': 'Invalid JSON'}, status=400)
     except Exception as e:
+        # Create audit log for failed remark upsert
+        admin_user_obj = None
+        try:
+            admin_id = request.session.get('admin_id')
+            if admin_id:
+                try:
+                    admin_user_obj = AdminUser.objects.get(admin_id=admin_id)
+                except AdminUser.DoesNotExist:
+                    pass
+        except Exception:
+            pass
+
+        if admin_user_obj:
+            create_audit_log(
+                admin_user=admin_user_obj,
+                action_type='update',
+                resource_type='form_remark',
+                description='Failed to upsert remark',
+                request=request,
+                success=False,
+                error_message=str(e),
+                metadata={'form_id': form_id, 'error': str(e)},
+                severity='medium'
+            )
+
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
 

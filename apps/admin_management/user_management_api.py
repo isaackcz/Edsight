@@ -14,6 +14,7 @@ from django.utils import timezone
 from apps.core.models import AdminUser, Region, Division, District, School
 from apps.admin_management.utils import AdminUserManager
 from apps.admin_management.views import get_admin_division_filter
+from apps.core.views import create_audit_log
 
 
 def get_admin_scope_for_api(request):
@@ -682,6 +683,18 @@ def api_user_management_reset_password(request):
             admin_user.password_hash = password_hash
             admin_user.save()
             
+            # Get admin user for audit logging
+            admin_user_obj = None
+            try:
+                admin_id = admin_scope.get('admin_id')
+                if admin_id:
+                    try:
+                        admin_user_obj = AdminUser.objects.get(admin_id=admin_id)
+                    except AdminUser.DoesNotExist:
+                        pass
+            except Exception:
+                pass
+            
             # Log the activity
             AuditLogger.log_activity(
                 admin_id=admin_scope.get('admin_id'),
@@ -692,6 +705,23 @@ def api_user_management_reset_password(request):
                 ip_address=request.META.get('REMOTE_ADDR'),
                 user_agent=request.META.get('HTTP_USER_AGENT')
             )
+            
+            # Create audit log for successful password reset
+            if admin_user_obj:
+                create_audit_log(
+                    admin_user=admin_user_obj,
+                    action_type='update',
+                    resource_type='admin_user',
+                    description=f'Reset password for user {admin_user.username}',
+                    request=request,
+                    success=True,
+                    metadata={
+                        'user_id': user_id,
+                        'username': admin_user.username,
+                        'reset_by': admin_scope.get('admin_id')
+                    },
+                    severity='high'
+                )
             
             return JsonResponse({
                 'success': True,
@@ -706,11 +736,65 @@ def api_user_management_reset_password(request):
             }, status=404)
             
     except json.JSONDecodeError:
+        # Create audit log for failed password reset (invalid JSON)
+        admin_user_obj = None
+        try:
+            admin_scope = get_admin_scope_for_api(request)
+            if admin_scope:
+                admin_id = admin_scope.get('admin_id')
+                if admin_id:
+                    try:
+                        admin_user_obj = AdminUser.objects.get(admin_id=admin_id)
+                    except AdminUser.DoesNotExist:
+                        pass
+        except Exception:
+            pass
+
+        if admin_user_obj:
+            create_audit_log(
+                admin_user=admin_user_obj,
+                action_type='update',
+                resource_type='admin_user',
+                description='Failed to reset password - invalid JSON',
+                request=request,
+                success=False,
+                error_message='Invalid JSON data',
+                metadata={'error': 'Invalid JSON data'},
+                severity='medium'
+            )
+
         return JsonResponse({
             'success': False,
             'error': 'Invalid JSON data'
         }, status=400)
     except Exception as e:
+        # Create audit log for failed password reset
+        admin_user_obj = None
+        try:
+            admin_scope = get_admin_scope_for_api(request)
+            if admin_scope:
+                admin_id = admin_scope.get('admin_id')
+                if admin_id:
+                    try:
+                        admin_user_obj = AdminUser.objects.get(admin_id=admin_id)
+                    except AdminUser.DoesNotExist:
+                        pass
+        except Exception:
+            pass
+
+        if admin_user_obj:
+            create_audit_log(
+                admin_user=admin_user_obj,
+                action_type='update',
+                resource_type='admin_user',
+                description='Failed to reset password',
+                request=request,
+                success=False,
+                error_message=str(e),
+                metadata={'error': str(e)},
+                severity='high'
+            )
+
         return JsonResponse({
             'success': False,
             'error': str(e)

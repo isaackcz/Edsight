@@ -13,23 +13,57 @@
     // Load Google Charts library
     function loadGoogleCharts() {
         return new Promise((resolve, reject) => {
+            // Check if Google Charts is already loaded and ready
+            if (window.google && window.google.charts && window.google.visualization) {
+                resolve();
+                return;
+            }
+            
+            // Check if loader script is already in the page
             if (window.google && window.google.charts) {
                 window.google.charts.load('current', {
                     'packages': ['corechart']
                 });
-                window.google.charts.setOnLoadCallback(resolve);
-            } else {
-                const script = document.createElement('script');
-                script.src = 'https://www.gstatic.com/charts/loader.js';
-                script.onload = function() {
+                window.google.charts.setOnLoadCallback(() => {
+                    // Wait a bit to ensure visualization is ready
+                    setTimeout(resolve, 100);
+                });
+                return;
+            }
+            
+            // Load the Google Charts loader script
+            const existingScript = document.querySelector('script[src*="gstatic.com/charts"]');
+            if (existingScript) {
+                // Script is already loading, wait for it
+                existingScript.addEventListener('load', function() {
                     window.google.charts.load('current', {
                         'packages': ['corechart']
                     });
-                    window.google.charts.setOnLoadCallback(resolve);
-                };
-                script.onerror = reject;
-                document.head.appendChild(script);
+                    window.google.charts.setOnLoadCallback(() => {
+                        setTimeout(resolve, 100);
+                    });
+                });
+                return;
             }
+            
+            const script = document.createElement('script');
+            script.src = 'https://www.gstatic.com/charts/loader.js';
+            script.async = true;
+            script.onload = function() {
+                window.google.charts.load('current', {
+                    'packages': ['corechart']
+                });
+                window.google.charts.setOnLoadCallback(() => {
+                    // Ensure visualization is available
+                    if (window.google.visualization) {
+                        setTimeout(resolve, 100);
+                    } else {
+                        reject(new Error('Google Visualization not available'));
+                    }
+                });
+            };
+            script.onerror = () => reject(new Error('Failed to load Google Charts'));
+            document.head.appendChild(script);
         });
     }
     

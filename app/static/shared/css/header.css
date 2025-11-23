@@ -110,6 +110,9 @@
 .hamburger-btn {
   position: relative;
   z-index: 100100;
+  pointer-events: auto;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 
 .hamburger:hover,

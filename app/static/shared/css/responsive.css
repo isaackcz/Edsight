@@ -155,13 +155,14 @@
   }
 
   /* Ensure the table doesn't push outside the page in off-canvas layout */
-  .dashboard-container.sidebar-open .table-container {
+  .dashboard-container.sidebar-open .table-container,
+  .dashboard-container.sidebar-collapsed .table-container {
     padding-left: 12px !important;
     padding-right: 12px !important;
   }
 }
 
-/* Mobile off-canvas sidebar: hidden by default, slide in when .sidebar-open
+/* Mobile off-canvas sidebar: hidden by default, slide in when .sidebar-collapsed is toggled
    This keeps the sidebar accessible on mobile without pushing the header
    or causing wide horizontal blocks (as seen in the screenshot). */
 @media (max-width: 1000px) {
@@ -172,7 +173,7 @@
     height: 100vh;
     width: 260px;
     max-width: 80%;
-    transform: translateX(-120%); /* hide off-canvas */
+    transform: translateX(-120%); /* hide off-canvas by default */
     transition: transform 0.22s ease, opacity 0.22s ease;
     border-radius: 0; /* full-height panel */
     box-shadow: var(--soft-shadow);
@@ -183,13 +184,39 @@
     pointer-events: none;
   }
 
-  /* When the container has .sidebar-open the sidebar slides into view */
+  /* When sidebar-collapsed is NOT present on mobile, keep sidebar hidden */
+  .dashboard-container:not(.sidebar-collapsed) .sidebar {
+    transform: translateX(-120%);
+    pointer-events: none;
+  }
+
+  /* When the container has .sidebar-collapsed the sidebar slides into view on mobile */
+  .dashboard-container.sidebar-collapsed .sidebar {
+    width: 260px !important;
+    padding: 20px !important;
+    margin: 0 !important;
+    opacity: 1 !important;
+    transform: translateX(0) !important;
+    pointer-events: auto !important;
+    overflow: visible !important;
+    border-radius: 0 !important;
+  }
+  
+  /* Show inner elements when sidebar is visible on mobile */
+  .dashboard-container.sidebar-collapsed .sidebar .logo,
+  .dashboard-container.sidebar-collapsed .sidebar .menu {
+    opacity: 1 !important;
+    pointer-events: auto !important;
+  }
+
+  /* Also support sidebar-open for backward compatibility */
   .dashboard-container.sidebar-open .sidebar {
     transform: translateX(0);
-    pointer-events: auto; /* re-enable interaction when visible */
+    pointer-events: auto;
   }
 
   /* Backdrop to dim the page when sidebar is open */
+  .dashboard-container.sidebar-collapsed::before,
   .dashboard-container.sidebar-open::before {
     content: "";
     position: fixed;
@@ -219,11 +246,8 @@
     border-radius: 0;
   }
 
-  /* Override the collapsed-sidebar style on mobile to avoid width:0 rule
-     interfering with the off-canvas approach */
-  .dashboard-container.sidebar-collapsed .sidebar {
-    width: 260px !important;
-    padding: 20px !important;
-    opacity: 1 !important;
+  /* Reset gap on mobile when sidebar is shown */
+  .dashboard-container.sidebar-collapsed {
+    --dashboard-gap: 0px;
   }
 }

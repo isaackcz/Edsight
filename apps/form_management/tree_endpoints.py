@@ -10,11 +10,14 @@ from django.db.models import Count, Q
 from django.core.cache import cache
 
 from apps.core.models import Region, Division, District
+from apps.core.decorators import session_required, block_school_users
 from .utils import get_admin_scope, get_pending_workflow_statuses
 
 
 @csrf_exempt
 @require_GET
+@session_required
+@block_school_users
 def api_regions(request):
     """Get regions that have schools with forms"""
     try:
@@ -133,6 +136,8 @@ def api_regions(request):
 
 @csrf_exempt
 @require_GET
+@session_required
+@block_school_users
 def api_divisions(request):
     """Get divisions for a specific region that have schools with forms"""
     try:
@@ -221,6 +226,8 @@ def api_divisions(request):
 
 @csrf_exempt
 @require_GET
+@session_required
+@block_school_users
 def api_districts(request):
     """Get districts for a specific division that have schools with forms"""
     try:
@@ -316,6 +323,7 @@ def api_districts(request):
 
 @csrf_exempt
 @require_GET
+@session_required
 def api_admin_scope(request):
     """Get admin scope information for tree auto-expand"""
     try:

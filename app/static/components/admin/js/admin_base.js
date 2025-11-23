@@ -5,20 +5,32 @@ document.addEventListener("DOMContentLoaded", function () {
     const root = document.querySelector(".dashboard-container");
     const hamburger = document.querySelector("#sidebar-toggle, .hamburger-btn");
 
-    if (hamburger) {
-        // Start with expanded state
-        hamburger.setAttribute("aria-expanded", "true");
+    if (hamburger && root) {
+        // Ensure sidebar starts expanded (remove collapsed class if present)
+        const isMobile = window.matchMedia("(max-width: 1000px)").matches;
+        if (isMobile) {
+            // On mobile, start with sidebar closed (no sidebar-open class)
+            root.classList.remove("sidebar-open");
+            root.classList.remove("sidebar-collapsed");
+        } else {
+            // On desktop, start with sidebar expanded (no sidebar-collapsed class)
+            root.classList.remove("sidebar-collapsed");
+        }
+        hamburger.setAttribute("aria-expanded", isMobile ? "false" : "true");
+        hamburger.title = isMobile ? "Open menu" : "Close menu";
 
         hamburger.addEventListener("click", function (e) {
-            const isMobile = window.matchMedia("(max-width: 1000px)").matches;
+            e.preventDefault();
+            e.stopPropagation();
+            const isMobileNow = window.matchMedia("(max-width: 1000px)").matches;
 
-            if (isMobile) {
-                // Toggle off-canvas open state for mobile
+            if (isMobileNow) {
+                // Mobile behavior: toggle sidebar-open class
                 const isOpen = root.classList.toggle("sidebar-open");
                 this.setAttribute("aria-expanded", isOpen ? "true" : "false");
                 this.title = isOpen ? "Close menu" : "Open menu";
             } else {
-                // Desktop: toggle collapsed sidebar
+                // Desktop behavior: toggle sidebar-collapsed class
                 const isCollapsed = root.classList.toggle("sidebar-collapsed");
                 this.setAttribute("aria-expanded", isCollapsed ? "false" : "true");
                 this.title = isCollapsed ? "Open menu" : "Close menu";

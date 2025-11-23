@@ -11,11 +11,14 @@ from django.db.models.functions import Coalesce
 from django.core.paginator import Paginator
 
 from apps.core.models import School, Form
+from apps.core.decorators import session_required, block_non_school_users
 from .utils import get_admin_scope, get_pending_workflow_statuses
 
 
 @csrf_exempt
 @require_GET
+@session_required
+@block_non_school_users
 def api_schools_table(request):
     """Get schools for display in MUI table with pagination"""
     try:
@@ -274,6 +277,8 @@ def api_schools_table(request):
 
 @csrf_exempt
 @require_GET
+@session_required
+@block_non_school_users
 def api_school_forms(request, school_id):
     """Get forms for a specific school"""
     try:

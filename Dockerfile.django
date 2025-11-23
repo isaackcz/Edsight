@@ -72,9 +72,10 @@ COPY --from=base /usr/local/bin /usr/local/bin
 # Copy project files (optimize layer caching)
 COPY --chown=appuser:appuser . /app
 
-# Create necessary directories with proper permissions
+# Create necessary directories with proper permissions and set execute permissions on entrypoint scripts
 RUN mkdir -p /vol/static /app/logs && \
-    chown -R appuser:appuser /app /vol/static
+    chown -R appuser:appuser /app /vol/static && \
+    chmod +x /app/entrypoint.django.sh
 
 # Switch to non-root user
 USER appuser

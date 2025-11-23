@@ -1,0 +1,449 @@
+/**
+ * Form Review Remarks Styling
+ * Styles for remark buttons, badges, and modal
+ */
+
+/* Remark Button - Positioned next to category/topic/question headers */
+.add-remark-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+    color: #64748b;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-left: 8px;
+}
+
+.add-remark-btn:hover {
+    background-color: rgba(100, 116, 139, 0.12);
+    color: #334155;
+}
+
+.add-remark-btn i {
+    font-size: 16px;
+}
+
+.add-remark-btn.icon-only span { display: none; }
+
+/* State: has remarks */
+.add-remark-btn.has-remarks {
+    color: #e11d48; /* red-600 */
+}
+
+.add-remark-btn.has-remarks:hover {
+    background-color: rgba(225, 29, 72, 0.12);
+    color: #be123c;
+}
+
+/* Tooltip styling for remarks preview */
+.remark-tooltip {
+    position: fixed;
+    background: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.12), 0 0 0 1px rgba(0,0,0,0.06);
+    padding: 12px 14px;
+    z-index: 10000;
+    min-width: 240px;
+    max-width: 360px;
+    color: #0f172a;
+    animation: tooltipFade 120ms ease-out;
+}
+
+.remark-tooltip .tooltip-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #111827;
+}
+
+.remark-tooltip .tooltip-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.remark-tooltip .tooltip-item {
+    font-size: 12px;
+    line-height: 1.5;
+    color: #374151;
+}
+
+.remark-tooltip .tooltip-item .meta {
+    display: block;
+    color: #6b7280;
+    margin-top: 2px;
+}
+
+@keyframes tooltipFade {
+  from { opacity: 0; transform: translateY(-2px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Remark Badge - Shows count of remarks */
+.remark-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border-radius: 12px;
+    background: #fff3e0;
+    color: #f57c00;
+    font-size: 12px;
+    font-weight: 600;
+    margin-left: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.remark-badge:hover {
+    background: #ffe0b2;
+}
+
+.remark-badge i {
+    font-size: 13px;
+}
+
+/* Remarks Display Section - Expandable section showing all remarks */
+.remarks-section {
+    margin-top: 16px;
+    padding: 16px;
+    background: #f9f9f9;
+    border-radius: 8px;
+    border: 1px solid #e0e0e0;
+}
+
+.remarks-section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.remarks-section-header h4 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: #333;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.remarks-section-header i.toggle-icon {
+    transition: transform 0.2s ease;
+}
+
+.remarks-section-header.expanded i.toggle-icon {
+    transform: rotate(90deg);
+}
+
+.remarks-list {
+    display: none;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.remarks-list.show {
+    display: flex;
+}
+
+/* Individual Remark Card */
+.remark-card {
+    padding: 12px;
+    background: white;
+    border-radius: 6px;
+    border: 1px solid #e0e0e0;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.remark-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.remark-author {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.remark-author-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: #333;
+}
+
+.remark-author-level {
+    padding: 2px 8px;
+    border-radius: 10px;
+    background: #e3f2fd;
+    color: #1976d2;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.remark-timestamp {
+    font-size: 12px;
+    color: #999;
+}
+
+.remark-text {
+    font-size: 14px;
+    color: #555;
+    line-height: 1.6;
+    margin: 0;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+/* Remark Modal */
+.remark-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    animation: fadeIn 0.2s ease;
+}
+
+.remark-modal {
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+    width: 90%;
+    max-width: 500px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    animation: slideUp 0.3s ease;
+}
+
+.remark-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.remark-modal-header h3 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 700;
+    color: #333;
+}
+
+.remark-modal-close {
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: #999;
+    cursor: pointer;
+    padding: 0;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+}
+
+.remark-modal-close:hover {
+    background: #f5f5f5;
+    color: #333;
+}
+
+.remark-modal-body {
+    margin-bottom: 20px;
+}
+
+.remark-modal-body label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #333;
+}
+
+.remark-modal-body textarea {
+    width: 100%;
+    min-height: 120px;
+    padding: 12px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 14px;
+    color: #333;
+    resize: vertical;
+    transition: border-color 0.2s ease;
+}
+
+.remark-modal-body textarea:focus {
+    outline: none;
+    border-color: #3a6ea5;
+}
+
+.remark-modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+}
+
+.remark-modal-footer button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.remark-modal-footer .btn-cancel {
+    background: #f5f5f5;
+    color: #666;
+}
+
+.remark-modal-footer .btn-cancel:hover {
+    background: #e0e0e0;
+    color: #333;
+}
+
+.remark-modal-footer .btn-submit {
+    background: #3a6ea5;
+    color: white;
+}
+
+.remark-modal-footer .btn-submit:hover {
+    background: #2d5680;
+}
+
+.remark-modal-footer .btn-submit:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Responsive Adjustments */
+@media (max-width: 767px) {
+    .remark-modal {
+        width: 95%;
+        padding: 20px;
+        max-height: 95vh;
+    }
+
+    .add-remark-btn {
+        padding: 5px 10px;
+        font-size: 12px;
+    }
+
+    .remark-badge {
+        font-size: 11px;
+        padding: 3px 8px;
+    }
+
+    .remarks-section {
+        padding: 12px;
+    }
+
+    .remark-card {
+        padding: 10px;
+    }
+}
+
+/* Integration with existing question cards */
+.question-card .question-header {
+    position: relative;
+    align-items: flex-start;
+}
+
+.question-card .add-remark-btn {
+    position: absolute;
+    right: 0;
+    top: 0;
+}
+
+/* Review-mode compact styling */
+.question-card.review-mode {
+    border: none !important;
+    border-bottom: 1px solid var(--border-color) !important;
+    border-radius: 0 !important;
+    padding: 12px 16px !important;
+    margin-bottom: 0 !important;
+}
+
+.question-card.review-mode .question-header {
+    margin-bottom: 8px !important;
+    padding-bottom: 8px !important;
+}
+
+.question-card.review-mode .question-number {
+    width: 28px;
+    height: 28px;
+    font-size: 0.85rem;
+}
+
+.question-card.review-mode .question-input .form-control,
+.question-card.review-mode .question-input .text-input,
+.question-card.review-mode .question-input .number-input,
+.question-card.review-mode .question-input .date-input {
+    padding: 10px 12px !important;
+}
+
+/* Auto-size long text inputs to their content */
+.question-card.review-mode textarea.form-control {
+    height: auto !important;
+    overflow: hidden !important;
+    resize: none !important;
+    white-space: pre-wrap !important;
+}
+
+/* Ensure question text is visible and uses available space */
+.question-text-display {
+    color: #1e293b !important; /* fallback to ensure visibility */
+    line-height: 1.55 !important;
+    font-weight: 500 !important;
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+}
+

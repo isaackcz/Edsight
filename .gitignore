@@ -130,6 +130,13 @@ dmypy.json
 
 # Docker
 .dockerignore
+# Keep Docker files in version control
+!Dockerfile*
+!docker-compose*.yml
+!docker-build.sh
+!docker-deploy.sh
+!nginx*.conf
+!entrypoint*.sh
 
 # IDE
 .vscode/

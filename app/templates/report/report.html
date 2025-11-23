@@ -32,26 +32,35 @@
         --font-weight-medium: 600;
         --font-weight-bold: 700;
         --heading-line-height: 1.15;
-        /* Base palette tokens provided by user */
-        --pumpkin: #ff6700ff; /* Accent color (buttons, links) */
-        --antiflash-white: #ebebebff; /* Light background for cards/panels */
-        --silver: #c0c0c0ff; /* Secondary text and borders */
-        --bice-blue: #3a6ea5ff; /* Primary brand color for nav/icons */
-        --polynesian-blue: #004e98ff; /* Strong header/banner color */
-        --white: #f7f9f9ff; /* Main background */
-        --black: #1e1e24ff; /* Primary text */
+        
+        /* Admin color scheme: 80% white, 20% #cde1f1 */
+        --admin-white: #ffffff;
+        --admin-accent: #cde1f1;
+        --admin-accent-dark: #3a6ea5ff;
+        --admin-bg: var(--admin-white);
+        --admin-text: #1e1e24ff;
+        --admin-text-muted: #333333;
+        --admin-text-light: #666666;
+        --admin-border: rgba(30, 30, 36, 0.08);
+        
+        /* Legacy variables for backward compatibility */
+        --pumpkin: #ff6700ff;
+        --antiflash-white: var(--admin-accent);
+        --silver: #c0c0c0ff;
+        --bice-blue: #3a6ea5ff;
+        --polynesian-blue: #004e98ff;
+        --white: var(--admin-white);
+        --black: var(--admin-text);
 
-        /* Core UI tokens (no mapping to other variables) */
+        /* Core UI tokens */
         --success: #4caf50;
         --warning: #ff9800;
         --danger: #f44336;
-        --border-radius: 18px;
+        --border-radius: 4px;
         --soft-shadow: 0 8px 24px rgba(30, 30, 36, 0.06);
         --subtle-shadow: 0 4px 12px rgba(30, 30, 36, 0.04);
         --transition: all 0.22s ease;
-
-        /* focus outline color (slightly transparent primary) */
-        --focus-outline: rgba(58, 110, 165, 0.16);
+        --focus-outline: rgba(205, 225, 241, 0.3);
       }
 
       * {
@@ -62,9 +71,7 @@
       }
 
       body {
-        /* Background (60%) */
-        background-color: var(--antiflash-white);
-        color: var(--black); /* main text */
+        color: var(--admin-text);
         min-height: 100vh;
         overflow-x: hidden;
         -webkit-font-smoothing: antialiased;
@@ -104,6 +111,9 @@
       }
     </style>
 
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+
     <!-- Shared layout CSS (dashboard) -->
     <link rel="stylesheet" href="{% static 'shared/css/sidebar.css' %}" />
     <link rel="stylesheet" href="{% static 'shared/css/header.css' %}" />
@@ -112,6 +122,17 @@
 
     <!-- Page specific CSS -->
     <link rel="stylesheet" href="{% static 'report/css/report.css' %}" />
+
+    <!-- Override any CSS that might set white background - must be after all other CSS -->
+    <style>
+      html, body {
+        background-color: var(--admin-accent) !important;
+      }
+      .dashboard-container,
+      .main-content {
+        background: transparent !important;
+      }
+    </style>
 
     <link rel="icon" type="image/png" href="{% static 'auth/img/logo.png' %}" />
   </head>
@@ -139,6 +160,12 @@
             <i class="ph-bold ph-chart-pie"></i>
             <span>Reports</span>
           </a>
+          {% if admin_level and admin_level != 'school' %}
+          <a href="{% url 'admin-profile-page' %}" class="menu-item">
+            <i class="ph-bold ph-user-circle"></i>
+            <span>Admin</span>
+          </a>
+          {% endif %}
         </div>
       </div>
 
@@ -148,13 +175,13 @@
         <div class="header">
           <div class="header-left">
             <button class="hamburger" aria-label="Open menu" title="Menu">
-              <i class="ph-bold ph-list"></i>
+              <i class="fas fa-bars"></i>
             </button>
           </div>
           <div class="header-actions">
-            <div class="notification" title="Notifications">
+            <div class="notification" title="Notifications" data-notifications-endpoint="{% url 'api-form-management-notifications' %}" data-default-avatar="{% static 'auth/img/default-profile.jpg' %}">
               <i class="ph-bold ph-bell"></i>
-              <span class="notif-badge">3</span>
+              <span class="notif-badge">0</span>
 
               <!-- Notifications panel -->
               <div class="notifications-panel" aria-hidden="true">
@@ -165,58 +192,9 @@
                   </button>
                 </div>
                 <div class="panel-body">
-                  <!-- Sample notification items -->
-                  <div class="notif-item">
-                    <div class="notif-avatar">
-                      <img
-                        src="{% static 'auth/img/default-profile.jpg' %}"
-                        alt="u"
-                      />
-                    </div>
-                    <div class="notif-content">
-                      <div class="notif-title">
-                        <div class="notif-name">Jackie Monroe</div>
-                        <div class="notif-message">
-                          requests permission to change
-                          <strong>Design System</strong>
-                        </div>
-                      </div>
-                      <div class="notif-meta">Project • 5 min ago</div>
-                    </div>
-                  </div>
-                  <div class="notif-item">
-                    <div class="notif-avatar">
-                      <img
-                        src="{% static 'auth/img/default-profile.jpg' %}"
-                        alt="u"
-                      />
-                    </div>
-                    <div class="notif-content">
-                      <div class="notif-title">
-                        <div class="notif-name">Chris Graham</div>
-                        <div class="notif-message">
-                          has added a new employee
-                        </div>
-                      </div>
-                      <div class="notif-meta">Employee • 28 min ago</div>
-                    </div>
-                  </div>
-                  <div class="notif-item">
-                    <div class="notif-avatar">
-                      <img
-                        src="{% static 'auth/img/default-profile.jpg' %}"
-                        alt="u"
-                      />
-                    </div>
-                    <div class="notif-content">
-                      <div class="notif-title">
-                        <div class="notif-name">Paul Miller</div>
-                        <div class="notif-message">
-                          has added a new project <strong>Mobile App</strong>
-                        </div>
-                      </div>
-                      <div class="notif-meta">Project • 12 hours ago</div>
-                    </div>
+                  <div data-notifications-list></div>
+                  <div data-notifications-empty style="display: none; padding: 1rem; text-align: center; color: #666;">
+                    No notifications yet.
                   </div>
                 </div>
               </div>
@@ -265,10 +243,7 @@
                   </div>
                 </div>
 
-                <a href="/profile/"
-                  ><i class="ph-bold ph-user"></i>View profile</a
-                >
-                <a href="/settings/"><i class="ph-bold ph-gear"></i>Settings</a>
+                <a href="{% url 'user-dashboard:settings' %}#security-section"><i class="ph-bold ph-user-circle"></i>Settings</a>
                 <div class="dropdown-logout">
                   <form method="post" action="/logout/">
                     {% csrf_token %}
@@ -287,19 +262,61 @@
           <div class="dashboard-title">
             <h1>Reports & Analytics</h1>
             <div class="controls">
-              <div class="date-selector">
+              <div class="date-selector" id="date-range-selector">
                 <i class="ph-bold ph-calendar"></i>
-                <span>Last 30 Days</span>
+                <span id="date-range-text">Last 30 Days</span>
                 <i class="ph-bold ph-caret-down"></i>
+                <div class="date-range-dropdown" id="date-range-dropdown">
+                  <div class="date-range-option" data-range="7days">Last 7 Days</div>
+                  <div class="date-range-option" data-range="30days">Last 30 Days</div>
+                  <div class="date-range-option" data-range="90days">Last 90 Days</div>
+                  <div class="date-range-option" data-range="6months">Last 6 Months</div>
+                  <div class="date-range-option" data-range="year">Last Year</div>
+                  <div class="date-range-option" data-range="all">All Time</div>
+                  <div class="date-range-divider"></div>
+                  <div class="date-range-option" data-range="custom" id="custom-date-range-option">
+                    <i class="ph-bold ph-calendar-blank"></i> Custom Range
               </div>
-              <button class="btn primary">
+                </div>
+              </div>
+              
+              <!-- Custom Date Range Modal -->
+              <div class="custom-date-modal" id="custom-date-modal">
+                <div class="custom-date-modal-content">
+                  <div class="custom-date-modal-header">
+                    <h3>Select Date Range</h3>
+                    <button class="close-modal" id="close-custom-date-modal">
+                      <i class="ph-bold ph-x"></i>
+                    </button>
+                  </div>
+                  <div class="custom-date-modal-body">
+                    <div class="date-input-group">
+                      <label>From Date</label>
+                      <input type="date" id="custom-date-from" class="date-input">
+                    </div>
+                    <div class="date-input-group">
+                      <label>To Date</label>
+                      <input type="date" id="custom-date-to" class="date-input">
+                    </div>
+                  </div>
+                  <div class="custom-date-modal-footer">
+                    <button class="btn secondary" id="cancel-custom-date">Cancel</button>
+                    <button class="btn primary" id="apply-custom-date">Apply</button>
+                  </div>
+                </div>
+              </div>
+              <button class="btn primary" id="export-report-btn">
                 <i class="ph-bold ph-download"></i> Export Report
+              </button>
+              <button class="btn secondary" id="comparison-mode-btn">
+                <i class="ph-bold ph-arrows-left-right"></i> Comparison Mode
               </button>
             </div>
           </div>
 
           <!-- Stats Cards -->
-          <div class="stats-cards">
+          <div class="row g-3 mb-4">
+            <div class="col-xl-3 col-lg-6 col-md-6 col-sm-12">
             <div class="card">
               <div class="card-header">
                 <i class="ph-bold ph-check-circle"></i>
@@ -308,9 +325,11 @@
               <div class="card-value" id="completion-rate">87.5%</div>
               <div class="card-trend" id="completion-rate-trend">
                 <i class="ph-bold ph-arrow-up"></i> +2.3% from last month
+                </div>
               </div>
             </div>
 
+            <div class="col-xl-3 col-lg-6 col-md-6 col-sm-12">
             <div class="card">
               <div class="card-header">
                 <i class="ph-bold ph-clock"></i>
@@ -319,9 +338,11 @@
               <div class="card-value" id="avg-time">24.3h</div>
               <div class="card-trend" id="avg-time-trend">
                 <i class="ph-bold ph-arrow-down"></i> -1.2h from last month
+                </div>
               </div>
             </div>
 
+            <div class="col-xl-3 col-lg-6 col-md-6 col-sm-12">
             <div class="card">
               <div class="card-header">
                 <i class="ph-bold ph-file-text"></i>
@@ -330,9 +351,11 @@
               <div class="card-value" id="completed-forms">1,243</div>
               <div class="card-trend" id="completed-forms-trend">
                 <i class="ph-bold ph-arrow-up"></i> +156 from last month
+                </div>
               </div>
             </div>
 
+            <div class="col-xl-3 col-lg-6 col-md-6 col-sm-12">
             <div class="card">
               <div class="card-header">
                 <i class="ph-bold ph-warning"></i>
@@ -344,606 +367,380 @@
               </div>
             </div>
           </div>
+
+            <div class="col-xl-3 col-lg-6 col-md-6 col-sm-12">
+              <div class="card">
+                <div class="card-header">
+                  <i class="ph-bold ph-flow-arrow"></i>
+                  <h3>In Workflow</h3>
+                </div>
+                <div class="card-value" id="in-workflow">0</div>
+                <div class="card-trend" id="in-workflow-trend">
+                  No change from last month
+              </div>
+              </div>
+            </div>
+
+            <div class="col-xl-3 col-lg-6 col-md-6 col-sm-12">
+              <div class="card">
+                <div class="card-header">
+                  <i class="ph-bold ph-buildings"></i>
+                  <h3>Active Schools</h3>
+                </div>
+                <div class="card-value" id="active-schools">0</div>
+                <div class="card-trend" id="active-schools-trend">
+                  No change from last month
+              </div>
+            </div>
+          </div>
+
+            <div class="col-xl-3 col-lg-6 col-md-6 col-sm-12">
+              <div class="card">
+                <div class="card-header">
+                  <i class="ph-bold ph-calendar-check"></i>
+                  <h3>On-Time Rate</h3>
+                </div>
+                <div class="card-value" id="on-time-rate">0%</div>
+                <div class="card-trend" id="on-time-rate-trend">
+                  No change from last month
+                </div>
+              </div>
+            </div>
+
+            <div class="col-xl-3 col-lg-6 col-md-6 col-sm-12">
+              <div class="card">
+                <div class="card-header">
+                  <i class="ph-bold ph-arrow-counter-clockwise"></i>
+                  <h3>Forms Returned</h3>
+                    </div>
+                <div class="card-value" id="forms-returned">0</div>
+                <div class="card-trend" id="forms-returned-trend">
+                  No change from last month
+                    </div>
+                  </div>
+                      </div>
+                    </div>
+
           <!-- Charts Section -->
-          <div class="charts-row">
-            <div class="chart-container">
-              <div class="chart-header">
-                <h3>Completion Rate by Region</h3>
-                <div class="chart-actions">
-                  <button class="btn-icon">
-                    <i class="ph-bold ph-arrows-out-simple"></i>
-                  </button>
-                  <button class="btn-icon">
-                    <i class="ph-bold ph-download"></i>
-                  </button>
-                </div>
-              </div>
-              <canvas id="completionChart"></canvas>
-            </div>
-
-            <div class="chart-container">
-              <div class="chart-header">
-                <h3>Forms Completed Over Time</h3>
-                <div class="chart-actions">
-                  <button class="btn-icon">
-                    <i class="ph-bold ph-arrows-out-simple"></i>
-                  </button>
-                  <button class="btn-icon">
-                    <i class="ph-bold ph-download"></i>
-                  </button>
-                </div>
-              </div>
-              <canvas id="timelineChart"></canvas>
-            </div>
-          </div>
-
-          <!-- School Completion Details Table -->
-          <div class="table-container">
-            <div class="table-header">
-              <h3>School Completion Details</h3>
-              <div class="table-actions">
-                <button id="export-completion-csv" class="btn-icon" title="Export CSV">
-                  <i class="fas fa-file-csv"></i>
-                </button>
-                <button id="export-completion-xlsx" class="btn-icon" title="Export Excel">
-                  <i class="fas fa-file-excel"></i>
-                </button>
-                <button id="export-completion-pdf" class="btn-icon" title="Export PDF">
-                  <i class="fas fa-file-pdf"></i>
-                </button>
-              </div>
-            </div>
-
-            <!-- Search and Filter Controls -->
-            <div class="chart-container filter-section">
-              <form autocomplete="off">
-                <div class="completion-filters">
-                  <div class="search-row" style="margin-bottom: 1rem">
-                    <div class="search-box" style="flex: 1; max-width: 300px">
-                      <i class="fas fa-search"></i>
-                      <input
-                        type="text"
-                        id="completion-search"
-                        placeholder="Search schools..."
-                        style="width: 100%"
-                        autocomplete="off"
-                        autocapitalize="off"
-                        autocorrect="off"
-                        spellcheck="false"
-                        name="search-completion-unique"
-                      />
+          <div class="row g-3 mb-4">
+            <div class="col-xl-6 col-lg-12">
+              <div class="card">
+                <div class="card-header">
+                  <i class="ph-bold ph-chart-line"></i>
+                  <h3>Forms Over Time</h3>
+                      </div>
+                <div class="chart-container" style="position: relative; height: 300px;">
+                  <canvas id="formsOverTimeChart"></canvas>
                     </div>
-                    <div
-                      class="filter-status"
-                      id="completion-filter-status"
-                      style="
-                        margin-left: 1rem;
-                        font-size: 0.875rem;
-                        color: var(--text-muted);
-                      "
-                    >
-                      No filters applied
+                      </div>
+                    </div>
+
+            <div class="col-xl-6 col-lg-12">
+              <div class="card">
+                <div class="card-header">
+                  <i class="ph-bold ph-pie-chart"></i>
+                  <h3>Forms by Status</h3>
+                      </div>
+                <div class="chart-container" style="position: relative; height: 300px;">
+                  <canvas id="statusDistributionChart"></canvas>
                     </div>
                   </div>
-
-                  <!-- Separated Filter Rows to Prevent Overlap -->
-                  <div class="filter-section-grid">
-                    <div class="filter-column">
-                      <label class="filter-label">Region</label>
-                      <div class="search-filter-container geographic-filter">
-                        <input
-                          type="text"
-                          id="filter-region"
-                          class="search-filter"
-                          placeholder="Search regions..."
-                          data-filter-type="region"
-                          autocomplete="off"
-                          autocapitalize="off"
-                          autocorrect="off"
-                          spellcheck="false"
-                          name="search-region-unique-name"
-                        />
-                        <div
-                          id="filter-region-results"
-                          class="search-results"
-                        ></div>
-                      </div>
-                    </div>
-
-                    <div class="filter-column">
-                      <label class="filter-label">Division</label>
-                      <div class="search-filter-container geographic-filter">
-                        <input
-                          type="text"
-                          id="filter-division"
-                          class="search-filter"
-                          placeholder="Search divisions..."
-                          data-filter-type="division"
-                          autocomplete="off"
-                          autocapitalize="off"
-                          autocorrect="off"
-                          spellcheck="false"
-                          name="search-division-unique"
-                        />
-                        <div
-                          id="filter-division-results"
-                          class="search-results"
-                        ></div>
-                      </div>
-                    </div>
-
-                    <div class="filter-column">
-                      <label class="filter-label">District</label>
-                      <div class="search-filter-container geographic-filter">
-                        <input
-                          type="text"
-                          id="filter-district"
-                          class="search-filter"
-                          placeholder="Search districts..."
-                          data-filter-type="district"
-                          autocomplete="off"
-                          autocapitalize="off"
-                          autocorrect="off"
-                          spellcheck="false"
-                          name="search-district-unique"
-                        />
-                        <div
-                          id="filter-district-results"
-                          class="search-results"
-                        ></div>
-                      </div>
-                    </div>
-
-                    <div class="filter-column">
-                      <label class="filter-label">School</label>
-                      <div class="search-filter-container geographic-filter">
-                        <input
-                          type="text"
-                          id="filter-school"
-                          class="search-filter"
-                          placeholder="Search schools..."
-                          data-filter-type="school"
-                          autocomplete="off"
-                          autocapitalize="off"
-                          autocorrect="off"
-                          spellcheck="false"
-                          name="search-school-unique"
-                        />
-                        <div
-                          id="filter-school-results"
-                          class="search-results"
-                        ></div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </form>
             </div>
 
-            <!-- Combined Totals Display -->
-            <div
-              id="combined-totals"
-              class="chart-container filter-section"
-              style="background: var(--gray-50); display: none"
-            >
-              <div class="totals-grid">
-                <div class="total-card">
-                  <h4>Combined Completion</h4>
-                  <span id="total-completion" class="total-value">0%</span>
+            <div class="col-xl-6 col-lg-12">
+              <div class="card">
+                <div class="card-header">
+                  <i class="ph-bold ph-chart-bar"></i>
+                  <h3>Forms by Workflow Level</h3>
                 </div>
-                <div class="total-card">
-                  <h4>Combined Answer Rate</h4>
-                  <span id="total-answers" class="total-value">0%</span>
-                </div>
-                <div class="total-card">
-                  <h4>Combined Status</h4>
-                  <span id="total-status" class="total-value">Not Started</span>
+                <div class="chart-container" style="position: relative; height: 300px;">
+                  <canvas id="workflowDistributionChart"></canvas>
                 </div>
               </div>
             </div>
 
-            <!-- School Completion Table -->
-            <div class="table-body">
-              <table class="data-table" id="school-completion-table">
-                <thead>
-                  <tr>
-                    <th data-sort="region_name">Region <i class="fas fa-sort"></i></th>
-                    <th data-sort="division_name">Division <i class="fas fa-sort"></i></th>
-                    <th data-sort="district_name">District <i class="fas fa-sort"></i></th>
-                    <th data-sort="school_name">School <i class="fas fa-sort"></i></th>
-                    <th data-sort="completion_pct">Completion % <i class="fas fa-sort"></i></th>
-                    <th data-sort="answered">Answered <i class="fas fa-sort"></i></th>
-                    <th data-sort="status">Status <i class="fas fa-sort"></i></th>
-                  </tr>
-                </thead>
-                <tbody id="school-completion-table-body"></tbody>
-              </table>
+            <div class="col-xl-6 col-lg-12">
+              <div class="card">
+                <div class="card-header">
+                  <i class="ph-bold ph-map-pin"></i>
+                  <h3>Geographic Distribution</h3>
             </div>
-
-            <!-- School Completion Pagination -->
-            <div class="pagination-container">
-              <div class="pagination-info">
-                <span id="completion-pagination-info"
-                  >Showing 0 of 0 results</span
-                >
-                <select id="completion-page-size" class="page-size-select">
-                  <option value="25">25 per page</option>
-                  <option value="50" selected>50 per page</option>
-                  <option value="100">100 per page</option>
-                  <option value="200">200 per page</option>
-                </select>
+                <div class="chart-container" style="position: relative; height: 300px;">
+                  <canvas id="geographicChart"></canvas>
               </div>
-              <div class="pagination-controls">
-                <button
-                  id="completion-first-page"
-                  class="pagination-btn"
-                  title="First page"
-                >
-                  <i class="fas fa-angle-double-left"></i>
-                </button>
-                <button
-                  id="completion-prev-page"
-                  class="pagination-btn"
-                  title="Previous page"
-                >
-                  <i class="fas fa-angle-left"></i>
-                </button>
-                <div
-                  class="pagination-numbers"
-                  id="completion-pagination-numbers"
-                ></div>
-                <button
-                  id="completion-next-page"
-                  class="pagination-btn"
-                  title="Next page"
-                >
-                  <i class="fas fa-angle-right"></i>
-                </button>
-                <button
-                  id="completion-last-page"
-                  class="pagination-btn"
-                  title="Last page"
-                >
-                  <i class="fas fa-angle-double-right"></i>
-                </button>
               </div>
             </div>
           </div>
 
-          <!-- Category Content Table -->
-          <div class="table-container" style="margin-top: 20px">
-            <div class="table-header">
-              <h3>Category Content Table</h3>
-              <div class="table-actions">
-                <button id="export-category-csv" class="btn-icon" title="Export CSV">
-                  <i class="fas fa-file-csv"></i>
+          <!-- Additional Charts Section -->
+          <div class="row g-3 mb-4">
+            <div class="col-xl-6 col-lg-6 col-md-12">
+              <div class="chart-container">
+                <div class="chart-header">
+                  <h3>Completion Rate by Region</h3>
+                  <div class="chart-actions">
+                    <button class="btn-icon">
+                      <i class="ph-bold ph-arrows-out-simple"></i>
                 </button>
-                <button id="export-category-xlsx" class="btn-icon" title="Export Excel">
-                  <i class="fas fa-file-excel"></i>
-                </button>
-                <button id="export-category-pdf" class="btn-icon" title="Export PDF">
-                  <i class="fas fa-file-pdf"></i>
+                    <button class="btn-icon">
+                      <i class="ph-bold ph-download"></i>
                 </button>
               </div>
             </div>
-
-            <!-- Search and Filter Controls -->
-            <div class="chart-container filter-section">
-              <form autocomplete="off">
-                <div class="category-filters">
-                  <div class="content-search-row" style="margin-bottom: 1rem">
-                    <div class="search-box" style="flex: 1; max-width: 300px">
-                      <i class="fas fa-search"></i>
-                      <input
-                        type="text"
-                        id="category-search"
-                        placeholder="Search content..."
-                        style="width: 100%"
-                        autocomplete="off"
-                        autocapitalize="off"
-                        autocorrect="off"
-                        spellcheck="false"
-                        name="category-search-unique"
-                      />
+                <canvas id="completionChart"></canvas>
                     </div>
                   </div>
 
-                  <!-- Geographic Selection Grid -->
-                  <div
-                    class="geographic-selection"
-                    style="margin-bottom: 1.5rem"
-                  >
-                    <h4
-                      style="
-                        margin-bottom: 0.75rem;
-                        font-size: 0.875rem;
-                        color: var(--text-heading);
-                      "
-                    >
-                      Geographic Selection
-                    </h4>
-                    <div class="filter-section-grid">
-                      <div class="filter-column">
-                        <label class="filter-label">Region</label>
-                        <div class="search-filter-container geographic-filter">
-                          <input
-                            type="text"
-                            id="geo-region"
-                            class="search-filter"
-                            placeholder="Search regions..."
-                            data-filter-type="region"
-                            autocomplete="off"
-                            autocapitalize="off"
-                            autocorrect="off"
-                            spellcheck="false"
-                            name="geo-region-unique"
-                          />
-                          <div
-                            id="geo-region-results"
-                            class="search-results"
-                          ></div>
+            <div class="col-xl-6 col-lg-6 col-md-12">
+              <div class="chart-container">
+                <div class="chart-header">
+                  <h3>Forms Completed Over Time</h3>
+                  <div class="chart-actions">
+                    <button class="btn-icon">
+                      <i class="ph-bold ph-arrows-out-simple"></i>
+                    </button>
+                    <button class="btn-icon">
+                      <i class="ph-bold ph-download"></i>
+                    </button>
+                        </div>
+                      </div>
+                <canvas id="timelineChart"></canvas>
+              </div>
                         </div>
                       </div>
 
-                      <div class="filter-column">
-                        <label class="filter-label">Division</label>
-                        <div class="search-filter-container geographic-filter">
-                          <input
-                            type="text"
-                            id="geo-division"
-                            class="search-filter"
-                            placeholder="Search divisions..."
-                            data-filter-type="division"
-                            autocomplete="off"
-                            autocapitalize="off"
-                            autocorrect="off"
-                            spellcheck="false"
-                            name="geo-division-unique"
-                          />
-                          <div
-                            id="geo-division-results"
-                            class="search-results"
-                          ></div>
-                        </div>
-                      </div>
-
-                      <div class="filter-column">
-                        <label class="filter-label">District</label>
-                        <div class="search-filter-container geographic-filter">
-                          <input
-                            type="text"
-                            id="geo-district"
-                            class="search-filter"
-                            placeholder="Search districts..."
-                            data-filter-type="district"
-                            autocomplete="off"
-                            autocapitalize="off"
-                            autocorrect="off"
-                            spellcheck="false"
-                            name="geo-district-unique"
-                          />
-                          <div
-                            id="geo-district-results"
-                            class="search-results"
-                          ></div>
-                        </div>
-                      </div>
-
-                      <div class="filter-column">
-                        <label class="filter-label">School</label>
-                        <div class="search-filter-container geographic-filter">
-                          <input
-                            type="text"
-                            id="geo-school"
-                            class="search-filter"
-                            placeholder="Search schools..."
-                            data-filter-type="school"
-                            autocomplete="off"
-                            autocapitalize="off"
-                            autocorrect="off"
-                            spellcheck="false"
-                            name="geo-school-unique"
-                          />
-                          <div
-                            id="geo-school-results"
-                            class="search-results"
-                          ></div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- Content Filter Grid -->
-                  <div class="content-selection">
-                    <h4
-                      style="
-                        margin-bottom: 0.75rem;
-                        font-size: 0.875rem;
-                        color: var(--text-heading);
-                      "
-                    >
-                      Content Filters
-                    </h4>
-                    <div class="filter-section-grid">
-                      <div class="filter-column">
-                        <label class="filter-label">Category</label>
-                        <div class="search-filter-container content-filter">
-                          <input
-                            type="text"
-                            id="filter-category"
-                            class="search-filter"
-                            placeholder="Search categories..."
-                            data-filter-type="category"
-                            autocomplete="off"
-                            autocapitalize="off"
-                            autocorrect="off"
-                            spellcheck="false"
-                            name="filter-category-unique"
-                          />
-                          <div
-                            id="filter-category-results"
-                            class="search-results"
-                          ></div>
-                        </div>
-                      </div>
-
-                      <div class="filter-column">
-                        <label class="filter-label">Subsection</label>
-                        <div class="search-filter-container content-filter">
-                          <input
-                            type="text"
-                            id="filter-subsection"
-                            class="search-filter"
-                            placeholder="Search subsections..."
-                            data-filter-type="subsection"
-                            autocomplete="off"
-                            autocapitalize="off"
-                            autocorrect="off"
-                            spellcheck="false"
-                            name="filter-subsection-unique"
-                          />
-                          <div
-                            id="filter-subsection-results"
-                            class="search-results"
-                          ></div>
-                        </div>
-                      </div>
-
-                      <div class="filter-column">
-                        <label class="filter-label">Topic</label>
-                        <div class="search-filter-container content-filter">
-                          <input
-                            type="text"
-                            id="filter-topic"
-                            class="search-filter"
-                            placeholder="Search topics..."
-                            data-filter-type="topic"
-                            autocomplete="off"
-                            autocapitalize="off"
-                            autocorrect="off"
-                            spellcheck="false"
-                            name="filter-topic-unique"
-                          />
-                          <div
-                            id="filter-topic-results"
-                            class="search-results"
-                          ></div>
-                        </div>
-                      </div>
-
-                      <div class="filter-column">
-                        <label class="filter-label">Question</label>
-                        <div class="search-filter-container content-filter">
-                          <input
-                            type="text"
-                            id="filter-question"
-                            class="search-filter"
-                            placeholder="Search questions..."
-                            data-filter-type="question"
-                            autocomplete="off"
-                            autocapitalize="off"
-                            autocorrect="off"
-                            spellcheck="false"
-                            name="filter-question-unique"
-                          />
-                          <div
-                            id="filter-question-results"
-                            class="search-results"
-                          ></div>
-                        </div>
-                      </div>
-
-                      <div class="filter-column">
-                        <label class="filter-label">Sub-question</label>
-                        <div class="search-filter-container content-filter">
-                          <input
-                            type="text"
-                            id="filter-subquestion"
-                            class="search-filter"
-                            placeholder="Search sub-questions..."
-                            data-filter-type="subquestion"
-                            autocomplete="off"
-                            autocapitalize="off"
-                            autocorrect="off"
-                            spellcheck="false"
-                            name="filter-subquestion-unique"
-                          />
-                          <div
-                            id="filter-subquestion-results"
-                            class="search-results"
-                          ></div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+          <!-- Detailed Reports Section -->
+          <div class="row g-3 mb-4">
+            <div class="col-12">
+              <div class="card">
+                <div class="card-header">
+                  <i class="ph-bold ph-flow-arrow"></i>
+                  <h3>Workflow Performance Report</h3>
                 </div>
-              </form>
+                <div class="table-responsive">
+                  <table class="table" id="workflow-performance-table">
+                    <thead>
+                      <tr>
+                        <th data-sort="stage">Stage</th>
+                        <th data-sort="count">Forms Count</th>
+                        <th data-sort="avg_time">Avg. Time (hours)</th>
+                        <th data-sort="approval_count">Approved</th>
+                        <th data-sort="return_count">Returned</th>
+                        <th data-sort="approval_rate">Approval Rate (%)</th>
+                      </tr>
+                    </thead>
+                    <tbody id="workflow-performance-tbody">
+                      <tr>
+                        <td colspan="6" class="text-center">Loading workflow data...</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+                        </div>
+                      </div>
+
+            <div class="col-12">
+              <div class="card">
+                <div class="card-header">
+                  <i class="ph-bold ph-map-pin"></i>
+                  <h3>Geographic Performance Report</h3>
+                  <div class="ms-auto">
+                    <select id="geographic-level-select" class="form-select" style="width: auto; display: inline-block;">
+                      <option value="region">By Region</option>
+                      <option value="division">By Division</option>
+                      <option value="district">By District</option>
+                    </select>
+                        </div>
+                      </div>
+                <div class="table-responsive">
+                  <table class="table" id="geographic-performance-table">
+                    <thead>
+                      <tr id="geographic-table-headers">
+                        <th data-sort="name">Region</th>
+                        <th data-sort="total_forms">Total Forms</th>
+                        <th data-sort="completed_forms">Completed</th>
+                        <th data-sort="completion_rate">Completion Rate (%)</th>
+                        <th data-sort="active_schools">Active Schools</th>
+                      </tr>
+                    </thead>
+                    <tbody id="geographic-performance-tbody">
+                      <tr>
+                        <td colspan="5" class="text-center">Loading geographic data...</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+                    </div>
+                  </div>
+
+            <div class="col-12">
+              <div class="card">
+                <div class="card-header">
+                  <i class="ph-bold ph-calendar-check"></i>
+                  <h3>Deadline Compliance Report</h3>
+                        </div>
+                <div class="table-responsive">
+                  <table class="table" id="deadline-compliance-table">
+                    <thead>
+                      <tr>
+                        <th data-sort="area_name">Area</th>
+                        <th data-sort="form_type">Form Type</th>
+                        <th data-sort="deadline_date">Deadline</th>
+                        <th data-sort="total_forms">Total Forms</th>
+                        <th data-sort="on_time">On Time</th>
+                        <th data-sort="late">Late</th>
+                        <th data-sort="overdue">Overdue</th>
+                        <th data-sort="compliance_rate">Compliance Rate (%)</th>
+                      </tr>
+                    </thead>
+                    <tbody id="deadline-compliance-tbody">
+                      <tr>
+                        <td colspan="8" class="text-center">Loading deadline data...</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                      </div>
+                        </div>
+                      </div>
+
+            <div class="col-12">
+              <div class="card">
+                <div class="card-header">
+                  <i class="ph-bold ph-buildings"></i>
+                  <h3>School Performance Report</h3>
+                        </div>
+                <div class="table-responsive">
+                  <table class="table" id="school-performance-table">
+                    <thead>
+                      <tr>
+                        <th data-sort="school_name">School Name</th>
+                        <th data-sort="school_code">School Code</th>
+                        <th data-sort="region_name">Region</th>
+                        <th data-sort="division_name">Division</th>
+                        <th data-sort="district_name">District</th>
+                        <th data-sort="total_forms">Total Forms</th>
+                        <th data-sort="completed_forms">Completed</th>
+                        <th data-sort="completion_rate">Completion Rate (%)</th>
+                        <th data-sort="last_activity">Last Activity</th>
+                      </tr>
+                    </thead>
+                    <tbody id="school-performance-tbody">
+                      <tr>
+                        <td colspan="9" class="text-center">Loading school data...</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                      </div>
+                        </div>
+                      </div>
+
+            <div class="col-12">
+              <div class="card">
+                <div class="card-header">
+                  <i class="ph-bold ph-users"></i>
+                  <h3>Admin Activity Report</h3>
+                        </div>
+                <div class="table-responsive">
+                  <table class="table" id="admin-activity-table">
+                    <thead>
+                      <tr>
+                        <th data-sort="username">Username</th>
+                        <th data-sort="full_name">Full Name</th>
+                        <th data-sort="admin_level">Admin Level</th>
+                        <th data-sort="activity_count">Activity Count</th>
+                        <th data-sort="login_count">Login Count</th>
+                        <th data-sort="active_sessions">Active Sessions</th>
+                        <th data-sort="avg_session_duration_hours">Avg. Session (hours)</th>
+                        <th data-sort="last_activity">Last Activity</th>
+                      </tr>
+                    </thead>
+                    <tbody id="admin-activity-tbody">
+                      <tr>
+                        <td colspan="8" class="text-center">Loading admin data...</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                      </div>
+                    </div>
+                  </div>
+            
+            <div class="col-12">
+              <div class="card">
+                <div class="card-header">
+                  <i class="ph-bold ph-shield-check"></i>
+                  <h3>Security & Audit Report</h3>
+                </div>
+                <div class="table-responsive">
+                  <table class="table" id="security-audit-table">
+                    <thead>
+                      <tr>
+                        <th data-sort="metric">Metric</th>
+                        <th data-sort="value">Value</th>
+                        <th data-sort="details">Details</th>
+                      </tr>
+                    </thead>
+                    <tbody id="security-audit-tbody">
+                      <tr>
+                        <td colspan="3" class="text-center">Loading security data...</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
             </div>
 
-            <!-- Category Content Table -->
-            <div class="table-body">
-              <table class="data-table" id="category-content-table">
+            <div class="col-12">
+              <div class="card">
+                <div class="card-header">
+                  <i class="ph-bold ph-star"></i>
+                  <h3>Form Quality Report</h3>
+                </div>
+                <div class="table-responsive">
+                  <table class="table" id="form-quality-table">
                 <thead>
                   <tr>
-                    <th data-sort="school_name">School <i class="fas fa-sort"></i></th>
-                    <th data-sort="category">Category <i class="fas fa-sort"></i></th>
-                    <th data-sort="subsection">Subsection <i class="fas fa-sort"></i></th>
-                    <th data-sort="topic">Topic <i class="fas fa-sort"></i></th>
-                    <th data-sort="question">Question <i class="fas fa-sort"></i></th>
-                    <th data-sort="sub_question">Sub-question <i class="fas fa-sort"></i></th>
-                    <th data-sort="answer">Answer <i class="fas fa-sort"></i></th>
+                        <th data-sort="form_id">Form ID</th>
+                        <th data-sort="school_name">School</th>
+                        <th data-sort="quality_score">Quality Score</th>
+                        <th data-sort="completeness_score">Completeness</th>
+                        <th data-sort="revision_score">Revision Score</th>
+                        <th data-sort="completeness_rate">Completeness Rate (%)</th>
                   </tr>
                 </thead>
-                <tbody id="category-content-table-body"></tbody>
+                    <tbody id="form-quality-tbody">
+                      <tr>
+                        <td colspan="6" class="text-center">Loading quality data...</td>
+                      </tr>
+                    </tbody>
               </table>
+                </div>
+              </div>
             </div>
 
-            <!-- Category Content Pagination -->
-            <div class="pagination-container">
-              <div class="pagination-info">
-                <span id="category-pagination-info"
-                  >Showing 0 of 0 results</span
-                >
-                <select id="category-page-size" class="page-size-select">
-                  <option value="25">25 per page</option>
-                  <option value="50" selected>50 per page</option>
-                  <option value="100">100 per page</option>
-                  <option value="200">200 per page</option>
-                </select>
+            <div class="col-12">
+              <div class="card">
+                <div class="card-header">
+                  <i class="ph-bold ph-folder"></i>
+                  <h3>Category & Topic Analysis</h3>
               </div>
-              <div class="pagination-controls">
-                <button
-                  id="category-first-page"
-                  class="pagination-btn"
-                  title="First page"
-                >
-                  <i class="fas fa-angle-double-left"></i>
-                </button>
-                <button
-                  id="category-prev-page"
-                  class="pagination-btn"
-                  title="Previous page"
-                >
-                  <i class="fas fa-angle-left"></i>
-                </button>
-                <div
-                  class="pagination-numbers"
-                  id="category-pagination-numbers"
-                ></div>
-                <button
-                  id="category-next-page"
-                  class="pagination-btn"
-                  title="Next page"
-                >
-                  <i class="fas fa-angle-right"></i>
-                </button>
-                <button
-                  id="category-last-page"
-                  class="pagination-btn"
-                  title="Last page"
-                >
-                  <i class="fas fa-angle-double-right"></i>
-                </button>
+                <div class="table-responsive">
+                  <table class="table" id="category-topic-table">
+                    <thead>
+                      <tr>
+                        <th data-sort="category_name">Category</th>
+                        <th data-sort="topic_name">Topic</th>
+                        <th data-sort="total_questions">Total Questions</th>
+                        <th data-sort="answered_questions">Answered</th>
+                        <th data-sort="completion_rate">Completion Rate (%)</th>
+                      </tr>
+                    </thead>
+                    <tbody id="category-topic-tbody">
+                      <tr>
+                        <td colspan="5" class="text-center">Loading category/topic data...</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
           </div>

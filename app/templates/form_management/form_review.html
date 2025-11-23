@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Form Review | EdSight</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📊</text></svg>" />
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+    
+    <!-- Phosphor Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.2/dist/phosphor.css" />
+    <link rel="stylesheet" href="{% static 'shared/phosphor/phosphor.css' %}" />
+    
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    
+    <!-- Bootstrap CSS for Grid System -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+
+    <!-- Shared layout CSS (dashboard) -->
+    <link rel="stylesheet" href="{% static 'shared/css/sidebar.css' %}" />
+    <link rel="stylesheet" href="{% static 'shared/css/header.css' %}" />
+    <link rel="stylesheet" href="{% static 'shared/css/main-content.css' %}" />
+    <link rel="stylesheet" href="{% static 'shared/css/responsive.css' %}" />
+
+    <!-- School Form System CSS (Reused from user dashboard) -->
+    <link rel="stylesheet" href="{% static 'user_dashboard/css/school-form.css' %}" />
+    <link rel="stylesheet" href="{% static 'user_dashboard/css/school-form-tree.css' %}" />
+    <link rel="stylesheet" href="{% static 'user_dashboard/css/school-form-questions.css' %}" />
+    <link rel="stylesheet" href="{% static 'user_dashboard/css/school-form-responsive.css' %}" />
+    <link rel="stylesheet" href="{% static 'user_dashboard/css/school-form-dialogs.css' %}" />
+
+    <!-- Form Review Specific CSS -->
+    <link rel="stylesheet" href="{% static 'form-management/css/form-review-remarks.css' %}" />
+
+    <!-- Page-specific adjustments layered on top of shared layout -->
+    <style>
+      /* Apply 4px radius to all divs within the page content only */
+      .content.form-review-page div {
+        border-radius: 4px !important;
+      }
+      .dashboard-container {
+        display: flex;
+        --dashboard-gap: 28px;
+        gap: var(--dashboard-gap);
+        padding: 24px;
+        align-items: flex-start;
+        transition: gap 0.22s ease, padding 0.22s ease;
+      }
+      :root {
+        /* Typography tokens */
+        --base-font-family: "Poppins", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        --font-weight-regular: 400;
+        --font-weight-medium: 600;
+        --font-weight-bold: 700;
+        --heading-line-height: 1.15;
+        
+        /* Admin color scheme: 80% white, 20% #cde1f1 */
+        --admin-white: #ffffff;
+        --admin-accent: #cde1f1;
+        --admin-accent-dark: #3a6ea5ff;
+        --admin-bg: var(--admin-white);
+        --admin-text: #1e1e24ff;
+        --admin-text-muted: #333333;
+        --admin-text-light: #666666;
+        --admin-border: rgba(30, 30, 36, 0.08);
+        
+        /* Legacy variables for backward compatibility */
+        --pumpkin: #ff6700ff;
+        --antiflash-white: var(--admin-accent);
+        --silver: #c0c0c0ff;
+        --bice-blue: #3a6ea5ff;
+        --polynesian-blue: #004e98ff;
+        --white: var(--admin-white);
+        --black: var(--admin-text);
+
+        /* Core UI tokens */
+        --success: #4caf50;
+        --warning: #ff9800;
+        --danger: #f44336;
+        --border-radius: 4px;
+        --soft-shadow: 0 8px 24px rgba(30, 30, 36, 0.06);
+        --subtle-shadow: 0 4px 12px rgba(30, 30, 36, 0.04);
+        --transition: all 0.22s ease;
+        --focus-outline: rgba(205, 225, 241, 0.3);
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: var(--base-font-family);
+      }
+
+      body {
+        color: var(--admin-text);
+        min-height: 100vh;
+        overflow-x: hidden;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+
+      /* Override any CSS that might set white background - must be after all other CSS */
+      html, body {
+        background-color: var(--admin-accent) !important;
+      }
+      .dashboard-container,
+      .main-content {
+        background: transparent !important;
+      }
+
+      /* White background for all containers except dashboard-container */
+      .content,
+      .content.form-review-page,
+      .tree-view-sidebar,
+      .questions-container,
+      .page-header,
+      .card,
+      .table-container {
+        background-color: var(--admin-white) !important;
+      }
+
+      .form-review-page .page-header {
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 24px;
+    padding: 20px;
+    background: var(--admin-white) !important;
+    border-radius: 4px;
+    border: 1px solid var(--admin-border);
+  }
+  
+  .form-review-page .page-header-content {
+    flex: 1;
+    min-width: 200px;
+  }
+  
+      .form-review-page .page-header h1 {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--admin-text);
+    margin-bottom: 8px;
+    margin-right: 24px;
+  }
+  
+  .form-review-page .page-header p {
+    color: var(--admin-text-muted);
+    margin: 0;
+  }
+
+      /* Blue header styling for sidebar */
+      .form-review-page .sidebar-header {
+        background: linear-gradient(135deg, var(--admin-accent) 0%, rgba(205, 225, 241, 0.5) 100%) !important;
+        border-bottom: 2px solid var(--admin-accent-dark) !important;
+        color: var(--admin-accent-dark) !important;
+      }
+
+      .form-review-page .sidebar-header h3 {
+        color: var(--admin-accent-dark) !important;
+        font-weight: 700 !important;
+      }
+
+      /* Blue hover effects for tree items - replace white/gray backgrounds */
+      .form-review-page .tree-node-item {
+        background-color: transparent !important;
+      }
+
+      .form-review-page .tree-node-item:hover {
+        background-color: rgba(205, 225, 241, 0.5) !important;
+        border-left-color: var(--admin-accent-dark) !important;
+      }
+
+      .form-review-page .tree-node-item:hover::before {
+        background: var(--admin-accent-dark) !important;
+      }
+
+      .form-review-page .tree-node-item:hover .tree-node-label,
+      .form-review-page .tree-node-item:hover .tree-node-icon,
+      .form-review-page .tree-node-item:hover .tree-node-icon i {
+        color: var(--admin-accent-dark) !important;
+      }
+
+      .form-review-page .tree-node-item.selected {
+        background-color: rgba(205, 225, 241, 0.3) !important;
+        border-left: 3px solid var(--admin-accent-dark) !important;
+        color: var(--admin-text) !important;
+      }
+
+      .form-review-page .tree-node-item.selected::before {
+        background: var(--admin-accent-dark) !important;
+        width: 3px !important;
+      }
+
+      .form-review-page .tree-node-item.selected .tree-node-label {
+        color: var(--admin-accent-dark) !important;
+        font-weight: 600 !important;
+      }
+
+      .form-review-page .tree-node-item.selected .tree-node-icon,
+      .form-review-page .tree-node-item.selected .tree-node-icon i {
+        color: var(--admin-accent-dark) !important;
+      }
+
+      .form-review-page .tree-node-item.selected .tree-node-count {
+        background-color: rgba(58, 110, 165, 0.2) !important;
+        color: var(--admin-accent-dark) !important;
+      }
+
+      /* Override default white/gray hover background from CSS files */
+      .form-review-page .tree-content .tree-node-item:hover,
+      .form-review-page .hierarchy-tree .tree-node-item:hover {
+        background: rgba(205, 225, 241, 0.5) !important;
+        background-color: rgba(205, 225, 241, 0.5) !important;
+      }
+
+      /* Blue hover effects for buttons */
+      .form-review-page .page-header-actions button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(58, 110, 165, 0.3);
+      }
+
+      .form-review-page #approveFormBtn:hover {
+        background: #45a049 !important;
+        box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
+      }
+
+      .form-review-page #returnFormBtn:hover {
+        background: #e68900 !important;
+        box-shadow: 0 4px 12px rgba(255, 152, 0, 0.4);
+      }
+
+      .form-review-page #clearRemarksBtn:hover {
+        background: var(--admin-accent-dark) !important;
+        color: var(--admin-white) !important;
+        box-shadow: 0 4px 12px rgba(58, 110, 165, 0.3);
+      }
+
+      /* Blue header styling for questions header */
+      .form-review-page .questions-header {
+        background: linear-gradient(135deg, var(--admin-accent) 0%, rgba(205, 225, 241, 0.5) 100%) !important;
+        border-bottom: 2px solid var(--admin-accent-dark) !important;
+        color: var(--admin-accent-dark) !important;
+        padding: 16px 20px !important;
+        border-radius: 4px 4px 0 0 !important;
+      }
+
+      .form-review-page .questions-header h3 {
+        color: var(--admin-accent-dark) !important;
+        font-weight: 700 !important;
+        margin: 0 !important;
+      }
+
+      .form-review-page .questions-header .progress-indicator {
+        color: var(--admin-accent-dark) !important;
+      }
+
+      /* Blue hover for questions and interactive elements */
+      .form-review-page .question-item:hover {
+        background-color: rgba(205, 225, 241, 0.2) !important;
+        border-left-color: var(--admin-accent-dark) !important;
+      }
+
+      .form-review-page .category-item:hover,
+      .form-review-page .topic-item:hover {
+        background-color: rgba(205, 225, 241, 0.3) !important;
+        color: var(--admin-accent-dark) !important;
+      }
+  
+  .form-review-page .page-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-left: auto;
+  }
+  
+  /* Responsive adjustments for header */
+  @media (max-width: 767px) {
+    .form-review-page .page-header {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 16px;
+    }
+    
+    .form-review-page .page-header h1 {
+      margin-right: 0;
+    }
+    
+    .form-review-page .page-header-actions {
+      width: 100%;
+      margin-top: 0;
+      margin-left: 0;
+      flex-direction: column;
+    }
+    
+    .form-review-page .page-header-actions button {
+      width: 100%;
+    }
+  }
+
+  /* Make questions-container flex column with fixed height when sticky */
+  .form-review-page .questions-container {
+    display: flex !important;
+    flex-direction: column !important;
+    height: calc(100vh - 140px) !important;
+    max-height: calc(100vh - 140px) !important;
+  }
+
+  /* Ensure header, controls, and pagination don't flex */
+  .form-review-page .questions-header,
+  .form-review-page .questions-controls,
+  .form-review-page .pagination-controls {
+    flex-shrink: 0;
+  }
+
+  /* Make questions-list scrollable */
+  .form-review-page .questions-list {
+    flex: 1 1 auto !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    min-height: 0 !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Ensure tree content has height relative to content, not matching right column */
+  .form-review-page .tree-view-sidebar {
+    height: auto !important;
+    min-height: 100px !important;
+    max-height: calc(100vh - 140px) !important;
+    align-self: flex-start !important;
+  }
+  
+  /* Make tree content adjust to content, but allow scrolling if exceeds max-height */
+  .form-review-page .tree-view-sidebar .tree-content {
+    flex: 0 1 auto !important;
+    overflow-y: auto !important;
+  }
+
+  /* Read-only input styling */
+  .form-review-page input[disabled],
+  .form-review-page textarea[disabled],
+  .form-review-page select[disabled] {
+    background-color: #f5f5f5 !important;
+    color: #666 !important;
+    cursor: not-allowed !important;
+    border-color: #e0e0e0 !important;
+  }
+
+  /* Status badge styling */
+  .form-review-page .status-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+
+  .form-review-page .status-submitted {
+    background-color: #e3f2fd;
+    color: #1976d2;
+  }
+
+  .form-review-page .status-pending {
+    background-color: #fff3e0;
+    color: #f57c00;
+  }
+
+  .form-review-page .status-approved {
+    background-color: #e8f5e9;
+    color: #388e3c;
+  }
+
+  .form-review-page .status-returned {
+    background-color: #ffebee;
+    color: #d32f2f;
+  }
+</style>
+</head>
+<body>
+<div class="dashboard-container">
+  <!-- Sidebar copied from Form Management layout -->
+  <div class="sidebar">
+    <div class="logo">
+      <span>edz</span>
+    </div>
+    <div class="menu">
+      <a href="/dashboard/" class="menu-item">
+        <i class="ph-bold ph-house"></i>
+        <span>Dashboard</span>
+      </a>
+      <a href="/form/" class="menu-item">
+        <i class="ph-bold ph-database"></i>
+        <span>Form</span>
+      </a>
+      <a href="/form-management/" class="menu-item active">
+        <i class="ph-bold ph-clipboard-text"></i>
+        <span>Form Mgmt.</span>
+      </a>
+      <a href="/reports/" class="menu-item">
+        <i class="ph-bold ph-chart-pie"></i>
+        <span>Reports</span>
+      </a>
+      {% if admin_level and admin_level != 'school' %}
+      <a href="{% url 'admin-profile-page' %}" class="menu-item">
+        <i class="ph-bold ph-user-circle"></i>
+        <span>Admin</span>
+      </a>
+      {% endif %}
+    </div>
+  </div>
+
+<div class="main-content">
+    <!-- Optional header for consistency -->
+    <div class="header">
+      <div class="header-left">
+        <button class="hamburger" aria-label="Open menu" title="Menu">
+          <i class="fas fa-bars"></i>
+        </button>
+      </div>
+      <div class="header-actions"></div>
+    </div>
+
+    <div class="content form-review-page">
+<!-- Page Header -->
+<div class="page-header mb-4">
+  <div class="page-header-content mt-4">
+    <h1 id="pageTitle">Form Review</h1>
+    <p id="formInfo" style="color: #666;">Loading form information...</p>
+  </div>
+  <div class="page-header-actions mt-4">
+    <button 
+      type="button" 
+      id="returnFormBtn" 
+      class="btn-warning"
+      style="background: #ff9800; color: white; padding: 10px 20px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; display: flex; align-items: center; gap: 8px;"
+    >
+      <i class="ph-bold ph-arrow-counter-clockwise"></i>
+      <span>Return Form</span>
+    </button>
+    
+    <button 
+      type="button" 
+      id="clearRemarksBtn" 
+      class="btn-neutral"
+      style="background: #a3b5d8; color: #1f2937; padding: 10px 20px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; display: none; align-items: center; gap: 8px;"
+    >
+      <i class="ph-bold ph-broom"></i>
+      <span>Clear Remarks</span>
+    </button>
+    
+    <button 
+      type="button" 
+      id="approveFormBtn" 
+      class="btn-success"
+      style="background: #4caf50; color: white; padding: 10px 20px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; display: flex; align-items: center; gap: 8px;"
+    >
+      <i class="ph-bold ph-check-circle"></i>
+      <span>Approve Form</span>
+    </button>
+  </div>
+</div>
+
+<!-- Main Container -->
+<div class="container-fluid px-0">
+  <div class="row g-3 g-xl-4">
+    <!-- Tree View Sidebar (Left Column) -->
+    <div class="col-12 col-md-4 col-lg-4 col-xl-4">
+      <div class="tree-view-sidebar">
+        <!-- Sidebar Header -->
+        <div class="sidebar-header">
+          <h3>Categories & Topics</h3>
+          <div class="review-badge" style="padding: 4px 12px; background: #e3f2fd; color: #1976d2; border-radius: 12px; font-size: 12px; font-weight: 600;">
+            <i class="ph-bold ph-eye"></i>
+            <span>Review Mode</span>
+          </div>
+        </div>
+
+        <!-- Tree Content -->
+        <div class="tree-content" id="treeContent">
+          <div class="loading-state">
+            <i class="fas fa-spinner fa-spin"></i>
+            <p>Loading categories...</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Questions Display (Right Column) -->
+    <div class="col-12 col-md-8 col-lg-8 col-xl-8">
+      <div class="questions-container">
+        <!-- Questions Header -->
+        <div class="questions-header">
+          <h3 id="topicTitle">Select a topic to begin</h3>
+          <div class="progress-indicator" id="progressIndicator" style="display: none;">
+            <i class="fas fa-check-circle"></i>
+            <span id="progressText">Review</span>
+          </div>
+        </div>
+
+        <!-- Questions List -->
+        <div class="questions-list" id="questionsList">
+          <div class="empty-state">
+            <i class="fas fa-clipboard-list"></i>
+            <h3>No topic selected</h3>
+            <p>Please select a topic from the left sidebar to view questions and answers</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Notification Container (Fixed position for toast notifications) -->
+<div class="notification-container" id="notificationContainer"></div>
+    </div>
+  </div>
+</div>
+
+<!-- School Form System JavaScript (Order matters for dependencies) -->
+<script src="{% static 'form-management/js/workflow_manager.js' %}"></script>
+<script src="{% static 'form-management/js/form_review.js' %}"></script>
+<script src="{% static 'form-management/js/form_review_remarks.js' %}"></script>
+<script src="{% static 'form-management/js/form_review_actions.js' %}"></script>
+<script src="{% static 'shared/js/sidebar.js' %}"></script>
+<script src="{% static 'shared/js/header.js' %}"></script>
+
+<!-- Initialize Form Review System -->
+<script>
+  window.currentAdminLevel = '{{ admin_level|default_if_none:""|escapejs }}';
+  document.addEventListener('DOMContentLoaded', function() {
+    const formId = parseInt('{{ form_id }}', 10);
+    
+    if (typeof FormReviewMain !== 'undefined') {
+      window.formReviewApp = new FormReviewMain(formId);
+    } else {
+      console.error('FormReviewMain not found. Check if all scripts are loaded correctly.');
+    }
+  });
+</script>
+</body>
+</html>
+

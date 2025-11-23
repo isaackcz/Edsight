@@ -1,0 +1,124 @@
+/**
+ * Main styles for role analytics page
+ * Imports sub-module styles
+ * Matches user_management page design patterns
+ */
+
+@import url('role_analytics/stats.css');
+@import url('role_analytics/charts.css');
+@import url('role_analytics/table.css');
+
+#roleAnalyticsPage {
+    padding: 0;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Page Title - Match user_management style */
+.page-title {
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--admin-border);
+}
+
+.page-title h1 {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--admin-text);
+    margin-bottom: 8px;
+}
+
+.page-title .page-subtitle {
+    font-size: 14px;
+    color: var(--admin-text-muted);
+    margin: 0;
+}
+
+.page-title-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.page-title-content {
+    flex: 1;
+    min-width: 200px;
+}
+
+/* Section Headers - Match user_management style */
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--admin-border);
+}
+
+.section-title-group {
+    flex: 1;
+}
+
+.section-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--admin-text);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 4px;
+}
+
+.section-title i {
+    font-size: 18px;
+    color: #3a6ea5ff;
+}
+
+.section-subtitle {
+    font-size: 14px;
+    color: var(--admin-text-muted);
+    margin: 0;
+}
+
+.section-actions {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1200px) {
+    .page-title h1 {
+        font-size: 22px;
+    }
+}
+
+@media (max-width: 768px) {
+    .page-title-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .section-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+    
+    .section-actions {
+        width: 100%;
+    }
+}
+

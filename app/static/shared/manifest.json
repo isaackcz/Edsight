@@ -1,89 +1,91 @@
 {
-  "name": "EdSight - School Data Management",
+  "name": "EdSight - School Assessment Dashboard",
   "short_name": "EdSight",
-  "description": "Professional web-based data entry interface for schools with offline capabilities",
-  "start_url": "/user-dashboard/",
+  "description": "Complete your school assessment forms and manage your dashboard",
+  "start_url": "/user/dashboard/",
+  "scope": "/user/dashboard/",
   "display": "standalone",
-  "background_color": "#f8fafc",
-  "theme_color": "#3b82f6",
+  "background_color": "#ffffff",
+  "theme_color": "#004e98",
   "orientation": "portrait-primary",
-  "scope": "/",
-  "lang": "en",
-  "categories": ["education", "productivity"],
   "icons": [
     {
-      "src": "/static/images/icon-72x72.png",
+      "src": "/static/shared/img/icon-72x72.png",
       "sizes": "72x72",
       "type": "image/png",
-      "purpose": "maskable any"
+      "purpose": "any maskable"
     },
     {
-      "src": "/static/images/icon-96x96.png",
+      "src": "/static/shared/img/icon-96x96.png",
       "sizes": "96x96",
       "type": "image/png",
-      "purpose": "maskable any"
+      "purpose": "any maskable"
     },
     {
-      "src": "/static/images/icon-128x128.png",
+      "src": "/static/shared/img/icon-128x128.png",
       "sizes": "128x128",
       "type": "image/png",
-      "purpose": "maskable any"
+      "purpose": "any maskable"
     },
     {
-      "src": "/static/images/icon-144x144.png",
+      "src": "/static/shared/img/icon-144x144.png",
       "sizes": "144x144",
       "type": "image/png",
-      "purpose": "maskable any"
+      "purpose": "any maskable"
     },
     {
-      "src": "/static/images/icon-152x152.png",
+      "src": "/static/shared/img/icon-152x152.png",
       "sizes": "152x152",
       "type": "image/png",
-      "purpose": "maskable any"
+      "purpose": "any maskable"
     },
     {
-      "src": "/static/images/icon-192x192.png",
+      "src": "/static/shared/img/icon-192x192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "maskable any"
+      "purpose": "any maskable"
     },
     {
-      "src": "/static/images/icon-384x384.png",
+      "src": "/static/shared/img/icon-384x384.png",
       "sizes": "384x384",
       "type": "image/png",
-      "purpose": "maskable any"
+      "purpose": "any maskable"
     },
     {
-      "src": "/static/images/icon-512x512.png",
+      "src": "/static/shared/img/icon-512x512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "maskable any"
+      "purpose": "any maskable"
     }
   ],
+  "categories": ["education", "productivity"],
+  "screenshots": [],
   "shortcuts": [
     {
-      "name": "Dashboard",
-      "short_name": "Dashboard",
-      "description": "View your dashboard",
-      "url": "/user-dashboard/",
+      "name": "Form Management",
+      "short_name": "Forms",
+      "description": "Access form management",
+      "url": "/user/dashboard/form/",
       "icons": [
         {
-          "src": "/static/images/dashboard-icon.png",
+          "src": "/static/shared/img/form-icon.png",
           "sizes": "96x96"
         }
       ]
     },
     {
-      "name": "Form",
-      "short_name": "Form",
-      "description": "Fill out forms",
-      "url": "/user-dashboard/?page=form",
+      "name": "Dashboard Overview",
+      "short_name": "Overview",
+      "description": "View dashboard overview",
+      "url": "/user/dashboard/overview/",
       "icons": [
         {
-          "src": "/static/images/form-icon.png",
+          "src": "/static/shared/img/dashboard-icon.png",
           "sizes": "96x96"
         }
       ]
     }
-  ]
-} 
+  ],
+  "prefer_related_applications": false
+}
+

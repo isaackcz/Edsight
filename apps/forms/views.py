@@ -160,17 +160,18 @@ def api_statistics(request):
         forms_queryset = get_accessible_forms(admin_id)
         
         # Calculate statistics
+        # Use workflow_status for workflow-related queries
         pending_review = forms_queryset.filter(
-            status__in=['district_pending', 'division_pending', 'region_pending', 'central_pending']
+            workflow_status__in=['district_pending', 'division_pending', 'region_pending', 'central_pending']
         ).count()
         
         approved_today = forms_queryset.filter(
-            status__in=['district_approved', 'division_approved', 'region_approved', 'central_approved'],
+            workflow_status__in=['district_approved', 'division_approved', 'region_approved', 'central_approved'],
             updated_at__date=timezone.now().date()
         ).count()
         
         returned_for_revision = forms_queryset.filter(
-            status__in=['district_returned', 'division_returned', 'region_returned', 'central_returned']
+            workflow_status__in=['district_returned', 'division_returned', 'region_returned', 'central_returned']
         ).count()
         
         total_forms = forms_queryset.count()
@@ -211,6 +212,18 @@ def api_forms(request):
         # Get accessible forms
         forms_queryset = get_accessible_forms(admin_id)
         
+        # Base visibility rule: Admins should only see submitted items that are
+        # currently pending or approved at any level. Exclude any "returned" or
+        # non-submitted/in-progress drafts from the main table, regardless of filter.
+        # This keeps the default and all-status views clean for reviewers.
+        forms_queryset = forms_queryset.filter(
+            Q(workflow_status__endswith='pending') | Q(workflow_status__endswith='approved')
+        ).exclude(
+            workflow_status__icontains='returned'
+        ).exclude(
+            status__in=['draft', 'in-progress']
+        )
+        
         # Apply filters
         if search:
             forms_queryset = forms_queryset.filter(
@@ -220,22 +233,22 @@ def api_forms(request):
             )
         
         if status_filter:
+            # Use workflow_status for workflow-related filtering
             if status_filter == 'pending':
                 forms_queryset = forms_queryset.filter(
-                    status__in=['district_pending', 'division_pending', 'region_pending', 'central_pending']
+                    workflow_status__in=['district_pending', 'division_pending', 'region_pending', 'central_pending']
                 )
             elif status_filter == 'approved':
                 forms_queryset = forms_queryset.filter(
-                    status__in=['district_approved', 'division_approved', 'region_approved', 'central_approved']
+                    workflow_status__in=['district_approved', 'division_approved', 'region_approved', 'central_approved']
                 )
             elif status_filter == 'returned':
-                forms_queryset = forms_queryset.filter(
-                    status__in=['district_returned', 'division_returned', 'region_returned', 'central_returned']
-                )
+                # Explicitly prevent showing returned forms to admins in the table
+                forms_queryset = forms_queryset.none()
             elif status_filter == 'overdue':
                 # Forms that are past deadline and still pending
                 forms_queryset = forms_queryset.filter(
-                    status__in=['district_pending', 'division_pending', 'region_pending', 'central_pending'],
+                    workflow_status__in=['district_pending', 'division_pending', 'region_pending', 'central_pending'],
                     submission_deadline__lt=timezone.now()
                 )
         
@@ -400,16 +413,37 @@ def api_approve_form(request, form_id):
             # Get admin user
             admin_user = get_admin_user(admin_id)
             
-            # Determine next level
-            next_level = form.get_next_level()
+            # Determine current level from workflow_status to avoid stale current_level mismatches
+            def infer_level_from_workflow(status: str):
+                if status in ('draft', 'submitted') or (status or '').startswith('district_'):
+                    return 'district'
+                if (status or '').startswith('division_'):
+                    return 'division'
+                if (status or '').startswith('region_'):
+                    return 'region'
+                if (status or '').startswith('central_'):
+                    return 'central'
+                # Fallback to model's current_level
+                return form.current_level
+
+            current_level = infer_level_from_workflow(form.workflow_status)
+            # Compute next level based on inferred current level
+            level_map = {
+                'school': 'district',
+                'district': 'division',
+                'division': 'region',
+                'region': 'central',
+                'central': 'completed'
+            }
+            next_level = level_map.get(current_level)
             if not next_level:
                 return JsonResponse({
                     'success': False,
                     'message': 'Form is already at the final level'
                 })
             
-            # Update form status
-            status_map = {
+            # Update form workflow status and status
+            workflow_status_map = {
                 'district': 'district_approved',
                 'division': 'division_approved',
                 'region': 'region_approved',
@@ -417,7 +451,24 @@ def api_approve_form(request, form_id):
                 'completed': 'completed'
             }
             
-            form.status = status_map.get(next_level, 'completed')
+            # Approve current level and move to next
+            # Set workflow_status to approved for current level
+            form.workflow_status = workflow_status_map.get(current_level, 'district_approved')
+            
+            # Move to next level
+            if next_level == 'completed':
+                form.status = 'completed'
+                form.workflow_status = 'completed'
+            else:
+                # Set workflow_status to pending for next level
+                next_pending_map = {
+                    'district': 'division_pending',
+                    'division': 'region_pending',
+                    'region': 'central_pending'
+                }
+                form.workflow_status = next_pending_map.get(current_level, 'district_pending')
+                form.status = 'submitted'  # Still in workflow
+            
             form.current_level = next_level
             form.last_reviewed_by = admin_user
             form.last_reviewed_at = timezone.now()
@@ -500,15 +551,16 @@ def api_return_form(request, form_id):
                     'message': 'Form is already at the school level'
                 })
             
-            # Update form status
-            status_map = {
+            # Update form workflow status and status
+            workflow_status_map = {
                 'school': 'district_returned',
                 'district': 'division_returned',
                 'division': 'region_returned',
                 'region': 'central_returned'
             }
             
-            form.status = status_map.get(previous_level, 'district_returned')
+            form.workflow_status = workflow_status_map.get(previous_level, 'district_returned')
+            form.status = 'in-progress'  # Form is being edited, set status to in-progress
             form.current_level = previous_level
             form.last_reviewed_by = admin_user
             form.last_reviewed_at = timezone.now()
@@ -586,8 +638,8 @@ def api_bulk_approve(request):
                     if not next_level:
                         continue
                     
-                    # Update form status
-                    status_map = {
+                    # Update form workflow status and status
+                    workflow_status_map = {
                         'district': 'district_approved',
                         'division': 'division_approved',
                         'region': 'region_approved',
@@ -595,7 +647,25 @@ def api_bulk_approve(request):
                         'completed': 'completed'
                     }
                     
-                    form.status = status_map.get(next_level, 'completed')
+                    # Approve current level and move to next
+                    current_level = form.current_level
+                    # Set workflow_status to approved for current level
+                    form.workflow_status = workflow_status_map.get(current_level, 'district_approved')
+                    
+                    # Move to next level
+                    if next_level == 'completed':
+                        form.status = 'completed'
+                        form.workflow_status = 'completed'
+                    else:
+                        # Set workflow_status to pending for next level
+                        next_pending_map = {
+                            'district': 'division_pending',
+                            'division': 'region_pending',
+                            'region': 'central_pending'
+                        }
+                        form.workflow_status = next_pending_map.get(current_level, 'district_pending')
+                        form.status = 'submitted'  # Still in workflow
+                    
                     form.current_level = next_level
                     form.last_reviewed_by = admin_user
                     form.last_reviewed_at = timezone.now()
@@ -748,17 +818,18 @@ def api_export_forms(request):
             )
         
         if status_filter:
+            # Use workflow_status for workflow-related filtering
             if status_filter == 'pending':
                 forms_queryset = forms_queryset.filter(
-                    status__in=['district_pending', 'division_pending', 'region_pending', 'central_pending']
+                    workflow_status__in=['district_pending', 'division_pending', 'region_pending', 'central_pending']
                 )
             elif status_filter == 'approved':
                 forms_queryset = forms_queryset.filter(
-                    status__in=['district_approved', 'division_approved', 'region_approved', 'central_approved']
+                    workflow_status__in=['district_approved', 'division_approved', 'region_approved', 'central_approved']
                 )
             elif status_filter == 'returned':
                 forms_queryset = forms_queryset.filter(
-                    status__in=['district_returned', 'division_returned', 'region_returned', 'central_returned']
+                    workflow_status__in=['district_returned', 'division_returned', 'region_returned', 'central_returned']
                 )
         
         if level_filter:
@@ -822,15 +893,49 @@ def api_notifications(request):
     """Get notifications for the current admin"""
     admin_id = request.session.get('admin_id')
     
+    if not admin_id:
+        return JsonResponse({
+            'success': False,
+            'message': 'User not authenticated',
+            'notifications': [],
+            'unread_count': 0,
+        })
+    
     try:
-        # Get unread notifications
-        notifications = FormNotification.objects.filter(
-            recipient__admin_id=admin_id,
+        # Get the admin user object first to avoid database column issues
+        try:
+            admin_user = AdminUser.objects.get(admin_id=admin_id)
+        except AdminUser.DoesNotExist:
+            return JsonResponse({
+                'success': False,
+                'message': 'Admin user not found',
+                'notifications': [],
+                'unread_count': 0,
+            })
+        
+        # Get unread count first
+        unread_count = FormNotification.objects.filter(
+            recipient=admin_user,
             is_read=False
+        ).count()
+        
+        # Get recent notifications (both read and unread, limit to 10)
+        notifications = FormNotification.objects.filter(
+            recipient=admin_user
         ).order_by('-created_at')[:10]
         
         notifications_data = []
         for notification in notifications:
+            sender_name = 'System'
+            sender_avatar = None
+            if notification.sender:
+                sender_name = notification.sender.full_name or notification.sender.username or 'System'
+                if notification.sender.profile_image:
+                    try:
+                        sender_avatar = notification.sender.profile_image.url
+                    except:
+                        sender_avatar = None
+            
             notifications_data.append({
                 'id': notification.notification_id,
                 'title': notification.title,
@@ -838,16 +943,23 @@ def api_notifications(request):
                 'type': notification.notification_type,
                 'priority': notification.priority,
                 'created_at': notification.created_at.isoformat(),
+                'is_read': notification.is_read,
                 'action_required': notification.action_required,
                 'action_url': notification.action_url,
+                'sender': sender_name,
+                'avatar': sender_avatar,
             })
         
-        # Mark notifications as read
-        notifications.update(is_read=True, read_at=timezone.now())
+        # Mark unread notifications as read when fetched
+        FormNotification.objects.filter(
+            recipient=admin_user,
+            is_read=False
+        ).update(is_read=True, read_at=timezone.now())
         
         return JsonResponse({
             'success': True,
             'notifications': notifications_data,
+            'unread_count': unread_count,
         })
     except Exception as e:
         return JsonResponse({
@@ -975,4 +1087,4 @@ def log_admin_activity(admin_user, action, resource_type, description, metadata=
         print(f"Failed to log admin activity: {e}")
 
 
-# Form Management functionality moved to form_management_views.py
+# Form Management functionality moved to apps/form_management/ (modular structure)

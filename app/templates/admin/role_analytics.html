@@ -1,0 +1,49 @@
+{% extends 'admin/admin_base.html' %}
+{% load static %}
+
+{% block title %}Role Analytics{% endblock %}
+
+{% block breadcrumb %}Role Analytics{% endblock %}
+
+{% block extra_css %}
+    <!-- Dashboard Statistics Cards CSS -->
+    <link rel="stylesheet" href="{% static 'components/admin/css/admin_dashboard_stats.css' %}" />
+    <!-- Role Analytics Component CSS -->
+    <link rel="stylesheet" href="{% static 'components/admin/css/role_analytics.css' %}" />
+{% endblock %}
+
+{% block content %}
+    <!-- Role Analytics Page -->
+    <div id="roleAnalyticsPage">
+        <!-- Page Title -->
+        <div class="page-title">
+            <div class="page-title-header">
+                <div class="page-title-content">
+                    <h1>Role & Access</h1>
+                    <p class="page-subtitle">Comprehensive statistics and analysis of admin roles, permissions, and access patterns</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Statistics Cards -->
+        {% include 'admin/includes/role_analytics/stats_cards.html' %}
+        
+        <!-- Charts Section -->
+        {% include 'admin/includes/role_analytics/charts_section.html' %}
+        
+        <!-- Data Table Section -->
+        {% include 'admin/includes/role_analytics/table_section.html' %}
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+    <!-- Chart.js Library -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    
+    <!-- Role Analytics JavaScript Modules -->
+    <script src="{% static 'components/admin/js/role_analytics/stats.js' %}"></script>
+    <script src="{% static 'components/admin/js/role_analytics/charts.js' %}"></script>
+    <script src="{% static 'components/admin/js/role_analytics/table.js' %}"></script>
+    <script src="{% static 'components/admin/js/role_analytics.js' %}"></script>
+{% endblock %}
+

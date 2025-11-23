@@ -1,0 +1,76 @@
+# Celery Worker Dockerfile
+# Reuses Django Dockerfile base but runs Celery worker instead
+ARG PYTHON_VERSION=3.11-slim
+ARG BUILD_DATE
+ARG VCS_REF
+ARG VERSION=1.0.0
+
+# Build stage (same as Django)
+FROM python:${PYTHON_VERSION} as base
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    DEBIAN_FRONTEND=noninteractive
+
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    default-libmysqlclient-dev \
+    pkg-config \
+    curl \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY requirements.txt /app/
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
+    pip install --no-cache-dir -r requirements.txt
+
+# Production stage
+FROM python:${PYTHON_VERSION} as production
+
+LABEL maintainer="EdSight Team" \
+      org.opencontainers.image.created="${BUILD_DATE}" \
+      org.opencontainers.image.version="${VERSION}" \
+      org.opencontainers.image.revision="${VCS_REF}" \
+      org.opencontainers.image.title="EdSight Celery Worker" \
+      org.opencontainers.image.description="EdSight Celery Worker Container"
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PYTHONPATH=/app \
+    PATH="/home/appuser/.local/bin:$PATH"
+
+RUN groupadd -r appuser && \
+    useradd -r -g appuser -u 1000 -d /home/appuser -s /bin/bash appuser && \
+    mkdir -p /home/appuser && \
+    chown -R appuser:appuser /home/appuser
+
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    default-libmysqlclient-dev \
+    curl \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean
+
+COPY --from=base /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
+COPY --from=base /usr/local/bin /usr/local/bin
+
+COPY --chown=appuser:appuser . /app
+
+RUN mkdir -p /app/logs && \
+    chown -R appuser:appuser /app
+
+USER appuser
+
+# Health check for Celery worker
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD celery -A app inspect ping -d celery@$$HOSTNAME || exit 1
+
+ENTRYPOINT ["/app/entrypoint.celery.sh"]
+CMD []
+

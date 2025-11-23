@@ -1,241 +1,78 @@
 /* ========================================
    User Dashboard - Overview Page Responsive Styles
-   Mobile-first responsive design
+   Additional responsive adjustments
    ======================================== */
 
-/* Tablet & Medium Screens (768px - 1000px) */
-@media (max-width: 1000px) {
-    .page-title {
-        font-size: 28px;
+/* === MOBILE FIRST APPROACH === */
+@media (max-width: 575px) {
+    .container-fluid {
+        padding-left: 12px;
+        padding-right: 12px;
     }
     
-    .page-subtitle {
-        font-size: 15px;
+    .card {
+        margin-bottom: 16px;
     }
     
-    .stats-cards-row {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 16px;
+    .card-title {
+        font-size: 14px;
     }
     
-    .charts-row {
-        grid-template-columns: 1fr;
-        gap: 20px;
+    .chart-wrapper {
+        max-width: 150px;
+        height: 150px;
     }
     
-    .quick-actions-row {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 12px;
+    .chart-percentage {
+        font-size: 20px;
     }
     
-    .welcome-section {
-        padding: 24px;
+    .chart-label {
+        font-size: 9px;
     }
     
-    .welcome-greeting {
-        font-size: 24px;
+    .workflow-status-item {
+        margin-bottom: 16px;
     }
     
-    .chart-container {
-        height: 280px;
+    .status-label {
+        font-size: 10px;
+    }
+    
+    .status-value {
+        font-size: 12px;
     }
 }
 
-/* Mobile Screens (520px - 767px) */
-@media (max-width: 767px) {
-    .page-title {
-        font-size: 24px;
+/* === TABLET ADJUSTMENTS === */
+@media (min-width: 576px) and (max-width: 991px) {
+    .chart-wrapper {
+        max-width: 220px;
+        height: 220px;
     }
     
-    .page-subtitle {
-        font-size: 14px;
-    }
-    
-    .stats-cards-row {
-        grid-template-columns: 1fr;
-        gap: 12px;
-    }
-    
-    .stat-card {
-        padding: 20px;
-    }
-    
-    .stat-icon {
+    .chart-percentage {
         font-size: 28px;
-        width: 48px;
-        height: 48px;
     }
-    
-    .stat-value {
-        font-size: 32px;
+}
+
+/* === DESKTOP LARGE === */
+@media (min-width: 1200px) {
+    .container-fluid {
+        max-width: 1400px;
+        margin: 0 auto;
     }
-    
-    .stat-label {
-        font-size: 13px;
-    }
-    
-    .welcome-section {
-        padding: 20px;
-        margin-bottom: 24px;
-    }
-    
-    .welcome-greeting {
-        font-size: 22px;
-    }
-    
-    .welcome-message {
-        font-size: 15px;
-    }
-    
-    .deadline-card {
-        padding: 20px;
-    }
-    
-    .deadline-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 12px;
-    }
-    
-    .deadline-title {
-        font-size: 18px;
-    }
-    
-    .deadline-date {
-        font-size: 14px;
-    }
-    
-    .quick-actions-row {
-        grid-template-columns: 1fr;
-        gap: 10px;
-    }
-    
-    .action-button {
-        padding: 14px 20px;
-        font-size: 14px;
-    }
-    
-    .chart-card {
-        padding: 20px;
-    }
-    
-    .chart-title {
-        font-size: 16px;
+}
+
+/* === PRINT STYLES === */
+@media print {
+    .card {
+        break-inside: avoid;
+        box-shadow: none;
+        border: 1px solid #ddd;
     }
     
     .chart-container {
         height: 250px;
     }
-    
-    .activity-timeline {
-        gap: 12px;
-    }
-    
-    .timeline-item {
-        padding: 10px;
-    }
-    
-    .timeline-icon {
-        width: 36px;
-        height: 36px;
-        font-size: 16px;
-    }
-    
-    .timeline-title {
-        font-size: 14px;
-    }
-    
-    .timeline-description {
-        font-size: 12px;
-    }
 }
-
-/* Small Mobile Screens (360px - 519px) */
-@media (max-width: 519px) {
-    .page-header {
-        margin-bottom: 24px;
-    }
-    
-    .page-title {
-        font-size: 20px;
-    }
-    
-    .page-subtitle {
-        font-size: 13px;
-    }
-    
-    .stat-card {
-        padding: 16px;
-    }
-    
-    .stat-value {
-        font-size: 28px;
-    }
-    
-    .stat-trend {
-        font-size: 12px;
-    }
-    
-    .welcome-greeting {
-        font-size: 20px;
-    }
-    
-    .welcome-message {
-        font-size: 14px;
-    }
-    
-    .deadline-card {
-        padding: 16px;
-        margin-bottom: 24px;
-    }
-    
-    .deadline-title {
-        font-size: 16px;
-    }
-    
-    .action-button {
-        padding: 12px 16px;
-        font-size: 13px;
-    }
-    
-    .action-button i {
-        font-size: 18px;
-    }
-    
-    .chart-card {
-        padding: 16px;
-    }
-    
-    .chart-title {
-        font-size: 15px;
-    }
-    
-    .chart-container {
-        height: 220px;
-    }
-}
-
-/* Extra Small Screens (< 360px) */
-@media (max-width: 359px) {
-    .page-title {
-        font-size: 18px;
-    }
-    
-    .stat-value {
-        font-size: 24px;
-    }
-    
-    .welcome-greeting {
-        font-size: 18px;
-    }
-    
-    .action-button {
-        padding: 10px 14px;
-        font-size: 12px;
-    }
-    
-    .chart-container {
-        height: 200px;
-    }
-}
-

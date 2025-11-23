@@ -64,7 +64,7 @@ const UserDashboardAPI = {
      */
     async updateProfile(profileData) {
         try {
-            const response = await fetch(`${API_BASE_URL}/profile/update/`, {
+            const response = await fetch('/api/profile/update/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -72,7 +72,10 @@ const UserDashboardAPI = {
                 },
                 body: JSON.stringify(profileData)
             });
-            if (!response.ok) throw new Error('Failed to update profile');
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.error || 'Failed to update profile');
+            }
             return await response.json();
         } catch (error) {
             console.error('Error updating profile:', error);
@@ -85,7 +88,7 @@ const UserDashboardAPI = {
      */
     async updatePassword(passwordData) {
         try {
-            const response = await fetch(`${API_BASE_URL}/password/update/`, {
+            const response = await fetch('/api/security/password-change/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -93,7 +96,10 @@ const UserDashboardAPI = {
                 },
                 body: JSON.stringify(passwordData)
             });
-            if (!response.ok) throw new Error('Failed to update password');
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.error || 'Failed to update password');
+            }
             return await response.json();
         } catch (error) {
             console.error('Error updating password:', error);
@@ -102,35 +108,39 @@ const UserDashboardAPI = {
     },
     
     /**
-     * Get active sessions
+     * Update preferences
      */
-    async getSessions() {
+    async updatePreferences(preferencesData) {
         try {
-            const response = await fetch(`${API_BASE_URL}/sessions/`);
-            if (!response.ok) throw new Error('Failed to fetch sessions');
-            return await response.json();
-        } catch (error) {
-            console.error('Error fetching sessions:', error);
-            return null;
-        }
-    },
-    
-    /**
-     * End a session
-     */
-    async endSession(sessionId) {
-        try {
-            const response = await fetch(`${API_BASE_URL}/sessions/${sessionId}/end/`, {
+            const response = await fetch('/api/preferences/update/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'X-CSRFToken': this.getCSRFToken()
-                }
+                },
+                body: JSON.stringify(preferencesData)
             });
-            if (!response.ok) throw new Error('Failed to end session');
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.error || 'Failed to update preferences');
+            }
             return await response.json();
         } catch (error) {
-            console.error('Error ending session:', error);
+            console.error('Error updating preferences:', error);
+            throw error;
+        }
+    },
+    
+    /**
+     * Export audit logs
+     */
+    async exportAuditLogs(filter = 'all', timeRange = '30d') {
+        try {
+            const url = `/api/audit/export/?filter=${filter}&time_range=${timeRange}`;
+            window.location.href = url; // Trigger download
+            return { success: true };
+        } catch (error) {
+            console.error('Error exporting audit logs:', error);
             throw error;
         }
     },
@@ -138,9 +148,21 @@ const UserDashboardAPI = {
     /**
      * Get audit logs
      */
-    async getAuditLogs(filter = 'all') {
+    async getAuditLogs(filter = 'all', options = {}) {
         try {
-            const response = await fetch(`${API_BASE_URL}/audit-logs/?filter=${filter}`);
+            const params = new URLSearchParams();
+            if (filter) {
+                params.append('filter', filter);
+            }
+            if (options.timeRange) {
+                params.append('time_range', options.timeRange);
+            }
+            if (options.limit) {
+                params.append('limit', options.limit);
+            }
+            const query = params.toString();
+            const url = query ? `/api/audit/logs/?${query}` : '/api/audit/logs/';
+            const response = await fetch(url);
             if (!response.ok) throw new Error('Failed to fetch audit logs');
             return await response.json();
         } catch (error) {

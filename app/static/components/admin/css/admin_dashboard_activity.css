@@ -1,0 +1,88 @@
+/* Dashboard Activity Section Styles */
+
+.activity-list {
+    max-height: 600px;
+    overflow-y: auto;
+    padding-right: 8px;
+}
+
+.activity-item {
+    transition: background 0.2s ease;
+    padding: 12px;
+    border-radius: 4px;
+}
+
+.activity-item:hover {
+    background: rgba(205, 225, 241, 0.05);
+}
+
+.activity-icon {
+    flex-shrink: 0;
+    color: #3a6ea5ff;
+}
+
+.activity-icon i {
+    font-size: 18px;
+}
+
+.activity-item .fw-bold {
+    font-size: 14px;
+    color: var(--admin-text);
+    margin-bottom: 4px;
+}
+
+.activity-item .text-muted {
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+.activity-item .small {
+    font-size: 12px;
+}
+
+.activity-item .small i {
+    font-size: 12px;
+    margin-right: 4px;
+}
+
+/* Pagination for activity */
+#activityPagination {
+    margin-top: 16px;
+}
+
+#activityPagination .page-link {
+    padding: 6px 10px;
+    font-size: 13px;
+}
+
+/* Empty State */
+.activity-list .text-center {
+    padding: 40px 20px;
+}
+
+.activity-list .text-center i {
+    opacity: 0.5;
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+    .activity-list {
+        max-height: 500px;
+    }
+}
+
+@media (max-width: 768px) {
+    .activity-item {
+        padding: 10px;
+    }
+    
+    .activity-icon {
+        width: 32px !important;
+        height: 32px !important;
+    }
+    
+    .activity-icon i {
+        font-size: 16px;
+    }
+}
+

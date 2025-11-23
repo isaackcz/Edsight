@@ -103,11 +103,11 @@ WSGI_APPLICATION = 'app.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': os.environ.get('DB_NAME', 'edsight'),
-        'USER': os.environ.get('DB_USER', 'root'),
-        'PASSWORD': os.environ.get('DB_PASSWORD', ''),
-        'HOST': os.environ.get('DB_HOST', 'localhost'),
-        'PORT': os.environ.get('DB_PORT', '3306'),
+        'NAME': os.environ.get('DB_NAME', 'edsight').strip(),
+        'USER': os.environ.get('DB_USER', 'root').strip(),
+        'PASSWORD': os.environ.get('DB_PASSWORD', '').strip(),
+        'HOST': os.environ.get('DB_HOST', 'localhost').strip(),
+        'PORT': os.environ.get('DB_PORT', '3306').strip(),
         'OPTIONS': {
             'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
         },

@@ -5,115 +5,150 @@
 {% block breadcrumb %}Analytics{% endblock %}
 
 {% block extra_css %}
+<!-- Bootstrap CSS for Grid System -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+
+<!-- Shared Theme CSS -->
+<link rel="stylesheet" href="{% static 'components/user_dash/css/theme.css' %}" />
 <link rel="stylesheet" href="{% static 'components/user_dash/css/analytics.css' %}" />
 <link rel="stylesheet" href="{% static 'components/user_dash/css/analytics-responsive.css' %}" />
 {% endblock %}
 
 {% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="{% static 'components/user_dash/js/api.js' %}" defer></script>
 <script src="{% static 'components/user_dash/js/analytics.js' %}" defer></script>
 {% endblock %}
 
 {% block content %}
-<!-- Page Header -->
-<div class="page-header">
-    <h1 class="page-title">Analytics & Insights</h1>
-    <p class="page-subtitle">Detailed analysis of your form progress and performance</p>
+<!-- Dashboard Title -->
+<div class="dashboard-title">
+  <h1>Analytics & Insights</h1>
+  <p class="page-subtitle">Detailed analysis of your form progress and performance</p>
 </div>
 
 <!-- Controls Row -->
-<div class="controls-row">
-    <div class="controls-left">
-        <div class="control-dropdown">
-            <button class="dropdown-button">
+<div class="row g-3 mb-4">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-body">
+        <div class="controls-row">
+          <div class="controls-left">
+            <div class="control-dropdown">
+              <button class="dropdown-button">
                 <i class="ph-bold ph-calendar"></i>
                 <span>Last 30 Days</span>
                 <i class="ph-bold ph-caret-down"></i>
-            </button>
+              </button>
+            </div>
+          </div>
+          <button class="export-button">
+            <i class="ph-bold ph-download-simple"></i>
+            Export Report
+          </button>
         </div>
-        <button class="refresh-button" title="Refresh Data">
-            <i class="ph-bold ph-arrows-clockwise"></i>
-        </button>
+      </div>
     </div>
-    <button class="export-button">
-        <i class="ph-bold ph-download-simple"></i>
-        Export Report
-    </button>
+  </div>
 </div>
 
 <!-- Charts Row -->
-<div class="charts-row">
-    <!-- Progress Timeline Chart -->
-    <div class="chart-card">
-        <div class="chart-header">
-            <h3 class="chart-title">Progress Timeline</h3>
-            <div class="chart-legend">
-                <div class="legend-item">
-                    <span class="legend-dot" style="background: #3a6ea5;"></span>
-                    <span>Completion</span>
-                </div>
-            </div>
+<div class="row g-3 mb-4">
+  <!-- Progress Timeline Chart -->
+  <div class="col-xl-6 col-lg-12">
+    <div class="card h-100">
+      <div class="card-header">
+        <i class="ph-bold ph-chart-line"></i>
+        <h3>Progress Timeline</h3>
+        <div class="chart-legend ms-auto">
+          <div class="legend-item">
+            <span class="legend-dot" style="background: #3a6ea5;"></span>
+            <span>Completion</span>
+          </div>
         </div>
-        <div class="chart-container">
-            <canvas id="progressTimelineChart"></canvas>
-        </div>
+      </div>
+      <div class="card-body">
+        <canvas id="progressTimelineChart" class="chart-canvas"></canvas>
+      </div>
     </div>
-    
-    <!-- Category Completion Chart -->
-    <div class="chart-card">
-        <div class="chart-header">
-            <h3 class="chart-title">Category Completion</h3>
-            <div class="chart-legend">
-                <div class="legend-item">
-                    <span class="legend-dot" style="background: #4caf50;"></span>
-                    <span>Complete</span>
-                </div>
-                <div class="legend-item">
-                    <span class="legend-dot" style="background: #3a6ea5;"></span>
-                    <span>In Progress</span>
-                </div>
-                <div class="legend-item">
-                    <span class="legend-dot" style="background: #ff9800;"></span>
-                    <span>Pending</span>
-                </div>
-            </div>
+  </div>
+  
+  <!-- Category Completion Chart -->
+  <div class="col-xl-6 col-lg-12">
+    <div class="card h-100">
+      <div class="card-header">
+        <i class="ph-bold ph-pie-chart"></i>
+        <h3>Category Completion</h3>
+        <div class="chart-legend ms-auto">
+          <div class="legend-item">
+            <span class="legend-dot" style="background: #4caf50;"></span>
+            <span>Complete</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-dot" style="background: #3a6ea5;"></span>
+            <span>In Progress</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-dot" style="background: #ff9800;"></span>
+            <span>Pending</span>
+          </div>
         </div>
-        <div class="chart-container">
-            <canvas id="categoryCompletionChart"></canvas>
-        </div>
+      </div>
+      <div class="card-body">
+        <canvas id="categoryCompletionChart" class="chart-canvas"></canvas>
+      </div>
     </div>
+  </div>
 </div>
 
 <!-- Category Status Section -->
-<div class="category-status-section">
-    <h2 class="section-title">Category Status Overview</h2>
-    <div class="category-cards-grid">
-        <!-- Cards will be populated by JavaScript -->
+<div class="row g-3 mb-4">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header">
+        <i class="ph-bold ph-folders"></i>
+        <h3>Category Status Overview</h3>
+      </div>
+      <div class="card-body">
+        <div class="category-cards-grid">
+          <!-- Cards will be populated by JavaScript -->
+        </div>
+      </div>
     </div>
+  </div>
 </div>
 
 <!-- Data Table Section -->
-<div class="data-table-section">
-    <div class="data-table-card">
-        <div class="table-header">
-            <h3 class="table-title">Detailed Progress Report</h3>
-            <input type="text" class="table-search" placeholder="Search sections..." />
+<div class="row g-3 mb-4">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div class="d-flex align-items-center">
+          <i class="ph-bold ph-table"></i>
+          <h3>Detailed Progress Report</h3>
         </div>
-        <table class="analytics-table">
+        <input type="text" class="table-search" placeholder="Search sections..." />
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="analytics-table">
             <thead>
-                <tr>
-                    <th>Section</th>
-                    <th>Total Questions</th>
-                    <th>Completed</th>
-                    <th>Progress</th>
-                    <th>Status</th>
-                </tr>
+              <tr>
+                <th>Section</th>
+                <th>Total Questions</th>
+                <th>Completed</th>
+                <th>Progress</th>
+                <th>Status</th>
+              </tr>
             </thead>
             <tbody>
-                <!-- Rows will be populated by JavaScript -->
+              <!-- Rows will be populated by JavaScript -->
             </tbody>
-        </table>
+          </table>
+        </div>
+      </div>
     </div>
+  </div>
 </div>
 {% endblock %}
 

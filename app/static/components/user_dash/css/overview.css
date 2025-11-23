@@ -1,403 +1,561 @@
 /* ========================================
    User Dashboard - Overview Page Styles
-   Matches /dashboard/ design system with orange/blue theme
+   Bootstrap-based professional dashboard
    ======================================== */
 
 /* === COLOR VARIABLES === */
-:root {
-    --pumpkin: #ff6700ff;
-    --antiflash-white: #ebebebff;
-    --silver: #c0c0c0ff;
-    --bice-blue: #3a6ea5ff;
-    --polynesian-blue: #004e98ff;
-    --white: #f7f9f9ff;
-    --black: #1e1e24ff;
-    --success: #4caf50;
-    --warning: #ff9800;
-    --danger: #f44336;
-    --info: #2196f3;
+/* Use admin dashboard color scheme - variables are already defined in base.html */
+/* Cards use --antiflash-white which is --admin-accent (#cde1f1) */
+
+/* === CARD STYLING === */
+/* Cards use white background with subtle header highlight - matching admin dashboard border radius */
+.card {
+    background: var(--admin-white) !important;
+    border-radius: 8px !important;
+    padding: 0 !important;
+    transition: var(--transition);
+    box-shadow: var(--subtle-shadow);
+    border: 1px solid var(--admin-border);
+    overflow: hidden;
 }
 
-/* === PAGE HEADER === */
-.page-header {
-    margin-bottom: 32px;
+.card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--soft-shadow);
 }
 
-.page-title {
-    font-family: 'Poppins', sans-serif;
+.card-header {
+    background: rgba(205, 225, 241, 0.15) !important;
+    padding: 12px 18px !important;
+    margin: 0 !important;
+    border-radius: 8px 8px 0 0 !important;
+    border-bottom: 1px solid var(--admin-border);
+    display: flex;
+    align-items: center;
+}
+
+/* Ensure card body has proper padding */
+.card-body {
+    padding: 18px !important;
+}
+
+/* === DONUT CHARTS === */
+.chart-wrapper {
+    position: relative;
+    width: 100%;
+    max-width: 250px;
+    height: 250px;
+    margin: 0 auto;
+}
+
+.chart-center-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    pointer-events: none;
+}
+
+.chart-percentage {
+    display: block;
+    font-family: var(--base-font-family);
     font-size: 32px;
     font-weight: 700;
-    color: var(--polynesian-blue);
-    margin: 0 0 8px 0;
-}
-
-.page-subtitle {
-    font-family: 'Poppins', sans-serif;
-    font-size: 16px;
-    font-weight: 400;
-    color: var(--silver);
-    margin: 0;
-}
-
-/* === STATS CARDS ROW === */
-.stats-cards-row {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 24px;
-    margin-bottom: 32px;
-}
-
-.stat-card {
-    background: var(--white);
-    border-radius: 18px;
-    padding: 24px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-
-.stat-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
-}
-
-.stat-card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.stat-icon {
-    font-size: 32px;
-    width: 56px;
-    height: 56px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 12px;
-}
-
-.stat-icon.success {
-    background: rgba(76, 175, 80, 0.1);
-    color: var(--success);
-}
-
-.stat-icon.info {
-    background: rgba(33, 150, 243, 0.1);
-    color: var(--info);
-}
-
-.stat-icon.primary {
-    background: rgba(58, 110, 165, 0.1);
     color: var(--bice-blue);
+    line-height: 1;
 }
 
-.stat-icon.warning {
-    background: rgba(255, 152, 0, 0.1);
-    color: var(--warning);
-}
-
-.stat-content {
-    flex: 1;
-}
-
-.stat-label {
-    font-size: 14px;
+.chart-label {
+    display: block;
+    font-family: var(--base-font-family);
+    font-size: 12px;
     font-weight: 500;
-    color: var(--silver);
-    margin-bottom: 8px;
+    color: var(--admin-text-muted);
+    margin-top: 4px;
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
 
-.stat-value {
-    font-size: 36px;
-    font-weight: 700;
-    color: var(--polynesian-blue);
-    line-height: 1;
-}
-
-.stat-trend {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 13px;
-    font-weight: 600;
-    margin-top: 8px;
-}
-
-.stat-trend.positive {
-    color: var(--success);
-}
-
-.stat-trend.negative {
-    color: var(--danger);
-}
-
-.stat-trend i {
-    font-size: 16px;
-}
-
-/* === WELCOME SECTION === */
-.welcome-section {
-    background: linear-gradient(135deg, var(--bice-blue), var(--polynesian-blue));
-    border-radius: 18px;
-    padding: 32px;
-    margin-bottom: 32px;
-    color: white;
-    box-shadow: 0 4px 16px rgba(0, 78, 152, 0.2);
-}
-
-.welcome-greeting {
-    font-size: 28px;
-    font-weight: 700;
-    margin: 0 0 12px 0;
-    font-family: 'Poppins', sans-serif;
-}
-
-.welcome-message {
-    font-size: 16px;
-    font-weight: 400;
-    margin: 0;
-    opacity: 0.9;
-}
-
 /* === DEADLINE CARD === */
-.deadline-card {
-    background: var(--white);
-    border-radius: 18px;
-    padding: 28px;
-    margin-bottom: 32px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+.deadline-card .progress {
+    height: 20px;
+    border-radius: 10px;
+    background-color: var(--antiflash-white);
 }
 
-.deadline-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-}
-
-.deadline-title {
-    font-size: 20px;
-    font-weight: 600;
-    color: var(--polynesian-blue);
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.deadline-title i {
-    color: var(--pumpkin);
-    font-size: 24px;
-}
-
-.deadline-date {
-    font-size: 16px;
-    font-weight: 600;
-    color: var(--pumpkin);
-}
-
-.progress-bar-container {
-    width: 100%;
-    height: 12px;
-    background: var(--antiflash-white);
-    border-radius: 6px;
-    overflow: hidden;
-    margin-bottom: 12px;
-}
-
-.progress-bar-fill {
-    height: 100%;
-    background: linear-gradient(90deg, var(--pumpkin), var(--bice-blue));
+.deadline-card .progress-bar {
+    border-radius: 10px;
     transition: width 0.5s ease;
-    border-radius: 6px;
-}
-
-.progress-text {
-    font-size: 14px;
-    color: var(--silver);
-    text-align: right;
-}
-
-/* === QUICK ACTIONS ROW === */
-.quick-actions-row {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 16px;
-    margin-bottom: 32px;
-}
-
-.action-button {
-    padding: 16px 24px;
-    border-radius: 12px;
-    border: none;
-    font-size: 15px;
+    font-size: 12px;
     font-weight: 600;
-    font-family: 'Poppins', sans-serif;
-    cursor: pointer;
-    transition: all 0.3s ease;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 10px;
-}
-
-.action-button i {
-    font-size: 20px;
-}
-
-.action-button.primary {
-    background: var(--pumpkin);
     color: white;
 }
 
-.action-button.primary:hover {
-    background: #e55d00;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(255, 103, 0, 0.3);
-}
-
-.action-button.secondary {
-    background: var(--white);
-    color: var(--bice-blue);
-    border: 2px solid var(--bice-blue);
-}
-
-.action-button.secondary:hover {
-    background: var(--bice-blue);
-    color: white;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(58, 110, 165, 0.3);
-}
-
-.action-button.danger {
-    background: var(--white);
-    color: var(--danger);
-    border: 2px solid var(--danger);
-}
-
-.action-button.danger:hover {
-    background: var(--danger);
-    color: white;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(244, 67, 54, 0.3);
-}
-
-/* === CHARTS ROW === */
-.charts-row {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-    gap: 24px;
-    margin-bottom: 32px;
-}
-
-.chart-card {
-    background: var(--white);
-    border-radius: 18px;
-    padding: 28px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-}
-
-.chart-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 24px;
-}
-
-.chart-title {
-    font-size: 18px;
-    font-weight: 600;
-    color: var(--polynesian-blue);
-}
-
-.chart-refresh {
-    background: transparent;
-    border: none;
-    color: var(--bice-blue);
-    cursor: pointer;
-    font-size: 20px;
-    padding: 8px;
-    border-radius: 8px;
-    transition: all 0.3s ease;
-}
-
-.chart-refresh:hover {
-    background: var(--antiflash-white);
-}
-
+/* === PROGRESS TIMELINE CHART === */
+/* Chart container styling - white background with 8px border radius */
 .chart-container {
-    position: relative;
-    height: 300px;
+    background: var(--admin-white) !important;
+    border-radius: 8px !important;
+    box-shadow: var(--subtle-shadow);
+    border: 1px solid var(--admin-border);
 }
 
-/* === ACTIVITY TIMELINE === */
-.activity-timeline {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
+.chart-container canvas {
+    width: 100% !important;
+    max-height: 240px;
+    height: 240px !important;
+    align-self: stretch;
 }
 
-.timeline-item {
-    display: flex;
-    gap: 16px;
-    padding: 12px;
-    border-radius: 12px;
-    transition: background 0.3s ease;
+/* Table container - white background with 8px border radius */
+.table-container {
+    background: var(--admin-white) !important;
+    border-radius: 8px !important;
+    box-shadow: var(--subtle-shadow);
+    border: 1px solid var(--admin-border);
+    overflow: hidden;
 }
 
-.timeline-item:hover {
-    background: var(--antiflash-white);
+/* === NOTIFICATIONS === */
+.notifications-list {
+    max-height: 400px;
+    overflow-y: auto;
 }
 
-.timeline-icon {
-    width: 40px;
-    height: 40px;
+/* Limit height of notifications table container */
+.table-container .table-body {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.notification-item {
+    transition: background-color 0.2s ease;
+    border-left: 3px solid transparent;
+}
+
+.notification-item:hover {
+    background-color: var(--admin-accent);
+}
+
+.notification-unread {
+    border-left-color: var(--bice-blue);
+    background-color: rgba(58, 110, 165, 0.05);
+}
+
+.notification-icon {
+    width: 32px;
+    height: 32px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
+    font-size: 16px;
     flex-shrink: 0;
-    font-size: 18px;
+    background-color: rgba(58, 110, 165, 0.1);
 }
 
-.timeline-icon.success {
-    background: rgba(76, 175, 80, 0.1);
+.notification-icon.text-danger {
+    background-color: rgba(244, 67, 54, 0.1);
+}
+
+.notification-icon.text-warning {
+    background-color: rgba(255, 152, 0, 0.1);
+}
+
+.notification-icon.text-info {
+    background-color: rgba(33, 150, 243, 0.1);
+}
+
+.notification-icon.text-muted {
+    background-color: rgba(192, 192, 192, 0.1);
+}
+
+/* === WORKFLOW STATUS === */
+.workflow-status-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+    background: rgba(205, 225, 241, 0.08);
+    border-radius: 8px;
+    border: 1px solid var(--admin-border);
+    transition: var(--transition);
+}
+
+.workflow-status-card:hover {
+    background: rgba(205, 225, 241, 0.12);
+    transform: translateY(-2px);
+}
+
+.status-icon-wrapper {
+    width: 48px;
+    height: 48px;
+    border-radius: 8px;
+    background: rgba(205, 225, 241, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.status-icon-wrapper i {
+    font-size: 24px;
+    color: var(--bice-blue);
+}
+
+.status-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.status-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--admin-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+    display: block;
+}
+
+.status-value {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--admin-text);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.status-value .badge {
+    display: inline-block;
+    white-space: nowrap;
+    font-size: 12px;
+    padding: 4px 10px;
+}
+
+.status-value .small {
+    font-size: 12px;
+    color: var(--admin-text-muted);
+}
+
+/* Workflow Progress Section */
+.workflow-progress-section {
+    margin-top: 32px;
+    padding-top: 32px;
+    border-top: 1px solid var(--admin-border);
+}
+
+.workflow-progress-bar {
+    position: relative;
+    padding: 20px 0;
+}
+
+.workflow-steps {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    position: relative;
+    padding: 0 10px;
+    gap: 8px;
+}
+
+.workflow-steps::before {
+    content: '';
+    position: absolute;
+    top: 24px;
+    left: 10%;
+    right: 10%;
+    height: 3px;
+    background: var(--admin-border);
+    z-index: 0;
+    border-radius: 2px;
+}
+
+.workflow-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    z-index: 1;
+    flex: 1;
+    min-width: 0;
+}
+
+.step-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    font-weight: 700;
+    background: var(--admin-white);
+    border: 3px solid var(--admin-border);
+    color: var(--admin-text-muted);
+    margin-bottom: 12px;
+    transition: var(--transition);
+    position: relative;
+    z-index: 2;
+}
+
+.step-icon i {
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.workflow-step.completed .step-icon {
+    background: var(--success);
+    border-color: var(--success);
+    color: white;
+    box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
+}
+
+.workflow-step.active .step-icon {
+    background: var(--bice-blue);
+    border-color: var(--bice-blue);
+    color: white;
+    box-shadow: 0 0 0 4px rgba(58, 110, 165, 0.15), 0 2px 8px rgba(58, 110, 165, 0.3);
+    transform: scale(1.1);
+}
+
+.workflow-step.pending .step-icon {
+    background: var(--admin-white);
+    border-color: var(--admin-border);
+    color: var(--admin-text-muted);
+}
+
+.step-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--admin-text-muted);
+    text-align: center;
+    white-space: nowrap;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.workflow-step.completed .step-label {
     color: var(--success);
 }
 
-.timeline-icon.info {
-    background: rgba(33, 150, 243, 0.1);
-    color: var(--info);
+.workflow-step.active .step-label {
+    color: var(--bice-blue);
+    font-weight: 700;
 }
 
-.timeline-icon.warning {
-    background: rgba(255, 152, 0, 0.1);
-    color: var(--warning);
+/* Progress line between steps */
+.workflow-step.completed + .workflow-step::before {
+    content: '';
+    position: absolute;
+    top: 24px;
+    left: -50%;
+    width: 100%;
+    height: 3px;
+    background: var(--success);
+    z-index: 1;
 }
 
-.timeline-content {
-    flex: 1;
+.workflow-step.active::before {
+    content: '';
+    position: absolute;
+    top: 24px;
+    left: -50%;
+    width: 50%;
+    height: 3px;
+    background: var(--success);
+    z-index: 1;
 }
 
-.timeline-title {
-    font-size: 15px;
-    font-weight: 600;
-    color: var(--black);
-    margin: 0 0 4px 0;
+/* === ROW PADDING === */
+.row {
+    padding-left: 15px;
+    padding-right: 15px;
 }
 
-.timeline-description {
-    font-size: 13px;
-    color: var(--silver);
-    margin: 0 0 4px 0;
+/* === RESPONSIVE DESIGN === */
+@media (max-width: 1199px) {
+    .chart-wrapper {
+        max-width: 200px;
+        height: 200px;
+    }
+    
+    .chart-percentage {
+        font-size: 28px;
+    }
 }
 
-.timeline-time {
-    font-size: 12px;
-    color: var(--silver);
+@media (max-width: 991px) {
+    /* Remove row padding on tablet */
+    .row {
+        padding-left: 0;
+        padding-right: 0;
+    }
+    
+    .workflow-status-card {
+        padding: 12px;
+    }
+    
+    .status-icon-wrapper {
+        width: 40px;
+        height: 40px;
+    }
+    
+    .status-icon-wrapper i {
+        font-size: 20px;
+    }
+    
+    .workflow-steps {
+        flex-wrap: wrap;
+        gap: 16px;
+        padding: 0 5px;
+    }
+    
+    .workflow-steps::before {
+        display: none;
+    }
+    
+    .workflow-step {
+        flex: 0 0 calc(50% - 8px);
+        min-width: 100px;
+    }
+    
+    .step-icon {
+        width: 40px;
+        height: 40px;
+        font-size: 18px;
+    }
 }
 
+@media (max-width: 767px) {
+    /* Remove row padding on mobile */
+    .row {
+        padding-left: 0;
+        padding-right: 0;
+    }
+    
+    .chart-wrapper {
+        max-width: 180px;
+        height: 180px;
+    }
+    
+    .chart-percentage {
+        font-size: 24px;
+    }
+    
+    .chart-label {
+        font-size: 10px;
+    }
+    
+    .workflow-status-card {
+        padding: 12px;
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .status-icon-wrapper {
+        width: 36px;
+        height: 36px;
+    }
+    
+    .status-icon-wrapper i {
+        font-size: 18px;
+    }
+    
+    .status-label {
+        font-size: 10px;
+    }
+    
+    .status-value {
+        font-size: 12px;
+        justify-content: center;
+    }
+    
+    .workflow-step {
+        flex: 0 0 100%;
+        margin-bottom: 20px;
+    }
+    
+    .workflow-steps {
+        flex-direction: column;
+        align-items: center;
+        gap: 20px;
+    }
+    
+    .workflow-steps::before {
+        display: block;
+        left: 50%;
+        top: 0;
+        bottom: 0;
+        width: 3px;
+        height: 100%;
+        transform: translateX(-50%);
+        border-radius: 2px;
+    }
+    
+    .step-icon {
+        width: 36px;
+        height: 36px;
+        font-size: 16px;
+    }
+    
+    .step-label {
+        font-size: 11px;
+    }
+}
+
+/* === SCROLLBAR STYLING === */
+.notifications-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.notifications-list::-webkit-scrollbar-track {
+    background: var(--admin-accent);
+    border-radius: 3px;
+}
+
+.notifications-list::-webkit-scrollbar-thumb {
+    background: var(--silver);
+    border-radius: 3px;
+}
+
+.notifications-list::-webkit-scrollbar-thumb:hover {
+    background: var(--bice-blue);
+}
+
+/* === ANIMATIONS === */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.card {
+    animation: fadeIn 0.3s ease-out;
+}
+
+.notification-item {
+    animation: fadeIn 0.3s ease-out;
+}
+
+/* === UTILITY CLASSES === */
+.shadow-sm {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
+}
+
+.text-muted {
+    color: var(--admin-text-muted) !important;
+}

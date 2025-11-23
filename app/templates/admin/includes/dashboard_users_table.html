@@ -1,0 +1,100 @@
+<!-- User Management Table Section -->
+<div class="col-xl-8 mt-5">
+    <div class="table-container">
+        <div class="table-header">
+            <h3>User Management</h3>
+        </div>
+        <div class="table-body">
+            <!-- Search and Filters -->
+            <div class="table-filters mb-3">
+                <div class="row g-2">
+                    <div class="col-xl-6 col-lg-6 col-md-12">
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="ph-bold ph-magnifying-glass"></i></span>
+                            <input type="text" class="form-control" id="userSearchInput" placeholder="Search users..." />
+                        </div>
+                    </div>
+                    <div class="col-xl-3 col-lg-3 col-md-6">
+                        <select class="form-select" id="userRoleFilter">
+                            <option value="">All Roles</option>
+                            <option value="central">Central Office</option>
+                            <option value="region">Region</option>
+                            <option value="division">Division</option>
+                            <option value="district">District</option>
+                            <option value="school">School</option>
+                        </select>
+                    </div>
+                    <div class="col-xl-3 col-lg-3 col-md-6">
+                        <select class="form-select" id="userStatusFilter">
+                            <option value="">All Status</option>
+                            <option value="active">Active</option>
+                            <option value="inactive">Inactive</option>
+                            <option value="suspended">Suspended</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Loading State -->
+            <div id="usersLoadingState" class="text-center py-4" style="display: none;">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-2 text-muted">Loading users...</p>
+            </div>
+            
+            <!-- Users Table -->
+            <div id="usersTableWrapper">
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th class="sortable-checkbox"><input type="checkbox" class="form-check-input" id="selectAllUsers" /></th>
+                                <th class="sortable" data-sort="username">
+                                    <span>User</span>
+                                    <i class="ph-bold ph-arrows-up-down sort-icon"></i>
+                                </th>
+                                <th class="sortable" data-sort="admin_level">
+                                    <span>Role</span>
+                                    <i class="ph-bold ph-arrows-up-down sort-icon"></i>
+                                </th>
+                                <th class="sortable" data-sort="status">
+                                    <span>Status</span>
+                                    <i class="ph-bold ph-arrows-up-down sort-icon"></i>
+                                </th>
+                                <th class="sortable" data-sort="last_login">
+                                    <span>Last Login</span>
+                                    <i class="ph-bold ph-arrows-up-down sort-icon"></i>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody id="usersTableBody">
+                            <tr>
+                                <td colspan="5" class="text-center py-4 text-muted">Loading users...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Pagination Controls -->
+            <div class="d-flex justify-content-between align-items-center mt-3 flex-wrap gap-2">
+                <div class="d-flex align-items-center gap-2">
+                    <label for="pageSizeSelect" class="mb-0 small text-muted">Rows per page:</label>
+                    <select class="form-select form-select-sm" id="pageSizeSelect" style="width: auto;">
+                        <option value="10" selected>10</option>
+                        <option value="20">20</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                    </select>
+                </div>
+                <nav aria-label="Users pagination">
+                    <ul class="pagination mb-0" id="usersPagination">
+                        <!-- Pagination will be populated by JavaScript -->
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+</div>
+

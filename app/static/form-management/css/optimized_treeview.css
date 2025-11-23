@@ -671,12 +671,14 @@
     background: white;
     border-radius: 8px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    overflow: hidden;
+    overflow-x: auto; /* allow horizontal scroll when table is wider */
+    overflow-y: hidden;
     margin: 16px 0;
 }
 
 .mui-table {
     width: 100%;
+    min-width: 900px; /* ensure content can trigger horizontal scroll */
     border-collapse: collapse;
     font-size: 14px;
 }
@@ -716,8 +718,108 @@
 }
 
 .actions-column {
-    width: 100px;
+    width: 80px;
     text-align: center;
+    padding: 8px !important;
+}
+
+.actions-cell {
+    text-align: center;
+    padding: 8px !important;
+    vertical-align: middle;
+}
+
+/* Action Menu Button */
+.action-menu-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    background: #ffffff;
+    color: #475569;
+    font-size: 18px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+    margin: 0 auto;
+}
+
+.action-menu-btn:hover {
+    background-color: #f8fafc;
+    border-color: #cbd5e1;
+    color: #334155;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.action-menu-btn:active {
+    background-color: #f1f5f9;
+    border-color: #94a3b8;
+    transform: scale(0.96);
+}
+
+.action-menu-btn i {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    font-weight: bold;
+}
+
+/* Action Menu Tooltip */
+.action-menu-tooltip {
+    position: fixed;
+    background: white;
+    border-radius: 8px;
+    padding: 8px;
+    min-width: 180px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.1);
+    z-index: 10000;
+    animation: tooltipFadeIn 0.2s ease;
+}
+
+@keyframes tooltipFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-4px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Modal Animations */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+    }
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
 }
 
 .school-name-cell {
@@ -825,6 +927,11 @@
     .school-action-btn {
         min-width: 28px;
         height: 28px;
+    }
+    
+    .action-menu-dropdown {
+        right: 0;
+        left: auto;
     }
     
     .validation-cell {

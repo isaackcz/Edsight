@@ -2,6 +2,7 @@ import os
 import sys
 from datetime import datetime, timedelta
 from typing import Optional, List, Dict, Any
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException, Depends, status, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -51,11 +52,26 @@ async def get_redis():
     # Simple cache implementation - replace with Redis later if needed
     return None
 
+# Lifespan context manager for graceful startup/shutdown
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup
+    print("Starting EdSight API Gateway...")
+    try:
+        yield
+    except asyncio.CancelledError:
+        # Suppress cancellation errors during shutdown - this is normal when stopping the server
+        pass
+    finally:
+        # Cleanup code here if needed
+        pass
+
 # FastAPI app
 app = FastAPI(
     title="EdSight API Gateway",
     description="API Gateway for EdSight microservices platform",
-    version="2.0.0"
+    version="2.0.0",
+    lifespan=lifespan
 )
 
 # CORS middleware - Allow cookies from Django
@@ -771,28 +787,6 @@ async def get_last_login(current_user: dict = Depends(get_current_user)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.get("/api/security/sessions")
-async def get_user_sessions(current_user: dict = Depends(get_current_user)):
-    """Get active sessions for the current user."""
-    try:
-        from django.contrib.sessions.models import Session
-        from django.contrib.auth.models import User
-        
-        user = User.objects.get(id=current_user['id'])
-        sessions = Session.objects.filter(expire_date__gte=timezone.now())
-        
-        session_data = []
-        for session in sessions:
-            if session.get_decoded().get('_auth_user_id') == str(user.id):
-                session_data.append({
-                    "session_key": session.session_key,
-                    "created_at": session.expire_date.isoformat()
-                })
-        
-        return {"success": True, "sessions": session_data}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
 @app.get("/api/security/login-history")
 async def get_login_history(current_user: dict = Depends(get_current_user)):
     """Get login history for the current user."""
@@ -813,16 +807,6 @@ async def get_login_history(current_user: dict = Depends(get_current_user)):
             })
         
         return {"success": True, "history": history}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.delete("/api/security/terminate-session/{session_id}")
-async def terminate_session(session_id: str, current_user: dict = Depends(get_current_user)):
-    """Terminate a specific session."""
-    try:
-        from django.contrib.sessions.models import Session
-        Session.objects.filter(session_key=session_id).delete()
-        return {"success": True, "message": "Session terminated successfully"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -2024,4 +2008,8 @@ def test_database_connectivity():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8002, log_level="error", access_log=False)
+    try:
+        uvicorn.run("main:app", host="0.0.0.0", port=8002, log_level="error", access_log=False)
+    except KeyboardInterrupt:
+        print("\nShutting down FastAPI server...")
+        sys.exit(0)

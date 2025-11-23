@@ -1,0 +1,222 @@
+{% extends "report/base.html" %}
+{% load static %}
+
+{% block page_title %}Workflow Performance - Reports{% endblock %}
+{% block workflow_active %}active{% endblock %}
+
+{% block content %}
+<!-- Page Title -->
+<div class="dashboard-title mb-4">
+  <h1>Workflow Performance Report</h1>
+</div>
+
+<!-- Filters -->
+<div class="filters-section mb-4">
+  <div class="card p-3">
+    <div class="row g-3">
+      <!-- Date Range Filter -->
+      <div class="col-md-3 col-sm-6">
+        <label class="form-label">Date Range</label>
+        <div class="date-selector" id="date-range-selector">
+          <i class="ph-bold ph-calendar"></i>
+          <span id="date-range-text">Last 30 Days</span>
+          <i class="ph-bold ph-caret-down"></i>
+          <div class="date-range-dropdown" id="date-range-dropdown">
+            <div class="date-range-option" data-range="7days">Last 7 Days</div>
+            <div class="date-range-option" data-range="30days">Last 30 Days</div>
+            <div class="date-range-option" data-range="90days">Last 90 Days</div>
+            <div class="date-range-option" data-range="6months">Last 6 Months</div>
+            <div class="date-range-option" data-range="year">Last Year</div>
+            <div class="date-range-option" data-range="all">All Time</div>
+            <div class="date-range-divider"></div>
+            <div class="date-range-option" data-range="custom" id="custom-date-range-option">
+              <i class="ph-bold ph-calendar-blank"></i> Custom Range
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="col-md-3 col-sm-6">
+        <label class="form-label">Status</label>
+        <div class="date-selector" id="status-selector">
+          <i class="ph-bold ph-funnel"></i>
+          <span id="status-text">All Statuses</span>
+          <i class="ph-bold ph-caret-down"></i>
+          <div class="date-range-dropdown" id="status-dropdown">
+            <div class="status-option" data-status="draft">
+              <input type="checkbox" id="status-draft" value="draft">
+              <label for="status-draft">Draft</label>
+            </div>
+            <div class="status-option" data-status="pending">
+              <input type="checkbox" id="status-pending" value="pending">
+              <label for="status-pending">Pending</label>
+            </div>
+            <div class="status-option" data-status="approved">
+              <input type="checkbox" id="status-approved" value="approved">
+              <label for="status-approved">Approved</label>
+            </div>
+            <div class="status-option" data-status="returned">
+              <input type="checkbox" id="status-returned" value="returned">
+              <label for="status-returned">Returned</label>
+            </div>
+            <div class="status-option" data-status="completed">
+              <input type="checkbox" id="status-completed" value="completed">
+              <label for="status-completed">Completed</label>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Export Button -->
+      <div class="col-md-3 col-sm-6 d-flex align-items-end">
+        <button class="btn primary w-100" id="export-btn">
+          <i class="ph-bold ph-download"></i> Export
+        </button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Custom Date Range Modal -->
+  <div class="custom-date-modal" id="custom-date-modal">
+    <div class="custom-date-modal-content">
+      <div class="custom-date-modal-header">
+        <h3>Select Date Range</h3>
+        <button class="close-modal" id="close-custom-date-modal">
+          <i class="ph-bold ph-x"></i>
+        </button>
+      </div>
+      <div class="custom-date-modal-body">
+        <div class="date-input-group">
+          <label>From Date</label>
+          <input type="date" id="custom-date-from" class="date-input">
+        </div>
+        <div class="date-input-group">
+          <label>To Date</label>
+          <input type="date" id="custom-date-to" class="date-input">
+        </div>
+      </div>
+      <div class="custom-date-modal-footer">
+        <button class="btn secondary" id="cancel-custom-date">Cancel</button>
+        <button class="btn primary" id="apply-custom-date">Apply</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Export Modal -->
+<div class="custom-date-modal" id="export-modal">
+  <div class="custom-date-modal-content" style="max-width: 600px;">
+    <div class="custom-date-modal-header">
+      <h3>Export Data</h3>
+      <button class="close-modal" id="close-export-modal">
+        <i class="ph-bold ph-x"></i>
+      </button>
+    </div>
+    <div class="custom-date-modal-body">
+      <div class="mb-3">
+        <strong>Export based on:</strong>
+        <div class="mt-2" id="export-filters-info" style="padding: 12px; background: var(--admin-accent, #f5f5f5); border-radius: 4px; font-size: 0.875rem;">
+          <!-- Filter info will be inserted here -->
+        </div>
+      </div>
+      
+      <div class="mb-3">
+        <strong>Select columns to export:</strong>
+        <div class="mt-2" style="display: flex; flex-direction: column; gap: 8px;">
+          <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+            <input type="checkbox" id="export-stage" checked style="width: 18px; height: 18px; cursor: pointer;">
+            <span>Stage</span>
+          </label>
+          <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+            <input type="checkbox" id="export-count" checked style="width: 18px; height: 18px; cursor: pointer;">
+            <span>Forms Count</span>
+          </label>
+          <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+            <input type="checkbox" id="export-avg-time" checked style="width: 18px; height: 18px; cursor: pointer;">
+            <span>Avg. Time (hours)</span>
+          </label>
+          <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+            <input type="checkbox" id="export-approved" checked style="width: 18px; height: 18px; cursor: pointer;">
+            <span>Approved</span>
+          </label>
+          <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+            <input type="checkbox" id="export-returned" checked style="width: 18px; height: 18px; cursor: pointer;">
+            <span>Returned</span>
+          </label>
+          <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+            <input type="checkbox" id="export-approval-rate" checked style="width: 18px; height: 18px; cursor: pointer;">
+            <span>Approval Rate (%)</span>
+          </label>
+        </div>
+      </div>
+    </div>
+    <div class="custom-date-modal-footer">
+      <button class="btn secondary" id="cancel-export">Cancel</button>
+      <button class="btn primary" id="confirm-export">Export</button>
+    </div>
+  </div>
+</div>
+
+<!-- Report Table -->
+<div class="row g-3 mb-4">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <i class="ph-bold ph-flow-arrow"></i>
+          <h3 style="margin: 0;">Workflow Performance</h3>
+        </div>
+        <div style="position: relative; max-width: 300px; width: 100%;">
+          <input 
+            type="text" 
+            id="workflow-search" 
+            class="form-control" 
+            placeholder="Search stages..." 
+            style="padding-left: 36px;"
+          >
+          <i class="ph-bold ph-magnifying-glass" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--admin-text-muted); pointer-events: none;"></i>
+        </div>
+      </div>
+      <div class="table-responsive">
+        <table class="table" id="workflow-table">
+          <thead>
+            <tr>
+              <th data-sort="stage">Stage</th>
+              <th data-sort="count">Forms Count</th>
+              <th data-sort="avg_time">Avg. Time (hours)</th>
+              <th data-sort="approval_count">Approved</th>
+              <th data-sort="return_count">Returned</th>
+              <th data-sort="approval_rate">Approval Rate (%)</th>
+            </tr>
+          </thead>
+          <tbody id="workflow-tbody">
+            <tr>
+              <td colspan="6" class="text-center">Loading workflow data...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <!-- Pagination -->
+      <div id="workflow-pagination" style="padding: 16px; border-top: 1px solid var(--admin-border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+        <div style="font-size: 0.875rem; color: var(--admin-text-muted);">
+          <span id="pagination-info">Showing 0-0 of 0</span>
+        </div>
+        <div style="display: flex; gap: 8px; align-items: center;">
+          <button class="btn secondary" id="prev-page" disabled style="padding: 6px 12px; font-size: 0.875rem;">
+            <i class="ph-bold ph-caret-left"></i> Previous
+          </button>
+          <span id="page-numbers" style="display: flex; gap: 4px;"></span>
+          <button class="btn secondary" id="next-page" disabled style="padding: 6px 12px; font-size: 0.875rem;">
+            Next <i class="ph-bold ph-caret-right"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'report/js/workflow.js' %}"></script>
+{% endblock %}
+

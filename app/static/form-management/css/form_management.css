@@ -185,6 +185,41 @@
   align-items: center;
 }
 
+/* Filter controls - improved select styling */
+.filter-controls {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.filter-select {
+  appearance: none; /* remove native arrow */
+  -moz-appearance: none;
+  -webkit-appearance: none;
+  padding: 10px 36px 10px 12px;
+  min-width: 160px;
+  border: 1px solid var(--silver);
+  border-radius: 4px;
+  background: var(--white);
+  color: var(--black);
+  font-size: 14px;
+  line-height: 1.2;
+  transition: var(--transition);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23808080' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+}
+
+.filter-select:hover {
+  border-color: var(--bice-blue);
+}
+
+.filter-select:focus {
+  outline: none;
+  border-color: var(--bice-blue);
+  box-shadow: 0 0 0 3px var(--focus-outline);
+}
+
 .schools-container {
   flex: 1;
   background: var(--antiflash-white);

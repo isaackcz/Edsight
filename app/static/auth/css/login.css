@@ -22,14 +22,24 @@
   --font-weight-bold: 700;
   --heading-line-height: 1.15;
 
-  /* Base palette tokens */
-  --pumpkin: #ff6700ff; /* Accent color (buttons, links) */
-  --antiflash-white: #ebebebff; /* Light background for cards/panels */
-  --silver: #c0c0c0ff; /* Secondary text and borders */
-  --bice-blue: #3a6ea5ff; /* Primary brand color for nav/icons */
-  --polynesian-blue: #004e98ff; /* Strong header/banner color */
-  --white: #f7f9f9ff; /* Main background */
-  --black: #1e1e24ff; /* Primary text */
+  /* Admin color scheme: 80% white, 20% #cde1f1 */
+  --admin-white: #ffffff;
+  --admin-accent: #cde1f1;
+  --admin-accent-dark: #3a6ea5ff;
+  --admin-bg: var(--admin-white);
+  --admin-text: #1e1e24ff;
+  --admin-text-muted: #333333;
+  --admin-text-light: #666666;
+  --admin-border: rgba(30, 30, 36, 0.08);
+
+  /* Legacy variables for backward compatibility */
+  --pumpkin: #ff6700ff;
+  --antiflash-white: var(--admin-accent);
+  --silver: #c0c0c0ff;
+  --bice-blue: #3a6ea5ff;
+  --polynesian-blue: #004e98ff;
+  --white: var(--admin-white);
+  --black: var(--admin-text);
 
   /* Additional colors for better visual hierarchy */
   --light-blue: #e3f2fd;
@@ -41,11 +51,16 @@
   --success: #4caf50;
   --warning: #ff9800;
   --danger: #f44336;
-  --border-radius: 18px;
+  --border-radius: 4px;
   --soft-shadow: 0 8px 24px rgba(30, 30, 36, 0.06);
   --subtle-shadow: 0 4px 12px rgba(30, 30, 36, 0.04);
   --transition: all 0.22s ease;
-  --focus-outline: rgba(58, 110, 165, 0.16);
+  --focus-outline: rgba(205, 225, 241, 0.3);
+
+  /* Button variables */
+  --btn-accent: var(--pumpkin);
+  --btn-accent-600: #ff5d00;
+  --btn-accent-400: #ff8f4d;
 }
 
 * {
@@ -61,13 +76,15 @@ html {
 
 body {
   /* Use Poppins for the page by default */
-  font-family: "Poppins", var(--base-font-family);
-  background-color: var(--white);
-  color: var(--black);
+  font-family: var(--base-font-family);
+  background-color: var(--admin-accent);
+  color: var(--admin-text);
   line-height: 1.6;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 /* =========================
@@ -84,14 +101,14 @@ body {
   position: absolute;
   border-radius: 50%;
   filter: blur(60px);
-  opacity: 0.15;
+  opacity: 0.2;
   animation: blob-move 20s infinite alternate;
   width: 500px;
   height: 500px;
-  background: linear-gradient(135deg, var(--light-blue), var(--medium-blue));
+  background: linear-gradient(135deg, var(--admin-accent), var(--admin-accent-dark));
 }
 .blob:nth-child(2) {
-  background: linear-gradient(135deg, var(--medium-blue), var(--dark-blue));
+  background: linear-gradient(135deg, var(--admin-accent-dark), var(--polynesian-blue));
   width: 520px;
   height: 520px;
   top: 20%;
@@ -114,13 +131,51 @@ body {
    ========================= */
 .site-header {
   padding: 1.5rem 2rem;
+  position: relative;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
+
 .brand {
-  font-size: 1.8rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  transition: var(--transition);
+  padding: 8px 12px;
+  border-radius: var(--border-radius);
+  background: var(--admin-white);
+  box-shadow: var(--subtle-shadow);
+  border: 1px solid var(--admin-border);
+}
+
+.brand:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--soft-shadow);
+}
+
+.brand-icon {
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--border-radius);
+  background: linear-gradient(135deg, var(--admin-accent), var(--admin-accent-dark));
+  color: var(--admin-white);
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.brand-text {
+  font-size: 1.5rem;
   font-weight: 700;
-  color: var(--black);
-  /* Brand uses Debata */
+  color: var(--admin-text);
   font-family: "Debata", var(--base-font-family);
+  letter-spacing: 0.3px;
+  line-height: 1;
 }
 
 .login-container {
@@ -136,6 +191,11 @@ body {
 
 /* Entrance animation for the card */
 .login-card {
+  background: var(--admin-white);
+  border-radius: var(--border-radius);
+  box-shadow: var(--soft-shadow);
+  padding: 2.5rem;
+  width: 100%;
   opacity: 0;
   transform: translateY(8px) scale(0.995);
   transition: opacity 420ms cubic-bezier(0.2, 0.9, 0.3, 1),
@@ -154,43 +214,38 @@ body {
 
 .login-header h1 {
   text-align: center;
+  color: var(--admin-text);
+  font-weight: var(--font-weight-bold);
+  margin-bottom: 0.5rem;
 }
 
-.login-button {
-  width: 100%;
-  height: 44px; /* consistent height */
-  border-radius: 999px; /* pill */
-  border: none;
-  font-weight: 700;
-  cursor: pointer;
-  transition: var(--transition);
-  display: flex;
-  align-items: center;
-  justify-content: center; /* center text horizontally */
-  padding: 0 16px; /* horizontal padding only */
-  font-size: 14px;
-  text-transform: uppercase;
-  letter-spacing: 0.8px;
-  -webkit-font-smoothing: antialiased;
-  background: linear-gradient(180deg, var(--btn-accent-400), var(--btn-accent));
-  color: var(--white);
-  box-shadow: 0 8px 24px rgba(255, 103, 0, 0.12);
-  line-height: 1; /* ensure no extra line height shifts */
+.login-header .subtitle {
+  color: var(--admin-text-muted);
+  font-size: 0.95rem;
+  text-align: center;
+  margin-bottom: 2rem;
 }
+
 .subtitle {
-  color: var(--black);
+  color: var(--admin-text-muted);
   font-size: 1rem;
   margin-bottom: 1.5rem;
   text-align: center;
 }
+
+.signup-prompt {
+  margin-top: 1rem;
+  margin-bottom: 0;
+}
+
 .signup-link {
-  color: var(--dark-blue);
+  color: var(--admin-accent-dark);
   text-decoration: none;
-  font-weight: 600;
-  transition: color 0.15s ease;
+  font-weight: var(--font-weight-medium);
+  transition: var(--transition);
 }
 .signup-link:hover {
-  color: var(--medium-dark-blue);
+  color: var(--polynesian-blue);
   text-decoration: underline;
 }
 
@@ -216,17 +271,17 @@ body {
 }
 .email-suffix {
   flex: 0 0 auto;
-  background: #fff;
-  border: 1px solid var(--silver);
+  background: var(--admin-white);
+  border: 1px solid var(--admin-border);
   padding: 0 14px;
   border-top-left-radius: 0;
   border-bottom-left-radius: 0;
-  border-top-right-radius: 8px;
-  border-bottom-right-radius: 8px;
+  border-top-right-radius: var(--border-radius);
+  border-bottom-right-radius: var(--border-radius);
   display: flex;
   align-items: center;
-  color: var(--black);
-  font-weight: 600;
+  color: var(--admin-text);
+  font-weight: var(--font-weight-medium);
   font-size: 0.95rem;
 }
 /* ensure the combined control matches the input height */
@@ -249,72 +304,86 @@ body {
   border: none;
   background: transparent;
   cursor: pointer;
-  color: var(--black); /* changed to black per request */
-  font-size: 18px; /* slightly larger for phosphor bold */
+  color: var(--admin-text);
+  font-size: 18px;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 6px;
+  transition: var(--transition);
+}
+.toggle-password:hover {
+  color: var(--admin-accent-dark);
 }
 .toggle-password:focus {
-  outline: none;
+  outline: 2px solid var(--focus-outline);
+  outline-offset: 2px;
+  border-radius: 2px;
 }
 .form-group label {
   display: block;
   margin-bottom: 0.5rem;
-  font-weight: 600;
-  color: var(--black);
+  font-weight: var(--font-weight-medium);
+  color: var(--admin-text);
+  font-size: 0.95rem;
 }
 .form-group input {
   width: 100%;
   padding: 0.9rem 1rem;
-  border: 1px solid var(--silver);
-  border-radius: 8px;
+  border: 1px solid var(--admin-border);
+  border-radius: var(--border-radius);
   font-size: 1rem;
   transition: var(--transition);
-  background: #fff;
+  background: var(--admin-white);
+  color: var(--admin-text);
+  font-family: var(--base-font-family);
+}
+.form-group input:focus {
+  outline: none;
+  border-color: var(--admin-accent-dark);
+  box-shadow: 0 0 0 3px var(--focus-outline);
 }
 /* For the email input specifically when displayed next to suffix, remove right-side rounding */
 .email-input-row input {
   border-top-right-radius: 0 !important;
   border-bottom-right-radius: 0 !important;
 }
+.email-input-row input:focus {
+  border-right: none !important;
+}
 .form-group input::placeholder {
-  color: var(--silver);
+  color: var(--admin-text-light);
 }
 
 /* =========================
    7. Buttons
    ========================= */
-/* Button variables (match dashboard) */
-:root {
-  --btn-accent: var(--pumpkin);
-  --btn-accent-600: #ff5d00; /* slightly darker pumpkin */
-  --btn-accent-400: #ff8f4d; /* slightly lighter pumpkin */
-}
-
 .login-button {
   width: 100%;
-  padding: 10px 16px;
-  border-radius: 999px;
+  height: 44px;
+  border-radius: var(--border-radius);
   border: none;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   cursor: pointer;
   transition: var(--transition);
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 10px;
   text-transform: uppercase;
   letter-spacing: 0.6px;
   -webkit-font-smoothing: antialiased;
   background: linear-gradient(180deg, var(--btn-accent-400), var(--btn-accent));
-  color: var(--white);
-  box-shadow: 0 8px 24px rgba(255, 103, 0, 0.12);
+  color: var(--admin-white);
+  box-shadow: var(--subtle-shadow);
+  font-size: 14px;
+  line-height: 1;
 }
 
 .login-button:hover {
   transform: translateY(-1px);
   filter: brightness(0.98);
+  box-shadow: var(--soft-shadow);
 }
 
 .login-button:active {
@@ -322,25 +391,27 @@ body {
 }
 
 .login-button:focus {
-  outline: none;
+  outline: 2px solid var(--focus-outline);
+  outline-offset: 2px;
 }
 
 /* =========================
    8. Footer & Links
    ========================= */
 .forgot-password {
-  color: var(--dark-blue);
+  color: var(--admin-accent-dark);
   text-decoration: none;
   font-size: 0.95rem;
-  transition: color 0.15s ease;
+  transition: var(--transition);
   display: inline-block;
   margin-top: 0.5rem;
   margin-bottom: 1rem;
   text-align: right;
   width: 100%;
+  font-weight: var(--font-weight-regular);
 }
 .forgot-password:hover {
-  color: var(--medium-dark-blue);
+  color: var(--polynesian-blue);
   text-decoration: underline;
 }
 
@@ -360,9 +431,19 @@ body {
 }
 .small {
   font-size: 0.8rem;
-  color: var(--black);
-  margin-top: 1rem;
+  color: var(--admin-text-muted);
+  margin-top: 0.5rem;
   line-height: 1.4;
+  display: block;
+}
+
+.small code {
+  background: var(--admin-accent);
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 0.85em;
+  color: var(--admin-accent-dark);
+  font-weight: var(--font-weight-medium);
 }
 
 /* =========================
@@ -377,7 +458,7 @@ body {
 }
 .input-error {
   border-color: var(--danger) !important;
-  box-shadow: 0 0 0 2px rgba(244, 67, 54, 0.1) !important;
+  box-shadow: 0 0 0 3px rgba(244, 67, 54, 0.1) !important;
 }
 
 /* =========================
@@ -403,6 +484,17 @@ body {
     padding: 1rem;
   }
   .brand {
-    font-size: 1.5rem;
+    padding: 6px 10px;
+  }
+  .brand-icon {
+    width: 32px;
+    height: 32px;
+    font-size: 16px;
+  }
+  .brand-text {
+    font-size: 1.3rem;
+  }
+  .login-header .subtitle {
+    font-size: 0.9rem;
   }
 }

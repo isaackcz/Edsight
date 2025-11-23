@@ -1,0 +1,68 @@
+{% load static %}
+<!-- Shared Filter Component -->
+<div class="filters-section mb-4">
+  <div class="card p-3">
+    <div class="row g-3">
+      <!-- Date Range Filter -->
+      <div class="col-md-3 col-sm-6">
+        <label class="form-label">Date Range</label>
+        <div class="date-selector" id="date-range-selector">
+          <i class="ph-bold ph-calendar"></i>
+          <span id="date-range-text">Last 30 Days</span>
+          <i class="ph-bold ph-caret-down"></i>
+          <div class="date-range-dropdown" id="date-range-dropdown">
+            <div class="date-range-option" data-range="7days">Last 7 Days</div>
+            <div class="date-range-option" data-range="30days">Last 30 Days</div>
+            <div class="date-range-option" data-range="90days">Last 90 Days</div>
+            <div class="date-range-option" data-range="6months">Last 6 Months</div>
+            <div class="date-range-option" data-range="year">Last Year</div>
+            <div class="date-range-option" data-range="all">All Time</div>
+            <div class="date-range-divider"></div>
+            <div class="date-range-option" data-range="custom" id="custom-date-range-option">
+              <i class="ph-bold ph-calendar-blank"></i> Custom Range
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Additional filters will be inserted here by child templates -->
+      {% if additional_filters %}
+        {{ additional_filters|safe }}
+      {% endif %}
+      
+      <!-- Export Button -->
+      <div class="col-md-3 col-sm-6 d-flex align-items-end">
+        <button class="btn primary w-100" id="export-btn">
+          <i class="ph-bold ph-download"></i> Export
+        </button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Custom Date Range Modal -->
+  <div class="custom-date-modal" id="custom-date-modal">
+    <div class="custom-date-modal-content">
+      <div class="custom-date-modal-header">
+        <h3>Select Date Range</h3>
+        <button class="close-modal" id="close-custom-date-modal">
+          <i class="ph-bold ph-x"></i>
+        </button>
+      </div>
+      <div class="custom-date-modal-body">
+        <div class="date-input-group">
+          <label>From Date</label>
+          <input type="date" id="custom-date-from" class="date-input">
+        </div>
+        <div class="date-input-group">
+          <label>To Date</label>
+          <input type="date" id="custom-date-to" class="date-input">
+        </div>
+      </div>
+      <div class="custom-date-modal-footer">
+        <button class="btn secondary" id="cancel-custom-date">Cancel</button>
+        <button class="btn primary" id="apply-custom-date">Apply</button>
+      </div>
+    </div>
+  </div>
+</div>
+

@@ -12,6 +12,7 @@
       type="text/css"
       href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.2/src/bold/style.css"
     />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -30,7 +31,7 @@
         --heading-line-height: 1.15;
         /* Base palette tokens provided by user */
         --pumpkin: #ff6700ff; /* Accent color (buttons, links) */
-        --antiflash-white: #ebebebff; /* Light background for cards/panels */
+        --antiflash-white: white; /* Light background for cards/panels */
         --silver: #c0c0c0ff; /* Secondary text and borders */
         --bice-blue: #3a6ea5ff; /* Primary brand color for nav/icons */
         --polynesian-blue: #004e98ff; /* Strong header/banner color */
@@ -132,6 +133,12 @@
             <i class="ph-bold ph-chart-pie"></i>
             <span>Reports</span>
           </a>
+          {% if admin_level and admin_level != 'school' %}
+          <a href="{% url 'admin-profile-page' %}" class="menu-item">
+            <i class="ph-bold ph-user-circle"></i>
+            <span>Admin</span>
+          </a>
+          {% endif %}
         </div>
       </div>
 
@@ -141,13 +148,13 @@
         <div class="header">
           <div class="header-left">
             <button class="hamburger" aria-label="Open menu" title="Menu">
-              <i class="ph-bold ph-list"></i>
+              <i class="fas fa-bars"></i>
             </button>
           </div>
           <div class="header-actions">
-            <div class="notification" title="Notifications">
+            <div class="notification" title="Notifications" data-notifications-endpoint="{% url 'api-form-management-notifications' %}" data-default-avatar="{% static 'auth/img/default-profile.jpg' %}">
               <i class="ph-bold ph-bell"></i>
-              <span class="notif-badge">3</span>
+              <span class="notif-badge">0</span>
 
               <!-- Notifications panel -->
               <div class="notifications-panel" aria-hidden="true">
@@ -158,58 +165,9 @@
                   </button>
                 </div>
                 <div class="panel-body">
-                  <!-- Sample notification items -->
-                  <div class="notif-item">
-                    <div class="notif-avatar">
-                      <img
-                        src="{% static 'auth/img/default-profile.jpg' %}"
-                        alt="u"
-                      />
-                    </div>
-                    <div class="notif-content">
-                      <div class="notif-title">
-                        <div class="notif-name">Jackie Monroe</div>
-                        <div class="notif-message">
-                          requests permission to change
-                          <strong>Design System</strong>
-                        </div>
-                      </div>
-                      <div class="notif-meta">Project • 5 min ago</div>
-                    </div>
-                  </div>
-                  <div class="notif-item">
-                    <div class="notif-avatar">
-                      <img
-                        src="{% static 'auth/img/default-profile.jpg' %}"
-                        alt="u"
-                      />
-                    </div>
-                    <div class="notif-content">
-                      <div class="notif-title">
-                        <div class="notif-name">Chris Graham</div>
-                        <div class="notif-message">
-                          has added a new employee
-                        </div>
-                      </div>
-                      <div class="notif-meta">Employee • 28 min ago</div>
-                    </div>
-                  </div>
-                  <div class="notif-item">
-                    <div class="notif-avatar">
-                      <img
-                        src="{% static 'auth/img/default-profile.jpg' %}"
-                        alt="u"
-                      />
-                    </div>
-                    <div class="notif-content">
-                      <div class="notif-title">
-                        <div class="notif-name">Paul Miller</div>
-                        <div class="notif-message">
-                          has added a new project <strong>Mobile App</strong>
-                        </div>
-                      </div>
-                      <div class="notif-meta">Project • 12 hours ago</div>
-                    </div>
+                  <div data-notifications-list></div>
+                  <div data-notifications-empty style="display: none; padding: 1rem; text-align: center; color: #666;">
+                    No notifications yet.
                   </div>
                 </div>
               </div>
@@ -258,10 +216,7 @@
                   </div>
                 </div>
 
-                <a href="/profile/"
-                  ><i class="ph-bold ph-user"></i>View profile</a
-                >
-                <a href="/settings/"><i class="ph-bold ph-gear"></i>Settings</a>
+                <a href="{% url 'user-dashboard:settings' %}#security-section"><i class="ph-bold ph-user-circle"></i>Settings</a>
                 <div class="dropdown-logout">
                   <form method="post" action="/logout/">
                     {% csrf_token %}

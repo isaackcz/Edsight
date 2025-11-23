@@ -5,31 +5,37 @@
 {% block breadcrumb %}Settings{% endblock %}
 
 {% block extra_css %}
+<!-- Bootstrap CSS for Grid System -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+
+<!-- Shared Theme CSS -->
+<link rel="stylesheet" href="{% static 'components/user_dash/css/theme.css' %}" />
 <link rel="stylesheet" href="{% static 'components/user_dash/css/settings.css' %}" />
 <link rel="stylesheet" href="{% static 'components/user_dash/css/settings-responsive.css' %}" />
 {% endblock %}
 
 {% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="{% static 'components/user_dash/js/api.js' %}" defer></script>
 <script src="{% static 'components/user_dash/js/settings.js' %}" defer></script>
 {% endblock %}
 
 {% block content %}
-<!-- Page Header -->
-<div class="page-header">
-    <h1 class="page-title">Settings</h1>
-    <p class="page-subtitle">Manage your account and preferences</p>
+<!-- Dashboard Title -->
+<div class="dashboard-title">
+  <h1>Settings</h1>
+  <p class="page-subtitle">Manage your account and preferences</p>
 </div>
 
-<!-- Settings Container -->
-<div class="settings-container">
-    
-    <!-- Profile Information Section -->
-    <div class="settings-section">
-        <div class="section-header">
-            <i class="section-icon ph-bold ph-user-circle"></i>
-            <h2 class="section-title">Profile Information</h2>
-        </div>
+<!-- Profile Information Section -->
+<div class="row g-3 mb-4">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header">
+        <i class="ph-bold ph-user"></i>
+        <h3>Profile Information</h3>
+      </div>
+      <div class="card-body">
         <p class="section-description">Update your personal information and contact details</p>
         
         <form class="settings-form" id="profileForm">
@@ -41,7 +47,7 @@
                 </div>
                 <div class="form-group">
                     <label class="form-label">Email <span class="required-indicator">*</span></label>
-                    <input type="email" class="form-input" id="email" value="{{ user.email|default:'' }}" required />
+                    <input type="email" class="form-input" id="email" value="{{ user.email|default:'' }}" readonly />
                 </div>
             </div>
             
@@ -62,95 +68,86 @@
                     <input type="text" class="form-input" id="district" value="{{ user.district|default:'' }}" readonly />
                 </div>
             </div>
-            
-            <div class="button-group">
-                <button type="submit" class="btn btn-primary">
-                    <i class="ph-bold ph-floppy-disk"></i>
-                    Save Changes
-                </button>
-            </div>
         </form>
+      </div>
     </div>
-    
-    <!-- Security Section -->
-    <div class="settings-section">
-        <div class="section-header">
-            <i class="section-icon ph-bold ph-lock"></i>
-            <h2 class="section-title">Security</h2>
-        </div>
+  </div>
+</div>
+
+<!-- Security Section -->
+<div class="row g-3 mb-4">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header">
+        <i class="ph-bold ph-lock"></i>
+        <h3>Security</h3>
+      </div>
+      <div class="card-body">
         <p class="section-description">Update your password and manage security settings</p>
         
         <form class="settings-form" id="securityForm">
             <div class="form-row">
                 <div class="form-group">
                     <label class="form-label">Current Password <span class="required-indicator">*</span></label>
-                    <input type="password" class="form-input" id="currentPassword" placeholder="Enter current password" required />
+                    <div class="input-wrapper">
+                        <input type="password" class="form-input" id="currentPassword" placeholder="Enter current password" required />
+                        <span class="error-message" id="currentPasswordError"></span>
+                    </div>
                 </div>
             </div>
             
             <div class="form-row">
                 <div class="form-group">
                     <label class="form-label">New Password <span class="required-indicator">*</span></label>
-                    <input type="password" class="form-input" id="newPassword" placeholder="Enter new password" required />
-                    <span class="form-help-text">Must be at least 8 characters long</span>
+                    <div class="input-wrapper">
+                        <input type="password" class="form-input" id="newPassword" placeholder="Enter new password" required />
+                        <span class="error-message" id="newPasswordError"></span>
+                        <span class="form-help-text">Must be at least 8 characters long</span>
+                    </div>
+                    <div class="password-strength" id="passwordStrength" style="display: none;">
+                        <div class="strength-bar">
+                            <div class="strength-bar-fill" id="strengthBarFill"></div>
+                        </div>
+                        <span class="strength-text" id="strengthText"></span>
+                    </div>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Confirm Password <span class="required-indicator">*</span></label>
-                    <input type="password" class="form-input" id="confirmPassword" placeholder="Confirm new password" required />
+                    <div class="input-wrapper">
+                        <input type="password" class="form-input" id="confirmPassword" placeholder="Confirm new password" required />
+                        <span class="error-message" id="confirmPasswordError"></span>
+                    </div>
                 </div>
             </div>
             
             <div class="button-group">
-                <button type="submit" class="btn btn-primary">
+                <button type="submit" class="btn btn-primary" id="updatePasswordBtn">
                     <i class="ph-bold ph-lock"></i>
                     Update Password
                 </button>
             </div>
         </form>
+      </div>
     </div>
-    
-    <!-- Active Sessions Section -->
-    <div class="settings-section">
-        <div class="section-header">
-            <i class="section-icon ph-bold ph-devices"></i>
-            <h2 class="section-title">Active Sessions</h2>
-        </div>
-        <p class="section-description">Manage your active login sessions across devices</p>
-        
-        <table class="sessions-table">
-            <thead>
-                <tr>
-                    <th>Device</th>
-                    <th>Location</th>
-                    <th>Last Active</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                <!-- Sessions will be populated by JavaScript -->
-                <tr>
-                    <td colspan="4" style="text-align: center; padding: 40px;">
-                        <i class="ph-bold ph-spinner" style="font-size: 32px; animation: spin 1s linear infinite;"></i>
-                        <p style="margin-top: 12px;">Loading sessions...</p>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
-    
-    <!-- Preferences Section -->
-    <div class="settings-section">
-        <div class="section-header">
-            <i class="section-icon ph-bold ph-sliders"></i>
-            <h2 class="section-title">Preferences</h2>
-        </div>
+  </div>
+</div>
+
+<!-- Preferences Section -->
+<div class="row g-3 mb-4">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header">
+        <i class="ph-bold ph-gear"></i>
+        <h3>Preferences</h3>
+      </div>
+      <div class="card-body">
         <p class="section-description">Customize your dashboard experience</p>
         
         <div class="settings-form">
             <div class="toggle-group">
                 <div class="toggle-label-group">
                     <span class="toggle-title">Email Notifications</span>
-                    <span class="toggle-description">Receive important updates via email</span>
+                    <span class="toggle-description">Receive updates via email</span>
                 </div>
                 <label class="toggle-switch">
                     <input type="checkbox" id="emailNotifications" checked />
@@ -161,7 +158,7 @@
             <div class="toggle-group">
                 <div class="toggle-label-group">
                     <span class="toggle-title">Auto-save Progress</span>
-                    <span class="toggle-description">Automatically save form progress every 5 minutes</span>
+                    <span class="toggle-description">Auto-save every 5 minutes</span>
                 </div>
                 <label class="toggle-switch">
                     <input type="checkbox" id="autoSave" checked />
@@ -172,7 +169,7 @@
             <div class="toggle-group">
                 <div class="toggle-label-group">
                     <span class="toggle-title">Show Completion Tips</span>
-                    <span class="toggle-description">Display helpful tips while filling out forms</span>
+                    <span class="toggle-description">Display helpful tips</span>
                 </div>
                 <label class="toggle-switch">
                     <input type="checkbox" id="showTips" checked />
@@ -180,14 +177,20 @@
                 </label>
             </div>
         </div>
+      </div>
     </div>
-    
-    <!-- Audit Logs Section -->
-    <div class="settings-section">
-        <div class="section-header">
-            <i class="section-icon ph-bold ph-clipboard-text"></i>
-            <h2 class="section-title">Audit Logs</h2>
-        </div>
+  </div>
+</div>
+
+<!-- Audit Logs Section -->
+<div class="row g-3 mb-4">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header">
+        <i class="ph-bold ph-clipboard-text"></i>
+        <h3>Audit Logs</h3>
+      </div>
+      <div class="card-body">
         <p class="section-description">View your recent account activity</p>
         
         <div class="logs-container">
@@ -200,7 +203,7 @@
                     <option value="data">Data Operations</option>
                 </select>
                 <button class="btn btn-secondary" id="exportLogsBtn">
-                    <i class="ph-bold ph-download-simple"></i>
+                    <i class="ph-bold ph-download"></i>
                     Export Logs
                 </button>
             </div>
@@ -209,8 +212,9 @@
                 <!-- Logs will be populated by JavaScript -->
             </div>
         </div>
+      </div>
     </div>
-    
+  </div>
 </div>
 
 <!-- Spinner Animation CSS -->

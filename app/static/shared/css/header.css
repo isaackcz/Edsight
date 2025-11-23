@@ -4,29 +4,29 @@
   display: flex;
   flex-direction: column;
   overflow-y: auto;
+  overflow-x: hidden;
   min-width: 0;
+  background: transparent !important;
 }
 
 .header {
+  margin-bottom: 16px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 18px 22px;
-  gap: 30px;
-  /* use base token directly */
-  background: var(--white);
-  color: var(--polynesian-blue);
   padding: 16px 18px;
+  gap: 30px;
+  background: var(--admin-white, var(--white));
+  color: var(--admin-text, var(--black));
   transition: var(--transition);
   box-shadow: none;
-  /* Keep top corners rounded but make bottom corners square so content meets flush */
-  border-top-left-radius: 12px;
-  border-top-right-radius: 12px;
+  border-top-left-radius: 4px;
+  border-top-right-radius: 4px;
   border-bottom-left-radius: 0;
   border-bottom-right-radius: 0;
   position: relative;
   z-index: 40;
-  border-bottom: 1px solid rgba(30, 30, 36, 0.04);
+  border-bottom: 1px solid var(--admin-border, rgba(30, 30, 36, 0.08));
 }
 
 .header-left {
@@ -34,6 +34,45 @@
   align-items: center;
   gap: 12px;
   min-width: 0; /* allow children to shrink properly */
+}
+
+/* Breadcrumb Navigation */
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--polynesian-blue);
+  margin-bottom: 0 !important; /* Override Bootstrap default */
+}
+
+.breadcrumb-item {
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.breadcrumb-item:hover {
+  opacity: 0.8;
+}
+
+.breadcrumb-separator {
+  font-size: 12px;
+  opacity: 0.6;
+  display: inline-flex;
+  align-items: center;
+  color: var(--polynesian-blue);
+}
+
+.breadcrumb-current {
+  font-weight: 600;
+  color: var(--polynesian-blue);
+}
+
+/* Ensure all icons in breadcrumb are visible */
+.breadcrumb i {
+  color: #808080;
+  opacity: 0.8;
 }
 
 .search-bar {
@@ -47,18 +86,18 @@
 }
 
 /* Hamburger (mobile menu) button placed before the search bar */
-.hamburger {
+.hamburger,
+.hamburger-btn {
   background: none;
   border: none;
-  /* Use the polynesian-blue token for the hamburger icon color */
-  color: var(--polynesian-blue);
+  color: var(--admin-text-light, #666666);
   font-size: 20px;
   width: 40px;
   height: 40px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 8px;
+  border-radius: 4px;
   cursor: pointer;
   transition: var(--transition);
   margin-right: 12px;
@@ -67,12 +106,14 @@
 /* Place the hamburger above overlays so it's clickable even when the
    sidebar/backdrop are present. Keep the rest of the header visually below
    the sidebar to match the intended design. */
-.hamburger {
+.hamburger,
+.hamburger-btn {
   position: relative;
   z-index: 100100;
 }
 
-.hamburger:hover {
+.hamburger:hover,
+.hamburger-btn:hover {
   background: rgba(255, 255, 255, 0.06);
 }
 
@@ -88,10 +129,10 @@
 .search-bar input {
   width: 100%;
   padding: 12px 20px 12px 45px;
-  border: 1px solid var(--silver);
-  border-radius: 22px;
-  background: rgba(247, 249, 249, 0.95);
-  color: var(--black);
+  border: 1px solid var(--admin-border, rgba(30, 30, 36, 0.08));
+  border-radius: 4px;
+  background: var(--admin-white, var(--white));
+  color: var(--admin-text, var(--black));
   font-size: 14px;
   transition: var(--transition);
 }
@@ -118,7 +159,7 @@
   color: inherit;
   cursor: pointer;
   padding: 6px;
-  border-radius: 8px;
+  border-radius: 4px;
   transition: var(--transition);
 }
 
@@ -127,10 +168,23 @@
   height: 40px;
   border-radius: 50%;
   overflow: hidden;
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  
   flex: 0 0 40px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
-  background: var(--antiflash-white);
+  background: var(--admin-accent, #cde1f1);
+}
+
+.avatar i {
+  font-size: 20px;
+  color: var(--bice-blue, #3a6ea5);
+  line-height: 1;
+  display: block;
+  margin: 0;
+  padding: 0;
+  padding-left: 5px;
 }
 
 .avatar img {
@@ -149,14 +203,15 @@
   position: absolute;
   right: 0;
   top: calc(100% + 8px);
-  background: var(--white);
-  color: var(--black);
-  border-radius: 10px;
+  background: var(--admin-white, var(--white));
+  color: var(--admin-text, var(--black));
+  border-radius: 4px;
   box-shadow: var(--soft-shadow);
   min-width: 250px;
   display: none;
   z-index: 40;
   overflow: hidden;
+  border: 1px solid var(--admin-border, rgba(30, 30, 36, 0.08));
 }
 
 .profile-dropdown.show {
@@ -181,10 +236,14 @@
 .profile-dropdown .profile-header {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   padding: 12px 14px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.04);
-  background: linear-gradient(180deg, rgba(0, 0, 0, 0.02), transparent);
+  border-bottom: 1px solid var(--admin-border, rgba(30, 30, 36, 0.08));
+  background: rgba(205, 225, 241, 0.05);
+}
+
+.profile-dropdown .profile-header .avatar {
+  flex-shrink: 0;
 }
 
 .profile-dropdown .profile-header .name {
@@ -215,22 +274,17 @@
 .notification {
   position: relative;
   cursor: pointer;
-  font-size: 22px; /* bumped size for better visibility */
-  /* don't set a global color here — it was being inherited by the
-     notifications panel when the panel is nested inside this element
-     (making text appear white on white). Instead color the icon only */
+  font-size: 22px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   width: 44px;
   height: 44px;
-  border-radius: 10px;
+  border-radius: 4px;
 }
 
-/* Keep the bell icon visible on the colored header */
 .notification i {
-  /* Bell icon uses polynesian-blue to match header accent */
-  color: var(--polynesian-blue);
+  color: var(--admin-text-light, #666666);
 }
 
 /* Notification badge (separate from .badge used for status labels) */
@@ -258,18 +312,16 @@
   position: absolute;
   right: 0;
   top: calc(100% + 12px);
-  /* slightly narrower so content doesn't feel oversized */
-  width: 320px;
-  max-height: 380px;
-  background: var(--white);
-  /* ensure text inside the panel uses the normal dark color (avoid
-     inheriting the notification button's color) */
-  color: var(--black);
-  border-radius: 14px;
+  width: 360px;
+  max-height: 480px;
+  background: var(--admin-white, var(--white));
+  color: var(--admin-text, var(--black));
+  border-radius: 8px;
   box-shadow: var(--soft-shadow);
   overflow: hidden;
   display: none;
   z-index: 50;
+  border: 1px solid var(--admin-border, rgba(30, 30, 36, 0.08));
 }
 
 .notifications-panel.show {
@@ -277,20 +329,22 @@
 }
 
 .notifications-panel .panel-header {
-  padding: 12px 14px;
-  font-weight: 700;
+  padding: 12px 18px;
+  font-weight: 600;
   font-size: 16px;
-  border-bottom: 1px solid rgba(30, 30, 36, 0.04);
+  border-bottom: 1px solid var(--admin-border, rgba(30, 30, 36, 0.08));
   display: flex;
   align-items: center;
   justify-content: space-between;
-  color: var(--black); /* ensure the header text is readable */
+  background: rgba(205, 225, 241, 0.15);
+  color: var(--polynesian-blue, var(--admin-text));
 }
 
 .notifications-panel .panel-header .panel-title {
-  color: var(--black);
-  font-weight: 700;
-  font-size: 18px;
+  color: var(--polynesian-blue, var(--admin-text));
+  font-weight: 600;
+  font-size: 16px;
+  margin: 0;
 }
 
 /* Notification item sizing - use a variable so the panel can be
@@ -303,72 +357,172 @@
 .notifications-panel .panel-body {
   /* exactly 5 items tall */
   max-height: calc(var(--notif-item-height) * 5);
-  overflow: auto;
-  background: linear-gradient(#ffffff, #fbfdff);
+  overflow-y: auto;
+  overflow-x: hidden;
+  background: var(--admin-white, var(--white));
 }
 
 .notif-item {
   display: flex;
-  gap: 10px;
-  padding: 10px 12px;
-  align-items: center;
-  border-bottom: 1px solid rgba(30, 30, 36, 0.03);
+  gap: 12px;
+  padding: 14px 18px;
+  align-items: flex-start;
+  border-bottom: 1px solid var(--admin-border, rgba(30, 30, 36, 0.08));
   min-height: var(--notif-item-height);
   box-sizing: border-box;
+  transition: var(--transition);
+  cursor: pointer;
+}
+
+.notif-item:hover {
+  background: var(--admin-accent, rgba(205, 225, 241, 0.1));
+}
+
+.notif-item:last-child {
+  border-bottom: none;
 }
 
 .notif-item .notif-avatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 999px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
   overflow: hidden;
-  flex: 0 0 32px;
+  flex: 0 0 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--admin-accent, #cde1f1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+}
+
+.notif-item .notif-avatar i {
+  font-size: 18px;
+  color: var(--bice-blue, #3a6ea5);
+  line-height: 1;
 }
 
 .notif-item .notif-avatar img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  display: none; /* Hide images, use icons instead */
 }
 
 .notif-item .notif-content {
   flex: 1;
+  min-width: 0;
 }
 
 .notif-item .notif-title {
-  font-weight: 700;
+  font-weight: 600;
   margin-bottom: 4px;
-  color: var(--black);
-  font-size: 15px;
-  line-height: 1.15;
+  color: var(--admin-text, var(--black));
+  font-size: 14px;
+  line-height: 1.3;
 }
 
-.notif-item .notif-name {
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--black);
-  line-height: 1.1;
-}
 
 .notif-item .notif-message {
   font-size: 13px;
   font-weight: 400;
-  color: rgba(0, 0, 0, 0.85);
-  line-height: 1.25;
+  color: var(--admin-text, var(--black));
+  line-height: 1.4;
   margin-top: 4px;
+}
+
+.notif-item .notif-deadline {
+  margin-top: 10px;
+  padding: 10px 12px;
+  background: rgba(58, 110, 165, 0.08);
+  border-radius: 6px;
+  font-size: 12px;
+  color: var(--bice-blue, #3a6ea5);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.notif-item .notif-deadline-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.notif-item .notif-deadline i {
+  font-size: 14px;
+}
+
+.notif-item .notif-deadline strong {
+  font-weight: 600;
+}
+
+.notif-item .notif-deadline-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  align-self: flex-start;
+}
+
+.notif-item .notif-deadline-badge.overdue {
+  background: rgba(244, 67, 54, 0.15);
+  color: #d32f2f;
+}
+
+.notif-item .notif-deadline-badge.due-today {
+  background: rgba(244, 67, 54, 0.15);
+  color: #d32f2f;
+}
+
+.notif-item .notif-deadline-badge.due-soon {
+  background: rgba(255, 152, 0, 0.15);
+  color: #f57c00;
+}
+
+.notif-item .notif-deadline-badge.due-later {
+  background: rgba(33, 150, 243, 0.15);
+  color: #1976d2;
 }
 
 .notif-item .notif-meta {
   font-size: 12px;
-  color: var(--silver);
+  color: var(--admin-text-muted, #666);
+  margin-top: 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
-/* Make the settings icon in the panel header dark so it's visible on white */
+.notif-item .notif-meta a {
+  color: var(--bice-blue, #3a6ea5);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.notif-item .notif-meta a:hover {
+  text-decoration: underline;
+}
+
+.notifications-panel .panel-header .btn-icon {
+  background: transparent;
+  border: none;
+  padding: 4px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition);
+}
+
+.notifications-panel .panel-header .btn-icon:hover {
+  background: rgba(58, 110, 165, 0.1);
+}
+
 .notifications-panel .panel-header .btn-icon i {
-  color: var(--black);
-}
-
-/* Slightly reduce the avatar placeholder contrast so text stands out */
-.notif-item .notif-avatar img {
-  opacity: 0.95;
+  font-size: 18px;
+  color: var(--bice-blue, #3a6ea5);
 }

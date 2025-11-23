@@ -1,0 +1,97 @@
+<!-- Basic Information Section -->
+<div class="col-xl-12 mb-4">
+    <div class="card profile-card-modern">
+        <div class="card-body-modern">
+            <h5 class="section-subtitle mb-4">
+                <i class="ph-bold ph-user"></i>
+                Basic Information
+            </h5>
+            
+            <div class="row g-3">
+                <!-- Username -->
+                <div class="col-xl-6 col-lg-6 col-md-12">
+                    <div class="form-group">
+                        <label for="createUsername" class="form-label">
+                            Username <span class="text-danger">*</span>
+                        </label>
+                        <input 
+                            type="text" 
+                            class="form-control" 
+                            id="createUsername" 
+                            name="username" 
+                            required
+                            placeholder="Enter username"
+                        />
+                        <div class="invalid-feedback" id="createUsernameError"></div>
+                    </div>
+                </div>
+                
+                <!-- Email -->
+                <div class="col-xl-6 col-lg-6 col-md-12">
+                    <div class="form-group">
+                        <label for="createEmail" class="form-label">
+                            Email <span class="text-danger">*</span>
+                        </label>
+                        <div class="input-group">
+                            <input 
+                                type="text" 
+                                class="form-control" 
+                                id="createEmail" 
+                                name="email" 
+                                required
+                                placeholder="firstname.lastname"
+                            />
+                            <span class="input-group-text" id="emailSuffix">@deped.gov.ph</span>
+                        </div>
+                        <small class="form-text text-muted" id="createEmailHelp">
+                            Format: firstname.lastname@deped.gov.ph (or school ID for school users)
+                        </small>
+                        <div class="invalid-feedback" id="createEmailError"></div>
+                    </div>
+                </div>
+                
+                <!-- Full Name -->
+                <div class="col-xl-6 col-lg-6 col-md-12">
+                    <div class="form-group">
+                        <label for="createFullName" class="form-label">
+                            Full Name <span class="text-danger">*</span>
+                        </label>
+                        <input 
+                            type="text" 
+                            class="form-control" 
+                            id="createFullName" 
+                            name="full_name" 
+                            required
+                            placeholder="Enter full name"
+                        />
+                        <div class="invalid-feedback" id="createFullNameError"></div>
+                    </div>
+                </div>
+                
+                <!-- Admin Level -->
+                <div class="col-xl-6 col-lg-6 col-md-12">
+                    <div class="form-group">
+                        <label for="createAdminLevel" class="form-label">
+                            Admin Level <span class="text-danger">*</span>
+                        </label>
+                        <select 
+                            class="form-select" 
+                            id="createAdminLevel" 
+                            name="admin_level" 
+                            required
+                        >
+                            <option value="">Select admin level</option>
+                            <option value="central">Central Office</option>
+                            <option value="region">Region</option>
+                            <option value="division">Division</option>
+                            <option value="district">District</option>
+                            <option value="school">School</option>
+                        </select>
+                        <div class="invalid-feedback" id="createAdminLevelError"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+

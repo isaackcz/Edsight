@@ -1,0 +1,141 @@
+/**
+ * School Form Dialog Styles
+ * Custom styles for confirmation, loading, and success dialogs
+ */
+
+/* Ensure modals are responsive */
+.modal-overlay {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    z-index: 10000 !important;
+}
+
+/* Modal content containers */
+.submit-confirmation-modal,
+.loading-modal,
+.success-modal {
+    max-width: 500px !important;
+    width: 90% !important;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3) !important;
+    animation: slideUp 0.3s ease !important;
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+    }
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+@keyframes scaleIn {
+    from {
+        transform: scale(0);
+    }
+    to {
+        transform: scale(1);
+    }
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Loading spinner */
+.loading-spinner {
+    width: 50px;
+    height: 50px;
+    border: 4px solid var(--gray-200, #e2e8f0);
+    border-top-color: var(--primary, #3a6ea5);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .submit-confirmation-modal,
+    .loading-modal,
+    .success-modal {
+        padding: 24px !important;
+        width: 95% !important;
+        max-width: none !important;
+    }
+    
+    .submit-confirmation-modal h3,
+    .loading-modal h3,
+    .success-modal h3 {
+        font-size: 1.25rem !important;
+    }
+    
+    .submit-confirmation-modal p,
+    .loading-modal p,
+    .success-modal p {
+        font-size: 0.9rem !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .submit-confirmation-modal,
+    .loading-modal,
+    .success-modal {
+        padding: 20px !important;
+        border-radius: 8px !important;
+    }
+    
+    .submit-confirmation-modal h3,
+    .loading-modal h3,
+    .success-modal h3 {
+        font-size: 1.1rem !important;
+    }
+    
+    .loading-spinner {
+        width: 40px;
+        height: 40px;
+        border-width: 3px;
+    }
+    
+    .success-modal .fa-check-circle {
+        font-size: 40px !important;
+    }
+}
+
+/* Print styles - hide modals */
+@media print {
+    .modal-overlay {
+        display: none !important;
+    }
+}
+

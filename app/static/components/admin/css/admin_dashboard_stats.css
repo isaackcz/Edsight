@@ -1,0 +1,41 @@
+/* Dashboard Statistics Cards Styles */
+
+.stats-cards .card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.stats-cards .card:hover {
+    transform: translateY(-2px);
+}
+
+.card-value {
+    font-size: 28px;
+    font-weight: 800;
+    margin-bottom: 8px;
+    color: var(--admin-text);
+    line-height: 1.2;
+}
+
+.card-trend {
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.card-trend i {
+    font-size: 14px;
+}
+
+.card-trend.positive {
+    color: var(--success);
+}
+
+.card-trend.warning {
+    color: var(--warning);
+}
+
+.card-trend.negative {
+    color: var(--danger);
+}
+

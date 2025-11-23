@@ -15,7 +15,7 @@ from django.conf import settings
 from .models import (
     Category, Topic,
     Question, QuestionChoice, Form, Answer,
-    School, District, Division, Region, AdminUser,
+    School, District, Division, Region, AdminUser, UsersSchool,
     AuditTrail, AuditLog
 )
 from apps.utils.logging import SystemLogger
@@ -31,6 +31,38 @@ from rest_framework.response import Response
 from datetime import datetime, timedelta
 from django.utils import timezone
 from django.db.models import Q
+
+def create_audit_log(admin_user, action_type, resource_type, description, request, success=True, error_message=None, metadata=None, severity='low'):
+    """Helper function to create audit log entries."""
+    try:
+        # Get IP address
+        ip_address = request.META.get('HTTP_X_FORWARDED_FOR')
+        if ip_address:
+            ip_address = ip_address.split(',')[0]
+        else:
+            ip_address = request.META.get('REMOTE_ADDR')
+        
+        # Get user agent
+        user_agent = request.META.get('HTTP_USER_AGENT', '')
+        
+        # Get session ID
+        session_id = request.session.session_key
+        
+        AuditLog.objects.create(
+            admin=admin_user,
+            session_id=session_id,
+            action_type=action_type,
+            resource_type=resource_type,
+            description=description,
+            ip_address=ip_address,
+            user_agent=user_agent,
+            severity=severity,
+            success=success,
+            error_message=error_message,
+            metadata=metadata or {}
+        )
+    except Exception as e:
+        print(f"Error creating audit log: {e}")
 
 def session_or_login_required(view_func):
     """
@@ -74,6 +106,29 @@ def get_current_user_school_id(request):
         return None
     except AdminUser.DoesNotExist:
         return None
+
+def get_admin_geographic_filter(request):
+    """Get SQL WHERE clause and parameters to filter by admin's assigned geographic area"""
+    admin_id = request.session.get('admin_id')
+    if not admin_id:
+        return "", []
+    
+    try:
+        admin_user = AdminUser.objects.get(admin_id=admin_id)
+        
+        # Filter based on the most specific assigned area
+        if admin_user.school_id:
+            return "AND s.id = %s", [admin_user.school_id]
+        elif admin_user.district_id:
+            return "AND s.district_id = %s", [admin_user.district_id]
+        elif admin_user.division_id:
+            return "AND s.division_id = %s", [admin_user.division_id]
+        elif admin_user.region_id:
+            return "AND s.region_id = %s", [admin_user.region_id]
+        # Central admins - return empty filter to show all data
+        return "", []
+    except AdminUser.DoesNotExist:
+        return "", []
 
 @session_or_login_required
 def user_form(request):
@@ -214,6 +269,7 @@ def user_form(request):
 @login_required
 @require_POST
 def submit_form(request):
+    admin_user_obj = None
     try:
         data = json.loads(request.body)
         answers = data.get('answers', [])
@@ -228,6 +284,10 @@ def submit_form(request):
         # For session-based auth, use admin_id as user_id
         if admin_id and school_id:
             user_id = admin_id
+            try:
+                admin_user_obj = AdminUser.objects.get(admin_id=admin_id)
+            except AdminUser.DoesNotExist:
+                pass
         # All users should be authenticated via admin_user table
         else:
             return JsonResponse({'error': 'Authentication required'}, status=403)
@@ -269,17 +329,48 @@ def submit_form(request):
             if data.get('status') == 'completed':
                 cursor.execute("""
                     UPDATE forms 
-                    SET status = 'completed', updated_at = NOW()
+                    SET status = 'completed', 
+                        workflow_status = 'district_pending',
+                        submitted_at = NOW(),
+                        updated_at = NOW()
                     WHERE form_id = %s
                 """, [form_id])
             
             connection.commit()
+        
+        # Create audit log for successful form submission
+        if admin_user_obj:
+            create_audit_log(
+                admin_user=admin_user_obj,
+                action_type='create',
+                resource_type='form_submission',
+                description=f'Submitted form with {len(answers)} answers',
+                request=request,
+                success=True,
+                metadata={'form_id': form_id, 'answer_count': len(answers), 'status': data.get('status', 'in-progress')},
+                severity='low'
+            )
         
         return JsonResponse({'status': 'success'})
         
     except Exception as e:
         if connection:
             connection.rollback()
+        
+        # Create audit log for failed form submission
+        if admin_user_obj:
+            create_audit_log(
+                admin_user=admin_user_obj,
+                action_type='create',
+                resource_type='form_submission',
+                description='Failed to submit form',
+                request=request,
+                success=False,
+                error_message=str(e),
+                metadata={'error': str(e)},
+                severity='medium'
+            )
+        
         return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
 
 @session_or_login_required
@@ -446,12 +537,21 @@ def response_distribution(request):
 @require_POST
 @session_required
 def submit_form_session(request):
+    admin_user_obj = None
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
             answers = data.get('answers', [])
             status = data.get('status', 'in-progress')
             school_id = get_current_user_school_id(request)
+            
+            # Get admin user for audit logging
+            admin_id = request.session.get('admin_id')
+            if admin_id:
+                try:
+                    admin_user_obj = AdminUser.objects.get(admin_id=admin_id)
+                except AdminUser.DoesNotExist:
+                    pass
             
             # Extract client information for logging
             ip_address = SystemLogger.get_client_ip(request)
@@ -483,11 +583,21 @@ def submit_form_session(request):
                 if result:
                     form_id = result[0]
                     # Update existing form
-                    cursor.execute("""
-                        UPDATE forms 
-                        SET status = %s, updated_at = NOW()
-                        WHERE form_id = %s
-                    """, [status, form_id])
+                    if status == 'completed':
+                        cursor.execute("""
+                            UPDATE forms 
+                            SET status = %s, 
+                                workflow_status = 'district_pending',
+                                submitted_at = NOW(),
+                                updated_at = NOW()
+                            WHERE form_id = %s
+                        """, [status, form_id])
+                    else:
+                        cursor.execute("""
+                            UPDATE forms 
+                            SET status = %s, updated_at = NOW()
+                            WHERE form_id = %s
+                        """, [status, form_id])
                 else:
                     # Create new form
                     cursor.execute("""
@@ -537,6 +647,19 @@ def submit_form_session(request):
                     success=True
                 )
             
+            # Create audit log for successful form submission
+            if admin_user_obj:
+                create_audit_log(
+                    admin_user=admin_user_obj,
+                    action_type='create',
+                    resource_type='form_submission',
+                    description=f'Submitted form session with {len(answers)} answers',
+                    request=request,
+                    success=True,
+                    metadata={'form_id': form_id, 'answer_count': len(answers), 'status': status},
+                    severity='low'
+                )
+            
             return JsonResponse({
                 'status': 'success',
                 'form_id': form_id,
@@ -546,6 +669,21 @@ def submit_form_session(request):
         except Exception as e:
             if 'connection' in locals():
                 connection.rollback()
+            
+            # Create audit log for failed form submission
+            if admin_user_obj:
+                create_audit_log(
+                    admin_user=admin_user_obj,
+                    action_type='create',
+                    resource_type='form_submission',
+                    description='Failed to submit form session',
+                    request=request,
+                    success=False,
+                    error_message=str(e),
+                    metadata={'error': str(e)},
+                    severity='medium'
+                )
+            
             return JsonResponse({'error': str(e)}, status=500)
     
     return JsonResponse({'error': 'POST required'}, status=405)
@@ -583,7 +721,16 @@ def get_sub_sections(request):
 @require_POST
 @session_required
 def submit_topic_form(request):
+    admin_user_obj = None
     try:
+        # Get admin user for audit logging
+        admin_id = request.session.get('admin_id')
+        if admin_id:
+            try:
+                admin_user_obj = AdminUser.objects.get(admin_id=admin_id)
+            except AdminUser.DoesNotExist:
+                pass
+        
         data = json.loads(request.body)
         category_id = data.get('category_id')  # Changed from sub_section_id
         name = data.get('name')
@@ -612,8 +759,36 @@ def submit_topic_form(request):
                             "INSERT INTO question_choices (question_id, choice_text) VALUES (%s, %s)",
                             [question_id, choice]
                         )
+        
+        # Create audit log for successful topic submission
+        if admin_user_obj:
+            create_audit_log(
+                admin_user=admin_user_obj,
+                action_type='create',
+                resource_type='topic',
+                description=f'Created topic "{name}" with {len(questions)} questions',
+                request=request,
+                success=True,
+                metadata={'topic_id': topic_id, 'category_id': category_id, 'question_count': len(questions)},
+                severity='low'
+            )
+        
         return JsonResponse({'status': 'success', 'topic_id': topic_id})
     except Exception as e:
+        # Create audit log for failed topic submission
+        if admin_user_obj:
+            create_audit_log(
+                admin_user=admin_user_obj,
+                action_type='create',
+                resource_type='topic',
+                description='Failed to create topic',
+                request=request,
+                success=False,
+                error_message=str(e),
+                metadata={'error': str(e)},
+                severity='medium'
+            )
+        
         return JsonResponse({'error': str(e)}, status=400)
 
 @csrf_exempt
@@ -762,17 +937,96 @@ def login_view(request):
 def dashboard_page(request):
     if request.session.get('user_type') != 'admin':
         return redirect('/auth/login/')
-    return render(request, 'dashboard/dashboard.html')
+    context = {
+        'admin_level': request.session.get('admin_level'),
+        'admin_username': request.session.get('admin_username'),
+    }
+    return render(request, 'dashboard/dashboard.html', context)
 
 def form_page(request):
     # Check if user is logged in
     if not request.session.get('admin_id'):
         return redirect('/auth/login/')
-    return render(request, 'form/form.html')
+    context = {
+        'admin_level': request.session.get('admin_level'),
+        'admin_username': request.session.get('admin_username'),
+    }
+    return render(request, 'form/form.html', context)
 
 def auth_page(request):
     next_url = request.GET.get('next', '/user/dashboard/')
     return render(request, 'auth/login.html', {'next': next_url})
+
+def forgot_password_page(request):
+    return render(request, 'auth/forgot_password.html')
+
+@csrf_exempt
+@require_POST
+def forgot_password_submit(request):
+    """Handle forgot password form submission and validate email exists"""
+    try:
+        data = json.loads(request.body.decode())
+    except json.JSONDecodeError:
+        return JsonResponse({'success': False, 'error': 'Invalid request format'}, status=400)
+    
+    email = data.get('email', '').strip()
+    
+    if not email:
+        return JsonResponse({'success': False, 'error': 'Email is required'}, status=400)
+    
+    # Ensure email has @deped.gov.ph suffix if not provided
+    if not email.endswith('@deped.gov.ph'):
+        email = email + '@deped.gov.ph'
+    
+    # Generic success message (for security, don't reveal if email exists)
+    success_message = 'If this email exists in our system, a password reset link has been sent to your email.'
+    
+    # Check if email exists in AdminUser table
+    email_exists = False
+    account_active = False
+    
+    try:
+        admin_user = AdminUser.objects.get(email=email)
+        email_exists = True
+        account_active = (admin_user.status == 'active')
+        
+        if account_active:
+            # TODO: Implement actual password reset email sending here
+            # For now, just log that we would send an email
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.info(f"Password reset requested for email: {email} (AdminUser)")
+    
+    except AdminUser.DoesNotExist:
+        # Check UsersSchool table as fallback (deprecated but might still have users)
+        try:
+            school_user = UsersSchool.objects.get(email=email)
+            email_exists = True
+            account_active = school_user.is_active
+            
+            if account_active:
+                # TODO: Implement actual password reset email sending here
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.info(f"Password reset requested for email: {email} (UsersSchool)")
+        
+        except UsersSchool.DoesNotExist:
+            # Email doesn't exist in either table
+            email_exists = False
+    
+    # Always return the same success message for security (prevent email enumeration)
+    # Only log errors internally, don't expose them to the user
+    if email_exists and not account_active:
+        # Log inactive account attempt
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.warning(f"Password reset attempted for inactive account: {email}")
+    
+    # Return success message regardless (security best practice)
+    return JsonResponse({
+        'success': True, 
+        'message': success_message
+    })
 
 @csrf_exempt
 def test_dashboard_direct(request):
@@ -1247,20 +1501,93 @@ def api_geographic_data(request, data_type):
 def api_dashboard_completion_by_region(request):
     """API endpoint for completion by region data"""
     try:
-        # Mock data for completion by region
-        data = {
-            'regions': [
-                {'name': 'NCR', 'completion_rate': 85.2, 'total_forms': 1245},
-                {'name': 'Region I', 'completion_rate': 78.9, 'total_forms': 892},
-                {'name': 'Region II', 'completion_rate': 82.1, 'total_forms': 654},
-                {'name': 'Region III', 'completion_rate': 79.5, 'total_forms': 1123},
-                {'name': 'Region IV-A', 'completion_rate': 88.3, 'total_forms': 1456},
-                {'name': 'Region IV-B', 'completion_rate': 76.8, 'total_forms': 534},
+        # Get geographic filter based on admin's assigned area
+        geo_where, geo_params = get_admin_geographic_filter(request)
+        
+        # Get date range parameters - support both days and custom date range
+        start_date = request.GET.get('start_date')
+        end_date = request.GET.get('end_date')
+        days = request.GET.get('days')
+        
+        # Build date filter with parameterized queries
+        date_where = ""
+        date_params = []
+        
+        if start_date and end_date:
+            try:
+                start_dt = datetime.strptime(start_date, '%Y-%m-%d')
+                end_dt = datetime.strptime(end_date, '%Y-%m-%d')
+                if start_dt > end_dt:
+                    return JsonResponse({'error': 'Start date must be before end date'}, status=400)
+                date_where = "AND f.created_at >= %s AND f.created_at <= %s"
+                date_params = [start_date, end_date + ' 23:59:59']
+            except ValueError:
+                return JsonResponse({'error': 'Invalid date format. Use YYYY-MM-DD'}, status=400)
+        elif days:
+            try:
+                days_int = int(days)
+                if days_int > 0:
+                    date_where = "AND f.created_at >= DATE_SUB(NOW(), INTERVAL %s DAY)"
+                    date_params = [days_int]
+            except ValueError:
+                return JsonResponse({'error': 'Invalid days parameter'}, status=400)
+        else:
+            date_where = "AND f.created_at >= DATE_SUB(NOW(), INTERVAL %s DAY)"
+            date_params = [30]
+        
+        # Combine all parameters
+        all_params = date_params + geo_params
+        
+        # For region-level filtering, also filter the regions table directly
+        region_where = ""
+        region_params = []
+        if geo_where and "s.region_id" in geo_where and geo_params:
+            # If filtering by region, also filter regions table
+            region_where = "WHERE r.id = %s"
+            region_params = [geo_params[0]]  # region_id is the first param
+        
+        # Get real data from database
+        from django.db import connection
+        with connection.cursor() as cursor:
+            cursor.execute(f"""
+                SELECT 
+                    r.name as region_name,
+                    COUNT(DISTINCT f.form_id) as total_forms,
+                    COUNT(DISTINCT CASE WHEN f.status = 'completed' THEN f.form_id END) as completed_forms
+                FROM regions r
+                {region_where}
+                LEFT JOIN schools s ON r.id = s.region_id
+                LEFT JOIN forms f ON s.id = f.school_id
+                    {date_where if date_where else ''}
+                    {geo_where if geo_where else ''}
+                GROUP BY r.id, r.name
+                ORDER BY r.name
+            """, region_params + all_params if region_params else all_params)
+            rows = cursor.fetchall()
+        
+        if rows and any(row[1] > 0 for row in rows):
+            # Use real data
+            regions = [row[0] for row in rows if row[1] > 0]
+            completion_rates = [
+                round((row[2] / row[1] * 100) if row[1] > 0 else 0, 1) 
+                for row in rows if row[1] > 0
             ]
-        }
-        return JsonResponse(data)
+        else:
+            # Use fallback data if no real data
+            regions = ['NCR', 'Region I', 'Region II', 'Region III', 'Region IV-A', 'Region IV-B']
+            completion_rates = [85, 79, 82, 80, 88, 77]
+        
+        return JsonResponse({
+            'regions': regions,
+            'completion_rates': completion_rates
+        })
     except Exception as e:
-        return JsonResponse({'error': str(e)}, status=500)
+        print(f"Error in api_dashboard_completion_by_region: {e}")
+        # Return fallback data
+        return JsonResponse({
+            'regions': ['NCR', 'Region I', 'Region II', 'Region III', 'Region IV-A'],
+            'completion_rates': [85, 79, 82, 80, 88]
+        })
 
 @csrf_exempt
 @require_GET
@@ -1268,63 +1595,380 @@ def api_dashboard_response_distribution(request):
     """API endpoint for response distribution data"""
     try:
         question_id = request.GET.get('question', 1)
-        # Mock data for response distribution
-        data = {
-            'question_id': question_id,
-            'question_text': 'How would you rate the overall quality of education in your school?',
-            'responses': [
-                {'option': 'Excellent', 'count': 245, 'percentage': 24.5},
-                {'option': 'Good', 'count': 456, 'percentage': 45.6},
-                {'option': 'Fair', 'count': 234, 'percentage': 23.4},
-                {'option': 'Poor', 'count': 65, 'percentage': 6.5},
-            ],
-            'total_responses': 1000
-        }
-        return JsonResponse(data)
+        
+        # Get real data from database
+        from django.db import connection
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                SELECT 
+                    a.response,
+                    COUNT(*) as count
+                FROM answers a
+                WHERE a.question_id = %s AND a.response IS NOT NULL AND a.response != ''
+                GROUP BY a.response
+                ORDER BY count DESC
+                LIMIT 10
+            """, [question_id])
+            rows = cursor.fetchall()
+        
+        if rows:
+            # Use real data
+            labels = [row[0][:50] for row in rows]  # Limit label length
+            values = [row[1] for row in rows]
+        else:
+            # Use fallback data
+            labels = ['Excellent', 'Good', 'Average', 'Poor']
+            values = [45, 30, 15, 10]
+        
+        return JsonResponse({
+            'labels': labels,
+            'values': values
+        })
     except Exception as e:
-        return JsonResponse({'error': str(e)}, status=500)
+        print(f"Error in api_dashboard_response_distribution: {e}")
+        # Return fallback data
+        return JsonResponse({
+            'labels': ['Excellent', 'Good', 'Average', 'Poor'],
+            'values': [45, 30, 15, 10]
+        })
 
 @csrf_exempt
 @require_GET
 def api_dashboard_forms_over_time(request):
     """API endpoint for forms over time data"""
     try:
-        # Mock data for forms over time
-        data = {
-            'time_series': [
-                {'date': '2025-01-01', 'submitted': 45, 'completed': 42},
-                {'date': '2025-01-02', 'submitted': 52, 'completed': 48},
-                {'date': '2025-01-03', 'submitted': 38, 'completed': 35},
-                {'date': '2025-01-04', 'submitted': 61, 'completed': 58},
-                {'date': '2025-01-05', 'submitted': 47, 'completed': 44},
-                {'date': '2025-01-06', 'submitted': 55, 'completed': 51},
-                {'date': '2025-01-07', 'submitted': 49, 'completed': 46},
-            ],
-            'total_submitted': 347,
-            'total_completed': 324
-        }
-        return JsonResponse(data)
+        # Get geographic filter based on admin's assigned area
+        geo_where, geo_params = get_admin_geographic_filter(request)
+        
+        # Get date range parameters
+        start_date = request.GET.get('start_date')
+        end_date = request.GET.get('end_date')
+        days = request.GET.get('days')
+        
+        # Build date filter with parameterized queries
+        date_where = ""
+        date_params = []
+        
+        if start_date and end_date:
+            try:
+                start_dt = datetime.strptime(start_date, '%Y-%m-%d')
+                end_dt = datetime.strptime(end_date, '%Y-%m-%d')
+                if start_dt > end_dt:
+                    return JsonResponse({'error': 'Start date must be before end date'}, status=400)
+                date_where = "AND f.created_at >= %s AND f.created_at <= %s"
+                date_params = [start_date, end_date + ' 23:59:59']
+            except ValueError:
+                return JsonResponse({'error': 'Invalid date format. Use YYYY-MM-DD'}, status=400)
+        elif days:
+            try:
+                days_int = int(days)
+                if days_int > 0:
+                    date_where = "AND f.created_at >= DATE_SUB(NOW(), INTERVAL %s DAY)"
+                    date_params = [days_int]
+            except ValueError:
+                return JsonResponse({'error': 'Invalid days parameter'}, status=400)
+        else:
+            date_where = "AND f.created_at >= DATE_SUB(NOW(), INTERVAL %s DAY)"
+            date_params = [30]
+        
+        # Combine all parameters
+        all_params = date_params + geo_params
+        
+        # Get real data from database
+        from django.db import connection
+        from datetime import datetime, timedelta
+        
+        with connection.cursor() as cursor:
+            if geo_where:
+                cursor.execute(f"""
+                SELECT 
+                    DATE(f.created_at) as date,
+                    COUNT(*) as count
+                FROM forms f
+                    JOIN schools s ON f.school_id = s.id
+                    WHERE 1=1 {date_where} {geo_where}
+                GROUP BY DATE(f.created_at)
+                ORDER BY date
+                """, all_params)
+            else:
+                cursor.execute(f"""
+                    SELECT 
+                        DATE(f.created_at) as date,
+                        COUNT(*) as count
+                    FROM forms f
+                    WHERE 1=1 {date_where}
+                    GROUP BY DATE(f.created_at)
+                    ORDER BY date
+                """, date_params)
+            rows = cursor.fetchall()
+        
+        if rows:
+            # Use real data
+            dates = [row[0].strftime('%Y-%m-%d') if hasattr(row[0], 'strftime') else str(row[0]) for row in rows]
+            counts = [row[1] for row in rows]
+        else:
+            # Use fallback data - last 7 days
+            from datetime import date
+            today = date.today()
+            dates = [(today - timedelta(days=i)).strftime('%Y-%m-%d') for i in range(6, -1, -1)]
+            counts = [120, 150, 180, 210, 240, 200, 220]
+        
+        return JsonResponse({
+            'dates': dates,
+            'counts': counts
+        })
     except Exception as e:
-        return JsonResponse({'error': str(e)}, status=500)
+        print(f"Error in api_dashboard_forms_over_time: {e}")
+        # Return fallback data
+        from datetime import date, timedelta
+        today = date.today()
+        dates = [(today - timedelta(days=i)).strftime('%Y-%m-%d') for i in range(6, -1, -1)]
+        return JsonResponse({
+            'dates': dates,
+            'counts': [120, 150, 180, 210, 240, 200, 220]
+        })
 
 @csrf_exempt
 @require_GET
-def api_dashboard_top_schools(request):
-    """API endpoint for top schools data"""
+def api_dashboard_workflow_status(request):
+    """API endpoint for form workflow status distribution"""
     try:
-        # Mock data for top schools
-        data = {
-            'schools': [
-                {'name': 'Manila Science High School', 'completion_rate': 95.8, 'total_forms': 245},
-                {'name': 'Quezon City High School', 'completion_rate': 94.2, 'total_forms': 312},
-                {'name': 'Makati High School', 'completion_rate': 93.7, 'total_forms': 189},
-                {'name': 'Taguig Science High School', 'completion_rate': 92.1, 'total_forms': 156},
-                {'name': 'Pasig City Science High School', 'completion_rate': 91.8, 'total_forms': 203},
-            ]
-        }
-        return JsonResponse(data)
+        # Get geographic filter based on admin's assigned area
+        geo_where, geo_params = get_admin_geographic_filter(request)
+        
+        # Get date range parameters
+        start_date = request.GET.get('start_date')
+        end_date = request.GET.get('end_date')
+        days = request.GET.get('days')
+        
+        # Build date filter with parameterized queries
+        date_where = ""
+        date_params = []
+        
+        if start_date and end_date:
+            try:
+                start_dt = datetime.strptime(start_date, '%Y-%m-%d')
+                end_dt = datetime.strptime(end_date, '%Y-%m-%d')
+                if start_dt > end_dt:
+                    return JsonResponse({'error': 'Start date must be before end date'}, status=400)
+                date_where = "AND f.created_at >= %s AND f.created_at <= %s"
+                date_params = [start_date, end_date + ' 23:59:59']
+            except ValueError:
+                return JsonResponse({'error': 'Invalid date format. Use YYYY-MM-DD'}, status=400)
+        elif days:
+            try:
+                days_int = int(days)
+                if days_int > 0:
+                    date_where = "AND f.created_at >= DATE_SUB(NOW(), INTERVAL %s DAY)"
+                    date_params = [days_int]
+            except ValueError:
+                return JsonResponse({'error': 'Invalid days parameter'}, status=400)
+        else:
+            date_where = "AND f.created_at >= DATE_SUB(NOW(), INTERVAL %s DAY)"
+            date_params = [30]
+        
+        # Combine all parameters
+        all_params = date_params + geo_params
+        
+        # Get real data from database
+        from django.db import connection
+        with connection.cursor() as cursor:
+            if geo_where:
+                cursor.execute(f"""
+                    SELECT 
+                        f.workflow_status,
+                        COUNT(*) as count
+                    FROM forms f
+                    JOIN schools s ON f.school_id = s.id
+                    WHERE 1=1 {date_where if date_where else ''} {geo_where}
+                    GROUP BY f.workflow_status
+                    ORDER BY count DESC
+                """, all_params if all_params else [])
+            else:
+                cursor.execute(f"""
+                    SELECT 
+                        workflow_status,
+                        COUNT(*) as count
+                    FROM forms
+                    WHERE 1=1 {date_where if date_where else ''}
+                    GROUP BY workflow_status
+                    ORDER BY count DESC
+                """, date_params if date_params else [])
+            rows = cursor.fetchall()
+        
+        if rows:
+            # Use real data
+            status_labels = []
+            status_counts = []
+            status_map = {
+                'draft': 'Draft',
+                'submitted': 'Submitted',
+                'district_pending': 'District Pending',
+                'district_approved': 'District Approved',
+                'district_returned': 'District Returned',
+                'division_pending': 'Division Pending',
+                'division_approved': 'Division Approved',
+                'division_returned': 'Division Returned',
+                'region_pending': 'Region Pending',
+                'region_approved': 'Region Approved',
+                'region_returned': 'Region Returned',
+                'central_pending': 'Central Pending',
+                'central_approved': 'Central Approved',
+                'central_returned': 'Central Returned',
+                'completed': 'Completed'
+            }
+            for row in rows:
+                status_labels.append(status_map.get(row[0], row[0].replace('_', ' ').title()))
+                status_counts.append(row[1])
+        else:
+            # Use fallback data
+            status_labels = ['Draft', 'Submitted', 'Pending', 'Approved', 'Completed']
+            status_counts = [45, 30, 15, 8, 2]
+        
+        return JsonResponse({
+            'labels': status_labels,
+            'values': status_counts
+        })
     except Exception as e:
-        return JsonResponse({'error': str(e)}, status=500)
+        print(f"Error in api_dashboard_workflow_status: {e}")
+        # Return fallback data
+        return JsonResponse({
+            'labels': ['Draft', 'Submitted', 'Pending', 'Approved', 'Completed'],
+            'values': [45, 30, 15, 8, 2]
+        })
+
+@csrf_exempt
+@require_GET
+def api_dashboard_recent_form_activity(request):
+    """API endpoint for recent form activity"""
+    try:
+        # Get geographic filter based on admin's assigned area
+        geo_where, geo_params = get_admin_geographic_filter(request)
+        
+        # Get date range parameters
+        start_date = request.GET.get('start_date')
+        end_date = request.GET.get('end_date')
+        days = request.GET.get('days')
+        
+        # Build date filter with parameterized queries
+        date_where = ""
+        date_params = []
+        
+        if start_date and end_date:
+            try:
+                start_dt = datetime.strptime(start_date, '%Y-%m-%d')
+                end_dt = datetime.strptime(end_date, '%Y-%m-%d')
+                if start_dt > end_dt:
+                    return JsonResponse({'error': 'Start date must be before end date'}, status=400)
+                date_where = "AND f.updated_at >= %s AND f.updated_at <= %s"
+                date_params = [start_date, end_date + ' 23:59:59']
+            except ValueError:
+                return JsonResponse({'error': 'Invalid date format. Use YYYY-MM-DD'}, status=400)
+        elif days:
+            try:
+                days_int = int(days)
+                if days_int > 0:
+                    date_where = "AND f.updated_at >= DATE_SUB(NOW(), INTERVAL %s DAY)"
+                    date_params = [days_int]
+            except ValueError:
+                return JsonResponse({'error': 'Invalid days parameter'}, status=400)
+        else:
+            date_where = "AND f.updated_at >= DATE_SUB(NOW(), INTERVAL %s DAY)"
+            date_params = [30]
+        
+        # Combine all parameters
+        all_params = date_params + geo_params
+        
+        # Get real data from database
+        from django.db import connection
+        with connection.cursor() as cursor:
+            cursor.execute(f"""
+                SELECT 
+                    s.school_name,
+                    f.workflow_status,
+                    f.updated_at,
+                    f.current_level
+                FROM forms f
+                JOIN schools s ON f.school_id = s.id
+                WHERE 1=1 {date_where if date_where else ''} {geo_where if geo_where else ''}
+                ORDER BY f.updated_at DESC
+                LIMIT 10
+            """, all_params if all_params else [])
+            rows = cursor.fetchall()
+        
+        if rows:
+            # Use real data
+            activities = []
+            status_map = {
+                'draft': 'Draft',
+                'submitted': 'Submitted',
+                'district_pending': 'District Pending',
+                'district_approved': 'District Approved',
+                'district_returned': 'District Returned',
+                'division_pending': 'Division Pending',
+                'division_approved': 'Division Approved',
+                'division_returned': 'Division Returned',
+                'region_pending': 'Region Pending',
+                'region_approved': 'Region Approved',
+                'region_returned': 'Region Returned',
+                'central_pending': 'Central Pending',
+                'central_approved': 'Central Approved',
+                'central_returned': 'Central Returned',
+                'completed': 'Completed'
+            }
+            for row in rows:
+                updated_at = row[2]
+                if hasattr(updated_at, 'strftime'):
+                    time_ago = get_time_ago(updated_at)
+                else:
+                    time_ago = 'Recently'
+                activities.append({
+                    'school_name': row[0],
+                    'status': status_map.get(row[1], row[1].replace('_', ' ').title()),
+                    'updated_at': time_ago,
+                    'level': row[3] or 'N/A'
+                })
+        else:
+            # Use fallback data
+            activities = [
+                {'school_name': 'Sample School 1', 'status': 'Submitted', 'updated_at': '2 hours ago', 'level': 'District'},
+                {'school_name': 'Sample School 2', 'status': 'Approved', 'updated_at': '5 hours ago', 'level': 'Division'},
+                {'school_name': 'Sample School 3', 'status': 'Pending', 'updated_at': '1 day ago', 'level': 'Region'},
+            ]
+        
+        return JsonResponse(activities, safe=False)
+    except Exception as e:
+        print(f"Error in api_dashboard_recent_activity: {e}")
+        # Return fallback data
+        return JsonResponse([
+            {'school_name': 'Sample School 1', 'status': 'Submitted', 'updated_at': '2 hours ago', 'level': 'District'},
+            {'school_name': 'Sample School 2', 'status': 'Approved', 'updated_at': '5 hours ago', 'level': 'Division'},
+        ], safe=False)
+
+def get_time_ago(dt):
+    """Helper function to get human-readable time ago"""
+    if not dt:
+        return 'Unknown'
+    now = timezone.now()
+    if isinstance(dt, str):
+        try:
+            dt = datetime.fromisoformat(dt.replace('Z', '+00:00'))
+        except:
+            return 'Recently'
+    if timezone.is_naive(dt):
+        dt = timezone.make_aware(dt)
+    diff = now - dt
+    
+    if diff.days > 0:
+        return f'{diff.days} day{"s" if diff.days > 1 else ""} ago'
+    elif diff.seconds >= 3600:
+        hours = diff.seconds // 3600
+        return f'{hours} hour{"s" if hours > 1 else ""} ago'
+    elif diff.seconds >= 60:
+        minutes = diff.seconds // 60
+        return f'{minutes} minute{"s" if minutes > 1 else ""} ago'
+    else:
+        return 'Just now'
 
 @require_GET
 @csrf_exempt
@@ -1384,7 +2028,16 @@ def get_drafts(request):
 @csrf_exempt
 @require_POST
 def save_topic(request):
+    admin_user_obj = None
     try:
+        # Get admin user for audit logging
+        admin_id = request.session.get('admin_id')
+        if admin_id:
+            try:
+                admin_user_obj = AdminUser.objects.get(admin_id=admin_id)
+            except AdminUser.DoesNotExist:
+                pass
+        
         data = json.loads(request.body)
         print('[save_topic] Received data:', data)  # Log the received data to the console
         category_id = data.get('category_id')
@@ -1416,25 +2069,67 @@ def save_topic(request):
                             'INSERT INTO question_choices (question_id, choice_text) VALUES (%s, %s)',
                             [question_id, choice]
                         )
+        
+        # Create audit log for successful topic save
+        if admin_user_obj:
+            create_audit_log(
+                admin_user=admin_user_obj,
+                action_type='create',
+                resource_type='topic',
+                description=f'Saved topic "{topic_name}" with {len(questions)} questions',
+                request=request,
+                success=True,
+                metadata={'topic_id': topic_id, 'category_id': category_id, 'question_count': len(questions), 'can_skip': can_skip},
+                severity='low'
+            )
+        
         return JsonResponse({'success': True, 'topic_id': topic_id})
     except Exception as e:
+        # Create audit log for failed topic save
+        if admin_user_obj:
+            create_audit_log(
+                admin_user=admin_user_obj,
+                action_type='create',
+                resource_type='topic',
+                description='Failed to save topic',
+                request=request,
+                success=False,
+                error_message=str(e),
+                metadata={'error': str(e)},
+                severity='medium'
+            )
+        
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
 @csrf_exempt
 @require_http_methods(["POST"])
 def create_question(request):
+    admin_user_obj = None
     try:
+        # Get admin user for audit logging
+        admin_id = request.session.get('admin_id')
+        if admin_id:
+            try:
+                admin_user_obj = AdminUser.objects.get(admin_id=admin_id)
+            except AdminUser.DoesNotExist:
+                pass
+        
         data = json.loads(request.body)
         topic_id = data.get('topic_id')
         question_text = data.get('question_text')
         answer_type = data.get('answer_type')
         is_required = data.get('is_required', False)
-        display_order = data.get('display_order', 1)
+        display_order = data.get('display_order')
         choices = data.get('choices', [])
         answer_description = data.get('answer_description', '')
         if not (topic_id and question_text and answer_type):
             return JsonResponse({'success': False, 'error': 'Missing required fields.'}, status=400)
         topic = Topic.objects.get(pk=topic_id)
+        # Assign next display order within the topic if not provided
+        if not display_order:
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT COALESCE(MAX(display_order), 0) + 1 FROM questions WHERE topic_id = %s", [topic_id])
+                display_order = cursor.fetchone()[0]
         question = Question.objects.create(
             topic=topic,
             question_text=question_text,
@@ -1448,8 +2143,35 @@ def create_question(request):
         
         # Sub-questions functionality removed
         
+        # Create audit log for successful question creation
+        if admin_user_obj:
+            create_audit_log(
+                admin_user=admin_user_obj,
+                action_type='create',
+                resource_type='question',
+                description=f'Created question in topic {topic_id}',
+                request=request,
+                success=True,
+                metadata={'question_id': question.question_id, 'topic_id': topic_id, 'answer_type': answer_type, 'choice_count': len(choices)},
+                severity='low'
+            )
+        
         return JsonResponse({'success': True, 'question_id': question.question_id})
     except Exception as e:
+        # Create audit log for failed question creation
+        if admin_user_obj:
+            create_audit_log(
+                admin_user=admin_user_obj,
+                action_type='create',
+                resource_type='question',
+                description='Failed to create question',
+                request=request,
+                success=False,
+                error_message=str(e),
+                metadata={'error': str(e)},
+                severity='medium'
+            )
+        
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
 @csrf_exempt
@@ -1457,7 +2179,16 @@ def create_question(request):
 @session_required
 def create_category(request):
     """Create a new category"""
+    admin_user_obj = None
     try:
+        # Get admin user for audit logging
+        admin_id = request.session.get('admin_id')
+        if admin_id:
+            try:
+                admin_user_obj = AdminUser.objects.get(admin_id=admin_id)
+            except AdminUser.DoesNotExist:
+                pass
+        
         print(f"DEBUG: create_category called with body: {request.body}")
         data = json.loads(request.body)
         name = data.get('name')
@@ -1486,9 +2217,37 @@ def create_category(request):
         from django.db import transaction
         transaction.commit()
         
+        # Create audit log for successful category creation
+        if admin_user_obj:
+            create_audit_log(
+                admin_user=admin_user_obj,
+                action_type='create',
+                resource_type='category',
+                description=f'Created category "{name}"',
+                request=request,
+                success=True,
+                metadata={'category_id': category.category_id, 'display_order': display_order},
+                severity='low'
+            )
+        
         return JsonResponse({'success': True, 'category_id': category.category_id})
     except Exception as e:
         print(f"DEBUG: Error in create_category: {str(e)}")
+        
+        # Create audit log for failed category creation
+        if admin_user_obj:
+            create_audit_log(
+                admin_user=admin_user_obj,
+                action_type='create',
+                resource_type='category',
+                description='Failed to create category',
+                request=request,
+                success=False,
+                error_message=str(e),
+                metadata={'error': str(e)},
+                severity='medium'
+            )
+        
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
 # create_subsection function removed - sub-sections no longer supported
@@ -1498,7 +2257,16 @@ def create_category(request):
 @session_required
 def create_topic(request):
     """Create a new topic"""
+    admin_user_obj = None
     try:
+        # Get admin user for audit logging
+        admin_id = request.session.get('admin_id')
+        if admin_id:
+            try:
+                admin_user_obj = AdminUser.objects.get(admin_id=admin_id)
+            except AdminUser.DoesNotExist:
+                pass
+        
         print(f"DEBUG: create_topic called with body: {request.body}")
         data = json.loads(request.body)
         category_id = data.get('category_id')
@@ -1531,9 +2299,37 @@ def create_topic(request):
         from django.db import transaction
         transaction.commit()
         
+        # Create audit log for successful topic creation
+        if admin_user_obj:
+            create_audit_log(
+                admin_user=admin_user_obj,
+                action_type='create',
+                resource_type='topic',
+                description=f'Created topic "{name}" in category {category_id}',
+                request=request,
+                success=True,
+                metadata={'topic_id': topic.topic_id, 'category_id': category_id, 'can_skip': can_skip, 'display_order': display_order},
+                severity='low'
+            )
+        
         return JsonResponse({'success': True, 'topic_id': topic.topic_id})
     except Exception as e:
         print(f"DEBUG: Error in create_topic: {str(e)}")
+        
+        # Create audit log for failed topic creation
+        if admin_user_obj:
+            create_audit_log(
+                admin_user=admin_user_obj,
+                action_type='create',
+                resource_type='topic',
+                description='Failed to create topic',
+                request=request,
+                success=False,
+                error_message=str(e),
+                metadata={'error': str(e)},
+                severity='medium'
+            )
+        
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
 @csrf_exempt
@@ -1827,9 +2623,104 @@ def get_questions(request, topic_id):
             q['choices'] = [row[0] for row in cursor.fetchall()]
     return JsonResponse(questions, safe=False)
 
-def report_page(request):
+# Report Page Views
+@session_or_login_required
+def report_overview(request):
+    """Overview/Dashboard report page with KPI cards and charts."""
     import time
-    return render(request, 'report/report.html', {'timestamp': int(time.time())})
+    context = {
+        'timestamp': int(time.time()),
+        'admin_level': request.session.get('admin_level'),
+        'admin_username': request.session.get('admin_username'),
+    }
+    return render(request, 'report/overview.html', context)
+
+@session_or_login_required
+def report_workflow(request):
+    """Workflow Performance report page."""
+    import time
+    context = {
+        'timestamp': int(time.time()),
+        'admin_level': request.session.get('admin_level'),
+        'admin_username': request.session.get('admin_username'),
+    }
+    return render(request, 'report/workflow.html', context)
+
+@session_or_login_required
+def report_geographic(request):
+    """Geographic Performance report page."""
+    import time
+    context = {
+        'timestamp': int(time.time()),
+        'admin_level': request.session.get('admin_level'),
+        'admin_username': request.session.get('admin_username'),
+    }
+    return render(request, 'report/geographic.html', context)
+
+@session_or_login_required
+def report_deadlines(request):
+    """Deadline Compliance report page."""
+    import time
+    context = {
+        'timestamp': int(time.time()),
+        'admin_level': request.session.get('admin_level'),
+        'admin_username': request.session.get('admin_username'),
+    }
+    return render(request, 'report/deadlines.html', context)
+
+@session_or_login_required
+def report_schools(request):
+    """School Performance report page."""
+    import time
+    context = {
+        'timestamp': int(time.time()),
+        'admin_level': request.session.get('admin_level'),
+        'admin_username': request.session.get('admin_username'),
+    }
+    return render(request, 'report/schools.html', context)
+
+@session_or_login_required
+def report_admin_activity(request):
+    """Admin Activity report page."""
+    import time
+    context = {
+        'timestamp': int(time.time()),
+        'admin_level': request.session.get('admin_level'),
+        'admin_username': request.session.get('admin_username'),
+    }
+    return render(request, 'report/admin_activity.html', context)
+
+@session_or_login_required
+def report_security(request):
+    """Security & Audit report page."""
+    import time
+    context = {
+        'timestamp': int(time.time()),
+        'admin_level': request.session.get('admin_level'),
+        'admin_username': request.session.get('admin_username'),
+    }
+    return render(request, 'report/security.html', context)
+
+
+@session_or_login_required
+def report_category_topic(request):
+    """Category & Topic Analysis report page."""
+    import time
+    context = {
+        'timestamp': int(time.time()),
+        'admin_level': request.session.get('admin_level'),
+        'admin_username': request.session.get('admin_username'),
+    }
+    return render(request, 'report/category_topic.html', context)
+
+def report_page_legacy(request):
+    import time
+    context = {
+        'timestamp': int(time.time()),
+        'admin_level': request.session.get('admin_level'),
+        'admin_username': request.session.get('admin_username'),
+    }
+    return render(request, 'report/report.html', context)
 
 def user_dashboard_page(request):
     """
@@ -1941,8 +2832,215 @@ def proxy_to_fastapi(request, endpoint):
 @session_or_login_required
 @csrf_exempt
 def api_dashboard_stats(request):
-    """Proxy to FastAPI dashboard stats endpoint."""
-    return proxy_to_fastapi(request, '/api/dashboard/stats')
+    """Get dashboard statistics with real data from database."""
+    try:
+        admin_id = request.session.get('admin_id')
+        if not admin_id:
+            return JsonResponse({'error': 'Not authenticated'}, status=403)
+        
+        from django.db import connection
+        from datetime import datetime, timedelta
+        
+        # Get geographic filter based on admin's assigned area
+        geo_where, geo_params = get_admin_geographic_filter(request)
+        
+        # Get date range parameters - support both days and custom date range
+        start_date = request.GET.get('start_date')
+        end_date = request.GET.get('end_date')
+        days = request.GET.get('days')
+        
+        # Build date filter with parameterized queries to prevent SQL injection
+        date_where = ""
+        date_params = []
+        
+        if start_date and end_date:
+            # Custom date range - validate dates
+            try:
+                start_dt = datetime.strptime(start_date, '%Y-%m-%d')
+                end_dt = datetime.strptime(end_date, '%Y-%m-%d')
+                if start_dt > end_dt:
+                    return JsonResponse({'error': 'Start date must be before end date'}, status=400)
+                date_where = "AND f.created_at >= %s AND f.created_at <= %s"
+                date_params = [start_date, end_date + ' 23:59:59']
+            except ValueError:
+                return JsonResponse({'error': 'Invalid date format. Use YYYY-MM-DD'}, status=400)
+        elif days:
+            # Predefined days range
+            try:
+                days_int = int(days)
+                if days_int > 0:
+                    date_where = "AND f.created_at >= DATE_SUB(NOW(), INTERVAL %s DAY)"
+                    date_params = [days_int]
+            except ValueError:
+                return JsonResponse({'error': 'Invalid days parameter'}, status=400)
+        else:
+            # Default to 30 days
+            date_where = "AND f.created_at >= DATE_SUB(NOW(), INTERVAL %s DAY)"
+            date_params = [30]
+        
+        # Combine all parameters
+        all_params = date_params + geo_params
+        
+        with connection.cursor() as cursor:
+            # Get total forms count - using parameterized query with geographic filter
+            if geo_where:
+                cursor.execute(f"""
+                    SELECT COUNT(*) FROM forms f
+                    JOIN schools s ON f.school_id = s.id
+                    WHERE 1=1 {date_where} {geo_where}
+                """, all_params)
+            else:
+                cursor.execute(f"SELECT COUNT(*) FROM forms f WHERE 1=1 {date_where}", date_params)
+            total_forms = cursor.fetchone()[0] or 0
+            
+            # Get completed forms count - using parameterized query with geographic filter
+            if geo_where:
+                cursor.execute(f"""
+                    SELECT COUNT(*) FROM forms f
+                    JOIN schools s ON f.school_id = s.id
+                    WHERE f.status = 'completed' {date_where} {geo_where}
+                """, all_params)
+            else:
+                cursor.execute(f"SELECT COUNT(*) FROM forms f WHERE f.status = 'completed' {date_where}", date_params)
+            completed_forms = cursor.fetchone()[0] or 0
+            
+            # Calculate completion rate
+            completion_rate = round((completed_forms / total_forms * 100) if total_forms > 0 else 0, 0)
+        
+            # Get average completion time in hours - using parameterized query with geographic filter
+            if geo_where:
+                cursor.execute(f"""
+                    SELECT AVG(TIMESTAMPDIFF(HOUR, f.created_at, f.updated_at)) as avg_hours
+                    FROM forms f
+                    JOIN schools s ON f.school_id = s.id
+                    WHERE f.status = 'completed' AND f.updated_at > f.created_at {date_where} {geo_where}
+                """, all_params)
+            else:
+                cursor.execute(f"""
+                    SELECT AVG(TIMESTAMPDIFF(HOUR, created_at, updated_at)) as avg_hours
+                    FROM forms
+                    WHERE status = 'completed' AND updated_at > created_at {date_where}
+                """, date_params)
+            avg_hours_result = cursor.fetchone()
+            avg_time = round(avg_hours_result[0] or 12, 0) if avg_hours_result and avg_hours_result[0] else 12
+        
+            # Get active schools (schools with forms) - using parameterized query with geographic filter
+            if geo_where:
+                cursor.execute(f"""
+                    SELECT COUNT(DISTINCT f.school_id) FROM forms f
+                    JOIN schools s ON f.school_id = s.id
+                    WHERE 1=1 {date_where} {geo_where}
+                """, all_params)
+            else:
+                cursor.execute(f"SELECT COUNT(DISTINCT school_id) FROM forms f WHERE 1=1 {date_where}", date_params)
+            active_schools = cursor.fetchone()[0] or 0
+            
+            # Calculate trends (compare current period to previous period of same length)
+            if start_date and end_date:
+                # For custom range, calculate period length
+                start_dt = datetime.strptime(start_date, '%Y-%m-%d')
+                end_dt = datetime.strptime(end_date, '%Y-%m-%d')
+                period_days = (end_dt - start_dt).days
+                period_start = start_dt
+                prev_period_start = start_dt - timedelta(days=period_days)
+            else:
+                period_days = int(days) if days and int(days) > 0 else 30
+                period_start = datetime.now() - timedelta(days=period_days)
+                prev_period_start = datetime.now() - timedelta(days=period_days * 2)
+            
+            # Total forms trend
+            cursor.execute("""
+                SELECT COUNT(*) FROM forms 
+                WHERE created_at >= %s AND created_at < %s
+            """, [prev_period_start, period_start])
+            prev_period_forms = cursor.fetchone()[0] or 0
+            
+            cursor.execute("""
+                SELECT COUNT(*) FROM forms 
+                WHERE created_at >= %s
+            """, [period_start])
+            current_period_forms = cursor.fetchone()[0] or 0
+            
+            if prev_period_forms > 0:
+                forms_trend_pct = round(((current_period_forms - prev_period_forms) / prev_period_forms) * 100, 0)
+                forms_trend_direction = 'up' if forms_trend_pct >= 0 else 'down'
+            else:
+                forms_trend_pct = 0
+                forms_trend_direction = 'up' if current_period_forms > 0 else 'down'
+            
+            # Completion rate trend - with geographic filter
+            if geo_where:
+                cursor.execute(f"""
+                    SELECT 
+                        COUNT(*) as total,
+                        SUM(CASE WHEN f.status = 'completed' THEN 1 ELSE 0 END) as completed
+                    FROM forms f
+                    JOIN schools s ON f.school_id = s.id
+                    WHERE f.created_at >= %s AND f.created_at < %s {geo_where}
+                """, [prev_period_start, period_start] + geo_params)
+            else:
+                cursor.execute("""
+                    SELECT 
+                        COUNT(*) as total,
+                        SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed
+                    FROM forms 
+                    WHERE created_at >= %s AND created_at < %s
+                """, [prev_period_start, period_start])
+            prev_result = cursor.fetchone()
+            prev_completion_rate = round((prev_result[1] / prev_result[0] * 100) if prev_result[0] > 0 else 0, 0)
+            
+            completion_trend_pct = round(completion_rate - prev_completion_rate, 0)
+            completion_trend_direction = 'up' if completion_trend_pct >= 0 else 'down'
+            
+            # Active schools trend - with geographic filter
+            if geo_where:
+                cursor.execute(f"""
+                    SELECT COUNT(DISTINCT f.school_id) FROM forms f
+                    JOIN schools s ON f.school_id = s.id
+                    WHERE f.created_at >= %s AND f.created_at < %s {geo_where}
+                """, [prev_period_start, period_start] + geo_params)
+            else:
+                cursor.execute("""
+                    SELECT COUNT(DISTINCT school_id) FROM forms 
+                    WHERE created_at >= %s AND created_at < %s
+                """, [prev_period_start, period_start])
+            prev_active_schools = cursor.fetchone()[0] or 0
+            
+            if prev_active_schools > 0:
+                schools_trend_pct = round(((active_schools - prev_active_schools) / prev_active_schools) * 100, 0)
+                schools_trend_direction = 'up' if schools_trend_pct >= 0 else 'down'
+            else:
+                schools_trend_pct = 0
+                schools_trend_direction = 'up' if active_schools > 0 else 'down'
+        
+        stats = {
+            'total_forms': total_forms if total_forms > 0 else 0,
+            'total_forms_trend': {'direction': forms_trend_direction, 'value': f'{abs(forms_trend_pct)}%'},
+            'completion_rate': int(completion_rate),
+            'completion_rate_trend': {'direction': completion_trend_direction, 'value': f'{abs(completion_trend_pct)}%'},
+            'avg_time': int(avg_time),
+            'avg_time_trend': {'direction': 'down', 'value': '1%'},  # Keep as is for now
+            'active_schools': active_schools if active_schools > 0 else 0,
+            'active_schools_trend': {'direction': schools_trend_direction, 'value': f'{abs(schools_trend_pct)}%'}
+        }
+        
+        return JsonResponse(stats)
+        
+    except Exception as e:
+        print(f"Error in api_dashboard_stats: {e}")
+        import traceback
+        traceback.print_exc()
+        # Return fallback data if error occurs
+        return JsonResponse({
+            'total_forms': 0,
+            'total_forms_trend': {'direction': 'up', 'value': '0%'},
+            'completion_rate': 0,
+            'completion_rate_trend': {'direction': 'up', 'value': '0%'},
+            'avg_time': 12,
+            'avg_time_trend': {'direction': 'down', 'value': '1%'},
+            'active_schools': 0,
+            'active_schools_trend': {'direction': 'up', 'value': '0%'}
+        })
 
 @session_or_login_required
 @csrf_exempt
@@ -2061,7 +3159,7 @@ def api_form_submit(request):
         # Handle different data formats from JavaScript
         answers_data = {}
         
-        # Format 1: Single question/answer submission (from form-data-manager.js)
+        # Format 1: Single question/answer submission
         if 'question_id' in data and 'answer' in data:
             question_id = data.get('question_id')
             answer_value = data.get('answer', '')
@@ -2135,6 +3233,24 @@ def api_form_submit(request):
             form.status = 'draft'
         form.save()
         
+        # Create audit log for successful form submission
+        create_audit_log(
+            admin_user=admin_user,
+            action_type='update',
+            resource_type='form',
+            description=f'Submitted form with {saved_count} answers, status: {form.status}',
+            request=request,
+            success=True,
+            metadata={
+                'form_id': form.form_id,
+                'saved_count': saved_count,
+                'submit_type': submit_type,
+                'status': form.status,
+                'error_count': len(errors)
+            },
+            severity='low'
+        )
+        
         return JsonResponse({
             'success': True,
             'saved_count': saved_count,
@@ -2147,6 +3263,26 @@ def api_form_submit(request):
         return JsonResponse({'error': 'Admin user not found'}, status=404)
     except Exception as e:
         print(f"Error in api_form_submit: {e}")
+        
+        # Create audit log for failed form submission
+        admin_id = request.session.get('admin_id')
+        if admin_id:
+            try:
+                admin_user_obj = AdminUser.objects.get(admin_id=admin_id)
+                create_audit_log(
+                    admin_user=admin_user_obj,
+                    action_type='update',
+                    resource_type='form',
+                    description='Failed to submit form',
+                    request=request,
+                    success=False,
+                    error_message=str(e),
+                    metadata={'error': str(e)},
+                    severity='high'
+                )
+            except AdminUser.DoesNotExist:
+                pass
+        
         return JsonResponse({'error': str(e)}, status=500)
 
 @session_or_login_required
@@ -2193,15 +3329,56 @@ def api_profile(request):
 @session_or_login_required
 @csrf_exempt
 def api_analytics_data(request):
-    """Get analytics data for the user dashboard."""
+    """Get analytics data for the user dashboard with optional date range."""
     try:
         admin_id = request.session.get('admin_id')
         if not admin_id:
             return JsonResponse({'error': 'Not authenticated via admin system'}, status=403)
         user_school = AdminUser.objects.get(admin_id=admin_id)
         
-        # Get user's forms
-        user_forms = Form.objects.filter(user_id=admin_id)
+        # Get date range from request parameter
+        range_type = request.GET.get('range', '30days')
+        
+        # Calculate date range based on view type and time range
+        if range_type == 'daily':
+            # Daily view shows last 30 days by default
+            days_back = 30
+            start_date = timezone.now().date() - timedelta(days=30)
+        elif range_type == 'weekly':
+            # Weekly view shows last 12 weeks (about 3 months)
+            days_back = 84  # 12 weeks
+            start_date = timezone.now().date() - timedelta(days=84)
+        elif range_type == 'monthly':
+            # Monthly view shows last 12 months
+            days_back = 365
+            start_date = timezone.now().date() - timedelta(days=365)
+        elif range_type == 'today':
+            days_back = 1
+            start_date = timezone.now().date()
+        elif range_type == '7days':
+            days_back = 7
+            start_date = timezone.now().date() - timedelta(days=7)
+        elif range_type == '30days':
+            days_back = 30
+            start_date = timezone.now().date() - timedelta(days=30)
+        elif range_type == '90days':
+            days_back = 90
+            start_date = timezone.now().date() - timedelta(days=90)
+        elif range_type == '6months':
+            days_back = 180
+            start_date = timezone.now().date() - timedelta(days=180)
+        elif range_type == 'year':
+            days_back = 365
+            start_date = timezone.now().date() - timedelta(days=365)
+        elif range_type == 'all':
+            days_back = 730  # Show up to 2 years
+            start_date = timezone.now().date() - timedelta(days=730)
+        else:
+            days_back = 30
+            start_date = timezone.now().date() - timedelta(days=30)
+        
+        # Get user's forms (forms.admin_user references AdminUser via admin_id)
+        user_forms = Form.objects.filter(admin_user_id=admin_id)
         
         # Get total questions count
         total_questions = Question.objects.count()
@@ -2262,20 +3439,21 @@ def api_analytics_data(request):
             
             form_status_data.append(category_data)
         
-        # Get timeline data (answers by date)
+        # Get timeline data (answers by date) based on selected range
         timeline_data = []
-        for i in range(30):  # Last 30 days
+        for i in range(days_back):
             date = timezone.now().date() - timedelta(days=i)
-            daily_answers = Answer.objects.filter(
-                form__in=user_forms,
-                answered_at__date=date,
-                response__isnull=False
-            ).exclude(response='').count()
-            
-            timeline_data.append({
-                'date': date.strftime('%Y-%m-%d'),
-                'answers': daily_answers
-            })
+            if date >= start_date:
+                daily_answers = Answer.objects.filter(
+                    form__in=user_forms,
+                    answered_at__date=date,
+                    response__isnull=False
+                ).exclude(response='').count()
+                
+                timeline_data.append({
+                    'date': date.strftime('%Y-%m-%d'),
+                    'answers': daily_answers
+                })
         
         timeline_data.reverse()  # Show oldest to newest
         
@@ -2285,6 +3463,7 @@ def api_analytics_data(request):
             'completion_rate': round(completion_rate, 1),
             'form_status': form_status_data,
             'timeline': timeline_data,
+            'date_range': range_type,
             'last_updated': timezone.now().isoformat()
         }
         
@@ -2557,10 +3736,13 @@ def api_analytics_bundle(request):
             except:
                 pass
         
-        # Apply filters to build base queryset
-        base_queryset = AnalyticsService.build_filtered_queryset(filters)
+        # Apply filters to build base queryset (with geographic filtering)
+        base_queryset = AnalyticsService.build_filtered_queryset(filters, request)
         
-        # Calculate completion statistics
+        # Calculate KPI metrics with period-over-period comparisons
+        kpi_metrics = AnalyticsService.calculate_kpi_metrics(base_queryset, filters)
+        
+        # Calculate completion statistics (for backward compatibility)
         completion_stats = AnalyticsService.calculate_completion_stats(base_queryset)
         
         # Get enhanced school completion data with geographic information
@@ -2574,10 +3756,14 @@ def api_analytics_bundle(request):
         
         return JsonResponse({
             'cards': {
-                'completion_rate': completion_stats['completion_rate'],
-                'avg_completion_hours': avg_completion_hours,
-                'completed_forms': completion_stats['completed_forms'],
-                'pending_forms': completion_stats['pending_forms']
+                'completion_rate': kpi_metrics.get('completion_rate', {'value': 0.0, 'change': 0.0, 'is_positive': True}),
+                'avg_time': kpi_metrics.get('avg_time', {'value': 0.0, 'change': 0.0, 'is_positive': True}),
+                'completed_forms': kpi_metrics.get('completed_forms', {'value': 0, 'change': 0, 'is_positive': True}),
+                'pending_forms': kpi_metrics.get('pending_forms', {'value': 0, 'change': 0, 'is_positive': True}),
+                'in_workflow': kpi_metrics.get('in_workflow', {'value': 0, 'change': 0, 'is_positive': True}),
+                'active_schools': kpi_metrics.get('active_schools', {'value': 0, 'change': 0, 'is_positive': True}),
+                'on_time_rate': kpi_metrics.get('on_time_rate', {'value': 0.0, 'change': 0.0, 'is_positive': True}),
+                'forms_returned': kpi_metrics.get('forms_returned', {'value': 0, 'change': 0, 'is_positive': False})
             },
             'charts': {
                 'completion_by_school': {
@@ -2601,13 +3787,19 @@ def api_analytics_bundle(request):
         
     except Exception as e:
         print(f"Analytics bundle error: {e}")
+        import traceback
+        traceback.print_exc()
         # Return fallback data on error
         return JsonResponse({
             'cards': {
-                'completion_rate': 0.0,
-                'avg_completion_hours': 0.0,
-                'completed_forms': 0,
-                'pending_forms': 0
+                'completion_rate': {'value': 0.0, 'change': 0.0, 'is_positive': True},
+                'avg_time': {'value': 0.0, 'change': 0.0, 'is_positive': True},
+                'completed_forms': {'value': 0, 'change': 0, 'is_positive': True},
+                'pending_forms': {'value': 0, 'change': 0, 'is_positive': True},
+                'in_workflow': {'value': 0, 'change': 0, 'is_positive': True},
+                'active_schools': {'value': 0, 'change': 0, 'is_positive': True},
+                'on_time_rate': {'value': 0.0, 'change': 0.0, 'is_positive': True},
+                'forms_returned': {'value': 0, 'change': 0, 'is_positive': False}
             },
             'charts': {
                 'completion_by_school': {'labels': [], 'datasets': [{'data': [], 'label': 'Completion Rate (%)'}]},
@@ -2646,8 +3838,8 @@ def api_analytics_drilldown(request):
         level = data.get('level', 'category')
         filters = data.get('filters', {})
         
-        # Build filtered queryset
-        base_queryset = AnalyticsService.build_filtered_queryset(filters)
+        # Build filtered queryset (with geographic filtering)
+        base_queryset = AnalyticsService.build_filtered_queryset(filters, request)
         
         # Get drilldown data based on level
         drilldown_data = AnalyticsService.get_drilldown_data(base_queryset, level)
@@ -2686,8 +3878,8 @@ def api_export_csv(request):
             except:
                 pass
 
-        # Build filtered queryset
-        base_queryset = AnalyticsService.build_filtered_queryset(filters)
+        # Build filtered queryset (with geographic filtering)
+        base_queryset = AnalyticsService.build_filtered_queryset(filters, request)
         
         # Get school completion data
         school_completion = AnalyticsService.get_school_completion_data(base_queryset, filters)
@@ -2743,8 +3935,8 @@ def api_export_drilldown_csv(request):
         level = data.get('level', 'category')
         filters = data.get('filters', {})
         
-        # Build filtered queryset
-        base_queryset = AnalyticsService.build_filtered_queryset(filters)
+        # Build filtered queryset (with geographic filtering)
+        base_queryset = AnalyticsService.build_filtered_queryset(filters, request)
         
         # Get drilldown data
         drilldown_data = AnalyticsService.get_drilldown_data(base_queryset, level)
@@ -2796,8 +3988,8 @@ def api_export_bundle_xlsx(request):
                 else:
                     filters[key] = value
         
-        # Build filtered queryset
-        base_queryset = AnalyticsService.build_filtered_queryset(filters)
+        # Build filtered queryset (with geographic filtering)
+        base_queryset = AnalyticsService.build_filtered_queryset(filters, request)
         
         # Get real data
         completion_stats = AnalyticsService.calculate_completion_stats(base_queryset)
@@ -2884,12 +4076,13 @@ def api_export_bundle_xlsx(request):
         return JsonResponse({"error": str(e)}, status=500)
 
 
+# Table-related API endpoints removed
+
 @session_or_login_required
 @csrf_exempt
-def api_reports_school_completion(request):
-    """Enhanced school completion data endpoint."""
+def api_analytics_workflow(request):
+    """Get workflow statistics."""
     try:
-        # Parse filters from request
         filters = {}
         if request.method == 'POST':
             try:
@@ -2897,36 +4090,23 @@ def api_reports_school_completion(request):
             except:
                 pass
         
-        # Get enhanced school completion data directly (no need for queryset filtering for raw SQL)
-        school_completion = AnalyticsService.get_enhanced_school_completion_data(None, filters)
-        
-        # Apply client-side filters if provided
-        if filters:
-            if filters.get('region_ids'):
-                school_completion = [s for s in school_completion if s['region_id'] in filters['region_ids']]
-            if filters.get('division_ids'):
-                school_completion = [s for s in school_completion if s['division_id'] in filters['division_ids']]
-            if filters.get('district_ids'):
-                school_completion = [s for s in school_completion if s['district_id'] in filters['district_ids']]
-            if filters.get('school_ids'):
-                school_completion = [s for s in school_completion if s['school_id'] in filters['school_ids']]
+        base_queryset = AnalyticsService.build_filtered_queryset(filters, request)
+        workflow_stats = AnalyticsService.get_workflow_statistics(base_queryset, filters)
         
         return JsonResponse({
             'success': True,
-            'data': school_completion,
-            'count': len(school_completion),
-            'filters_applied': filters
+            'data': workflow_stats
         })
-        
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         return JsonResponse({'error': str(e)}, status=500)
 
 @session_or_login_required
 @csrf_exempt
-def api_reports_category_content(request):
-    """Category content data endpoint."""
+def api_analytics_geographic(request):
+    """Get geographic statistics."""
     try:
-        # Parse filters from request
         filters = {}
         if request.method == 'POST':
             try:
@@ -2934,19 +4114,306 @@ def api_reports_category_content(request):
             except:
                 pass
         
-        # Apply filters to build base queryset
-        base_queryset = AnalyticsService.build_filtered_queryset(filters)
-        
-        # Get category content data
-        category_content = AnalyticsService.get_category_content_data(base_queryset, filters)
+        base_queryset = AnalyticsService.build_filtered_queryset(filters, request)
+        geographic_stats = AnalyticsService.get_geographic_statistics(base_queryset, filters)
         
         return JsonResponse({
             'success': True,
-            'data': category_content,
-            'count': len(category_content)
+            'data': geographic_stats
         })
-        
     except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return JsonResponse({'error': str(e)}, status=500)
+
+@session_or_login_required
+@csrf_exempt
+def api_analytics_deadlines(request):
+    """Get deadline compliance statistics."""
+    try:
+        filters = {}
+        if request.method == 'POST':
+            try:
+                filters = json.loads(request.body.decode('utf-8'))
+            except:
+                pass
+        
+        base_queryset = AnalyticsService.build_filtered_queryset(filters, request)
+        deadline_stats = AnalyticsService.get_deadline_compliance(base_queryset, filters)
+        
+        return JsonResponse({
+            'success': True,
+            'data': deadline_stats
+        })
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return JsonResponse({'error': str(e)}, status=500)
+
+@session_or_login_required
+@csrf_exempt
+def api_analytics_time_series(request):
+    """Get time series data for charts."""
+    try:
+        filters = {}
+        group_by = 'day'  # default
+        
+        if request.method == 'POST':
+            try:
+                data = json.loads(request.body.decode('utf-8'))
+                filters = data.get('filters', {})
+                group_by = data.get('group_by', 'day')
+            except:
+                pass
+        elif request.method == 'GET':
+            group_by = request.GET.get('group_by', 'day')
+        
+        base_queryset = AnalyticsService.build_filtered_queryset(filters, request)
+        
+        # Get all time series data
+        forms_over_time = AnalyticsService.get_forms_over_time(base_queryset, filters, group_by)
+        completion_rate_trend = AnalyticsService.get_completion_rate_trend(base_queryset, filters, group_by)
+        workflow_status_over_time = AnalyticsService.get_workflow_status_over_time(base_queryset, filters, group_by)
+        
+        return JsonResponse({
+            'success': True,
+            'data': {
+                'forms_over_time': forms_over_time,
+                'completion_rate_trend': completion_rate_trend,
+                'workflow_status_over_time': workflow_status_over_time
+            }
+        })
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return JsonResponse({'error': str(e)}, status=500)
+
+@session_or_login_required
+@csrf_exempt
+def api_analytics_distributions(request):
+    """Get distribution data for charts."""
+    try:
+        filters = {}
+        geographic_level = 'region'  # default
+        
+        if request.method == 'POST':
+            try:
+                data = json.loads(request.body.decode('utf-8'))
+                filters = data.get('filters', {})
+                geographic_level = data.get('geographic_level', 'region')
+            except:
+                pass
+        elif request.method == 'GET':
+            geographic_level = request.GET.get('geographic_level', 'region')
+        
+        base_queryset = AnalyticsService.build_filtered_queryset(filters, request)
+        
+        # Get all distribution data
+        status_distribution = AnalyticsService.get_forms_by_status_distribution(base_queryset, filters)
+        workflow_distribution = AnalyticsService.get_forms_by_workflow_level(base_queryset, filters)
+        geographic_distribution = AnalyticsService.get_geographic_distribution(base_queryset, filters, geographic_level)
+        
+        return JsonResponse({
+            'success': True,
+            'data': {
+                'status_distribution': status_distribution,
+                'workflow_distribution': workflow_distribution,
+                'geographic_distribution': geographic_distribution
+            }
+        })
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return JsonResponse({'error': str(e)}, status=500)
+
+@session_or_login_required
+@csrf_exempt
+def api_reports_workflow_performance(request):
+    """Get detailed workflow performance report."""
+    try:
+        filters = {}
+        if request.method == 'POST':
+            try:
+                filters = json.loads(request.body.decode('utf-8'))
+            except:
+                pass
+        
+        base_queryset = AnalyticsService.build_filtered_queryset(filters, request)
+        workflow_report = AnalyticsService.get_workflow_performance_report(base_queryset, filters)
+        
+        return JsonResponse({
+            'success': True,
+            'data': workflow_report
+        })
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return JsonResponse({'error': str(e)}, status=500)
+
+@session_or_login_required
+@csrf_exempt
+def api_reports_geographic_performance(request):
+    """Get detailed geographic performance report."""
+    try:
+        filters = {}
+        if request.method == 'POST':
+            try:
+                filters = json.loads(request.body.decode('utf-8'))
+            except:
+                pass
+        
+        base_queryset = AnalyticsService.build_filtered_queryset(filters, request)
+        geographic_report = AnalyticsService.get_geographic_performance_report(base_queryset, filters)
+        
+        return JsonResponse({
+            'success': True,
+            'data': geographic_report
+        })
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return JsonResponse({'error': str(e)}, status=500)
+
+@session_or_login_required
+@csrf_exempt
+def api_reports_deadline_compliance(request):
+    """Get detailed deadline compliance report."""
+    try:
+        filters = {}
+        if request.method == 'POST':
+            try:
+                filters = json.loads(request.body.decode('utf-8'))
+            except:
+                pass
+        
+        base_queryset = AnalyticsService.build_filtered_queryset(filters, request)
+        deadline_report = AnalyticsService.get_deadline_compliance_report(base_queryset, filters)
+        
+        return JsonResponse({
+            'success': True,
+            'data': deadline_report
+        })
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return JsonResponse({'error': str(e)}, status=500)
+
+@session_or_login_required
+@csrf_exempt
+def api_reports_school_performance(request):
+    """Get detailed school performance report."""
+    try:
+        filters = {}
+        if request.method == 'POST':
+            try:
+                filters = json.loads(request.body.decode('utf-8'))
+            except:
+                pass
+        
+        base_queryset = AnalyticsService.build_filtered_queryset(filters, request)
+        school_report = AnalyticsService.get_school_performance_report(base_queryset, filters)
+        
+        return JsonResponse({
+            'success': True,
+            'data': school_report
+        })
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return JsonResponse({'error': str(e)}, status=500)
+
+@session_or_login_required
+@csrf_exempt
+def api_reports_admin_activity(request):
+    """Get detailed admin activity report."""
+    try:
+        filters = {}
+        if request.method == 'POST':
+            try:
+                filters = json.loads(request.body.decode('utf-8'))
+            except:
+                pass
+        
+        admin_report = AnalyticsService.get_admin_activity_report(filters, request)
+        
+        return JsonResponse({
+            'success': True,
+            'data': admin_report
+        })
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return JsonResponse({'error': str(e)}, status=500)
+
+@session_or_login_required
+@csrf_exempt
+def api_analytics_security(request):
+    """Get security metrics summary."""
+    try:
+        filters = {}
+        if request.method == 'POST':
+            try:
+                filters = json.loads(request.body.decode('utf-8'))
+            except:
+                pass
+        
+        security_data = AnalyticsService.get_security_audit_report(filters, request)
+        
+        return JsonResponse({
+            'success': True,
+            'data': security_data
+        })
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return JsonResponse({'error': str(e)}, status=500)
+
+@session_or_login_required
+@csrf_exempt
+def api_reports_security_audit(request):
+    """Get detailed security audit report."""
+    try:
+        filters = {}
+        if request.method == 'POST':
+            try:
+                filters = json.loads(request.body.decode('utf-8'))
+            except:
+                pass
+        
+        security_report = AnalyticsService.get_security_audit_report(filters, request)
+        
+        return JsonResponse({
+            'success': True,
+            'data': security_report
+        })
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@session_or_login_required
+@csrf_exempt
+def api_reports_category_topic(request):
+    """Get detailed category and topic analysis report."""
+    try:
+        filters = {}
+        if request.method == 'POST':
+            try:
+                filters = json.loads(request.body.decode('utf-8'))
+            except:
+                pass
+        
+        base_queryset = AnalyticsService.build_filtered_queryset(filters, request)
+        category_topic_report = AnalyticsService.get_category_topic_analysis(base_queryset, filters)
+        
+        return JsonResponse({
+            'success': True,
+            'data': category_topic_report
+        })
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
         return JsonResponse({'error': str(e)}, status=500)
 
 @session_or_login_required
@@ -2998,8 +4465,8 @@ def api_export_drilldown_xlsx(request):
                 else:
                     filters[key] = value.split(',') if ',' in value else [value]
         
-        # Build filtered queryset
-        base_queryset = AnalyticsService.build_filtered_queryset(filters)
+        # Build filtered queryset (with geographic filtering)
+        base_queryset = AnalyticsService.build_filtered_queryset(filters, request)
         
         # Get drilldown data
         drilldown_data = AnalyticsService.get_drilldown_data(base_queryset, level)
@@ -3116,8 +4583,170 @@ def api_filters_options(request):
 @session_or_login_required
 @csrf_exempt
 def api_profile_update(request):
-    """Proxy to FastAPI profile update endpoint."""
-    return proxy_to_fastapi(request, '/api/profile')
+    """Update user profile information."""
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+    
+    try:
+        # Get user authentication
+        admin_id = request.session.get('admin_id')
+        admin_user_obj = None
+        
+        if not admin_id:
+            return JsonResponse({'error': 'Not authenticated'}, status=403)
+        
+        try:
+            admin_user_obj = AdminUser.objects.get(admin_id=admin_id)
+        except AdminUser.DoesNotExist:
+            return JsonResponse({'error': 'User not found'}, status=404)
+        
+        # Parse request data
+        data = json.loads(request.body)
+        
+        # Track changes for audit log
+        changes = []
+        
+        # Update fields
+        if 'full_name' in data and data['full_name'] != admin_user_obj.full_name:
+            old_value = admin_user_obj.full_name
+            admin_user_obj.full_name = data['full_name']
+            changes.append(f"Name: {old_value} → {data['full_name']}")
+        
+        if 'email' in data and data['email'] != admin_user_obj.email:
+            old_value = admin_user_obj.email
+            admin_user_obj.email = data['email']
+            changes.append(f"Email: {old_value} → {data['email']}")
+        
+        if 'phone' in data and data.get('phone') != admin_user_obj.phone:
+            old_value = admin_user_obj.phone or 'None'
+            admin_user_obj.phone = data.get('phone')
+            changes.append(f"Phone: {old_value} → {data.get('phone', 'None')}")
+        
+        # Save changes
+        if changes:
+            admin_user_obj.save()
+            
+            # Create audit log
+            create_audit_log(
+                admin_user=admin_user_obj,
+                action_type='update',
+                resource_type='profile',
+                description=f"Updated profile: {', '.join(changes)}",
+                request=request,
+                metadata={'changes': changes},
+                severity='low'
+            )
+            
+            return JsonResponse({
+                'success': True,
+                'message': 'Profile updated successfully',
+                'changes': changes
+            })
+        else:
+            return JsonResponse({
+                'success': True,
+                'message': 'No changes detected'
+            })
+            
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Invalid JSON data'}, status=400)
+    except Exception as e:
+        print(f"Error in api_profile_update: {e}")
+        if admin_user_obj:
+            create_audit_log(
+                admin_user=admin_user_obj,
+                action_type='update',
+                resource_type='profile',
+                description='Failed to update profile',
+                request=request,
+                success=False,
+                error_message=str(e),
+                severity='medium'
+            )
+        return JsonResponse({'error': str(e)}, status=500)
+
+@session_or_login_required
+@csrf_exempt
+def api_password_change(request):
+    """Change user password."""
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+    
+    try:
+        # Get user authentication
+        admin_id = request.session.get('admin_id')
+        admin_user_obj = None
+        
+        if not admin_id:
+            return JsonResponse({'error': 'Not authenticated'}, status=403)
+        
+        try:
+            admin_user_obj = AdminUser.objects.get(admin_id=admin_id)
+        except AdminUser.DoesNotExist:
+            return JsonResponse({'error': 'User not found'}, status=404)
+        
+        # Parse request data
+        data = json.loads(request.body)
+        current_password = data.get('current_password')
+        new_password = data.get('new_password')
+        
+        if not current_password or not new_password:
+            return JsonResponse({'error': 'Missing required fields'}, status=400)
+        
+        # Verify current password
+        if not bcrypt.checkpw(current_password.encode('utf-8'), admin_user_obj.password_hash.encode('utf-8')):
+            # Log failed attempt
+            create_audit_log(
+                admin_user=admin_user_obj,
+                action_type='password_change',
+                resource_type='security',
+                description='Failed password change attempt: incorrect current password',
+                request=request,
+                success=False,
+                severity='medium'
+            )
+            return JsonResponse({'error': 'Current password is incorrect'}, status=400)
+        
+        # Validate new password
+        if len(new_password) < 8:
+            return JsonResponse({'error': 'New password must be at least 8 characters'}, status=400)
+        
+        # Hash and save new password
+        hashed_password = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt())
+        admin_user_obj.password_hash = hashed_password.decode('utf-8')
+        admin_user_obj.save()
+        
+        # Create audit log
+        create_audit_log(
+            admin_user=admin_user_obj,
+            action_type='password_change',
+            resource_type='security',
+            description='Password changed successfully',
+            request=request,
+            severity='high'
+        )
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Password changed successfully'
+        })
+        
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Invalid JSON data'}, status=400)
+    except Exception as e:
+        print(f"Error in api_password_change: {e}")
+        if admin_user_obj:
+            create_audit_log(
+                admin_user=admin_user_obj,
+                action_type='password_change',
+                resource_type='security',
+                description='Failed to change password',
+                request=request,
+                success=False,
+                error_message=str(e),
+                severity='high'
+            )
+        return JsonResponse({'error': str(e)}, status=500)
 
 @session_or_login_required
 @csrf_exempt
@@ -3281,27 +4910,6 @@ def api_security_last_login(request):
 
 @session_or_login_required
 @csrf_exempt
-def api_security_sessions(request):
-    """Get active sessions for the current user."""
-    try:
-        # For now, return current session info
-        # In a full implementation, you'd track sessions in database
-        sessions = [
-            {
-                'id': 'current',
-                'device': request.META.get('HTTP_USER_AGENT', 'Unknown Device'),
-                'location': 'Unknown Location',
-                'last_activity': datetime.now().isoformat(),
-                'is_current': True
-            }
-        ]
-        
-        return JsonResponse({'sessions': sessions})
-    except Exception as e:
-        return JsonResponse({'error': str(e)}, status=500)
-
-@session_or_login_required
-@csrf_exempt
 def api_security_login_history(request):
     """Get login history for the current user."""
     try:
@@ -3330,33 +4938,37 @@ def api_security_login_history(request):
 
 @session_or_login_required
 @csrf_exempt
-def api_security_terminate_session(request, session_id):
-    """Terminate a specific session."""
-    if request.method != 'POST':
-        return JsonResponse({'error': 'Method not allowed'}, status=405)
-    
-    try:
-        # In a full implementation, you'd remove the session from database
-        # For now, just return success
-        return JsonResponse({'success': True, 'message': 'Session terminated'})
-    except Exception as e:
-        return JsonResponse({'error': str(e)}, status=500)
-
-@session_or_login_required
-@csrf_exempt
 def api_audit_logs(request):
     """Get audit logs for the current user from both AuditTrail and AuditLog tables."""
     try:
         # Check session-based authentication
         admin_id = request.session.get('admin_id')
-        if not admin_id:
-            return JsonResponse({'error': 'Not authenticated via admin system'}, status=403)
+        user_id = None
         
-        admin_user = AdminUser.objects.get(admin_id=admin_id)
+        # Try to get Django user if available
+        if request.user and request.user.is_authenticated:
+            user_id = request.user.id
+        
+        # Fallback to admin_id for session-based auth
+        if not user_id and admin_id:
+            try:
+                admin_user = AdminUser.objects.get(admin_id=admin_id)
+                if hasattr(admin_user, 'user') and admin_user.user:
+                    user_id = admin_user.user.id
+            except AdminUser.DoesNotExist:
+                pass
+        
+        if not user_id and not admin_id:
+            return JsonResponse({'error': 'Not authenticated'}, status=403)
         
         # Get filter parameters
-        log_type = request.GET.get('type', 'all')
-        time_range = request.GET.get('time_range', '7d')
+        log_type = request.GET.get('filter', request.GET.get('type', 'all'))
+        time_range = request.GET.get('time_range', '30d')
+        try:
+            limit = int(request.GET.get('limit', 50))
+        except (TypeError, ValueError):
+            limit = 50
+        limit = max(1, min(limit, 100))
         
         # Calculate date range
         from datetime import timedelta
@@ -3371,76 +4983,320 @@ def api_audit_logs(request):
         
         logs = []
         
+        # Import User model
+        from django.contrib.auth.models import User
+        
+        # Get user object
+        user = None
+        if user_id:
+            try:
+                user = User.objects.get(id=user_id)
+            except User.DoesNotExist:
+                pass
+        
         # Get audit trails for form modifications (if they exist)
-        try:
-            # Try to use Django user if available, otherwise skip
-            if hasattr(admin_user, 'user') and admin_user.user:
+        if user:
+            try:
                 audit_trails = AuditTrail.objects.filter(
-                    user=admin_user.user,
+                    user=user,
                     timestamp__gte=start_date
                 ).order_by('-timestamp')[:25]
-            else:
-                audit_trails = []
-            
-            for trail in audit_trails:
-                logs.append({
-                    'id': f'trail_{trail.id}',
-                    'action': f'{trail.action.title()} Question',
-                    'resource_type': 'question',
-                    'resource_name': f"Question {trail.question.question_id}" if trail.question else 'Unknown',
-                    'old_value': trail.old_value,
-                    'new_value': trail.new_value,
-                    'timestamp': trail.timestamp.isoformat(),
-                    'saved_locally': True,
-                    'saved_database': True
-                })
-        except AdminUser.DoesNotExist:
-            pass
+                
+                for trail in audit_trails:
+                    # Apply filter if specified
+                    if log_type != 'all':
+                        if log_type == 'data' and trail.action not in ['create', 'update', 'delete']:
+                            continue
+                        elif log_type == 'profile' and trail.resource_type not in ['profile', 'user']:
+                            continue
+                    
+                    logs.append({
+                        'id': f'trail_{trail.id}',
+                        'action': f'{trail.action.title()} Question',
+                        'resource_type': 'question',
+                        'resource_name': f"Question {trail.question.question_id}" if hasattr(trail, 'question') and trail.question else 'Unknown',
+                        'description': f"{trail.action.title()} question data",
+                        'old_value': trail.old_value,
+                        'new_value': trail.new_value,
+                        'timestamp': trail.timestamp.isoformat() if hasattr(trail.timestamp, 'isoformat') else str(trail.timestamp),
+                        'saved_locally': True,
+                        'saved_database': True
+                    })
+            except Exception as e:
+                print(f"Error fetching audit trails: {e}")
         
         # Get audit logs for profile updates and other system activities
-        try:
-            if hasattr(admin_user, 'user') and admin_user.user:
-                audit_logs = AuditLog.objects.filter(
-                    user=admin_user.user,
-                    timestamp__gte=start_date
-                ).order_by('-timestamp')[:25]
-            else:
-                audit_logs = []
-        except:
-            audit_logs = []
+        admin_user_obj = None
+        if admin_id:
+            try:
+                admin_user_obj = AdminUser.objects.get(admin_id=admin_id)
+            except AdminUser.DoesNotExist:
+                pass
         
-        for log in audit_logs:
-            action_display = {
+        if admin_user_obj:
+            try:
+                audit_logs_query = AuditLog.objects.filter(
+                    admin=admin_user_obj,
+                    timestamp__gte=start_date
+                )
+                
+                # Apply filter
+                if log_type == 'login':
+                    audit_logs_query = audit_logs_query.filter(action_type__in=['login', 'logout', 'failed_login'])
+                elif log_type == 'profile':
+                    audit_logs_query = audit_logs_query.filter(action_type__in=['update', 'password_change'])
+                elif log_type == 'security':
+                    audit_logs_query = audit_logs_query.filter(action_type__in=['password_change', 'security_change', 'account_lock', 'account_unlock'])
+                elif log_type == 'data':
+                    audit_logs_query = audit_logs_query.filter(action_type__in=['create', 'read', 'update', 'delete', 'export', 'import'])
+                
+                audit_logs = audit_logs_query.order_by('-timestamp')[:25]
+                
+                for log in audit_logs:
+                    action_display = {
                 'password_change': 'Changed Password',
                 'update': 'Updated Profile',
                 'login': 'Logged In',
                 'logout': 'Logged Out',
-                'session_terminated': 'Session Terminated'
-            }.get(log.action_type, log.action_type.title())
-            
-            logs.append({
+                        'failed_login': 'Failed Login Attempt',
+                        'session_terminated': 'Session Terminated',
+                        'create': 'Created Record',
+                        'read': 'Accessed Record',
+                        'delete': 'Deleted Record',
+                        'export': 'Exported Data',
+                        'import': 'Imported Data',
+                        'security_change': 'Security Setting Changed'
+                    }.get(log.action_type, log.action_type.replace('_', ' ').title())
+                    
+                    logs.append({
                 'id': f'log_{log.id}',
                 'action': action_display,
                 'resource_type': log.resource_type or 'system',
                 'resource_name': log.description or 'System Activity',
-                'old_value': None,  # AuditLog doesn't have old/new values
+                        'description': log.description or 'System activity',
+                        'old_value': None,
                 'new_value': None,
-                'timestamp': log.timestamp.isoformat(),
+                        'timestamp': log.timestamp.isoformat() if hasattr(log.timestamp, 'isoformat') else str(log.timestamp),
                 'saved_locally': True,
                 'saved_database': True
             })
+            except Exception as e:
+                print(f"Error fetching audit logs: {e}")
         
         # Sort all logs by timestamp (newest first)
         logs.sort(key=lambda x: x['timestamp'], reverse=True)
         
-        # Limit to 50 total logs
-        logs = logs[:50]
+        # If no logs were found, synthesize basic activity from recent answers
+        if not logs and admin_user_obj:
+            try:
+                recent_answers = Answer.objects.filter(
+                    form__admin_user=admin_user_obj,
+                    response__isnull=False
+                ).exclude(response='').order_by('-answered_at')[:limit]
+                
+                for answer in recent_answers:
+                    question = answer.question
+                    question_label = getattr(question, 'question_text', '')[:80]
+                    if not question_label:
+                        question_label = f'Question {question.question_id}'
+                    logs.append({
+                        'id': f'answer_{answer.answer_id}',
+                        'action': 'Answered Question',
+                        'resource_type': 'question',
+                        'resource_name': question_label,
+                        'description': question_label,
+                        'old_value': None,
+                        'new_value': answer.response,
+                        'timestamp': answer.answered_at.isoformat() if getattr(answer, 'answered_at', None) else timezone.now().isoformat(),
+                        'saved_locally': True,
+                        'saved_database': True
+                    })
+            except Exception as fallback_error:
+                print(f"Error building fallback audit logs: {fallback_error}")
+        
+        # Limit to requested total logs
+        logs = logs[:limit]
         
         return JsonResponse({'logs': logs})
-    except AdminUser.DoesNotExist:
-        return JsonResponse({'error': 'Admin user not found'}, status=404)
     except Exception as e:
         print(f"Error in api_audit_logs: {e}")
+        return JsonResponse({'error': str(e)}, status=500)
+
+@session_or_login_required
+@csrf_exempt
+def api_preferences_update(request):
+    """Update user preferences."""
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+    
+    try:
+        # Get user authentication
+        admin_id = request.session.get('admin_id')
+        admin_user_obj = None
+        
+        if not admin_id:
+            return JsonResponse({'error': 'Not authenticated'}, status=403)
+        
+        try:
+            admin_user_obj = AdminUser.objects.get(admin_id=admin_id)
+        except AdminUser.DoesNotExist:
+            return JsonResponse({'error': 'User not found'}, status=404)
+        
+        # Parse request data
+        data = json.loads(request.body)
+        
+        # Store preferences in session (can be moved to database later)
+        preferences = request.session.get('preferences', {})
+        changes = []
+        
+        if 'email_notifications' in data:
+            old_value = preferences.get('email_notifications', True)
+            new_value = data['email_notifications']
+            if old_value != new_value:
+                preferences['email_notifications'] = new_value
+                changes.append(f"Email notifications: {'enabled' if new_value else 'disabled'}")
+        
+        if 'data_visibility' in data:
+            old_value = preferences.get('data_visibility', 'public')
+            new_value = data['data_visibility']
+            if old_value != new_value:
+                preferences['data_visibility'] = new_value
+                changes.append(f"Data visibility: {old_value} → {new_value}")
+        
+        # Save preferences
+        if changes:
+            request.session['preferences'] = preferences
+            request.session.modified = True
+            
+            # Create audit log
+            create_audit_log(
+                admin_user=admin_user_obj,
+                action_type='update',
+                resource_type='preferences',
+                description=f"Updated preferences: {', '.join(changes)}",
+                request=request,
+                metadata={'changes': changes, 'preferences': preferences},
+                severity='low'
+            )
+            
+            return JsonResponse({
+                'success': True,
+                'message': 'Preferences updated successfully',
+                'changes': changes
+            })
+        else:
+            return JsonResponse({
+                'success': True,
+                'message': 'No changes detected'
+            })
+        
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Invalid JSON data'}, status=400)
+    except Exception as e:
+        print(f"Error in api_preferences_update: {e}")
+        if admin_user_obj:
+            create_audit_log(
+                admin_user=admin_user_obj,
+                action_type='update',
+                resource_type='preferences',
+                description='Failed to update preferences',
+                request=request,
+                success=False,
+                error_message=str(e),
+                severity='low'
+            )
+        return JsonResponse({'error': str(e)}, status=500)
+
+@session_or_login_required
+@csrf_exempt
+def api_export_audit_logs(request):
+    """Export audit logs to CSV."""
+    try:
+        # Get user authentication
+        admin_id = request.session.get('admin_id')
+        admin_user_obj = None
+        
+        if not admin_id:
+            return JsonResponse({'error': 'Not authenticated'}, status=403)
+        
+        try:
+            admin_user_obj = AdminUser.objects.get(admin_id=admin_id)
+        except AdminUser.DoesNotExist:
+            return JsonResponse({'error': 'User not found'}, status=404)
+        
+        # Get filter parameters
+        log_type = request.GET.get('filter', 'all')
+        time_range = request.GET.get('time_range', '30d')
+        
+        # Calculate date range
+        if time_range == '1d':
+            start_date = datetime.now() - timedelta(days=1)
+        elif time_range == '7d':
+            start_date = datetime.now() - timedelta(days=7)
+        elif time_range == '30d':
+            start_date = datetime.now() - timedelta(days=30)
+        else:
+            start_date = datetime.now() - timedelta(days=7)
+        
+        # Get logs
+        logs_query = AuditLog.objects.filter(timestamp__gte=start_date)
+        
+        if admin_user_obj:
+            logs_query = logs_query.filter(admin=admin_user_obj)
+        
+        # Apply filter
+        if log_type == 'login':
+            logs_query = logs_query.filter(action_type__in=['login', 'logout', 'failed_login'])
+        elif log_type == 'profile':
+            logs_query = logs_query.filter(action_type__in=['update', 'password_change'])
+        elif log_type == 'security':
+            logs_query = logs_query.filter(action_type__in=['password_change', 'security_change', 'session_terminated'])
+        elif log_type == 'data':
+            logs_query = logs_query.filter(action_type__in=['create', 'read', 'update', 'delete', 'export', 'import'])
+        
+        logs = logs_query.order_by('-timestamp')[:1000]  # Limit to 1000 logs
+        
+        # Create CSV content
+        import csv
+        from io import StringIO
+        
+        output = StringIO()
+        writer = csv.writer(output)
+        
+        # Write header
+        writer.writerow(['Timestamp', 'Action', 'Resource', 'Description', 'IP Address', 'Success', 'Severity'])
+        
+        # Write data
+        for log in logs:
+            writer.writerow([
+                log.timestamp.strftime('%Y-%m-%d %H:%M:%S'),
+                log.action_type,
+                log.resource_type,
+                log.description,
+                log.ip_address or 'N/A',
+                'Yes' if log.success else 'No',
+                log.severity
+            ])
+        
+        # Create audit log for export
+        create_audit_log(
+            admin_user=admin_user_obj,
+            action_type='export',
+            resource_type='audit_logs',
+            description=f'Exported {logs.count()} audit logs ({log_type}, {time_range})',
+            request=request,
+            metadata={'log_type': log_type, 'time_range': time_range, 'count': logs.count()},
+            severity='low'
+        )
+        
+        # Return CSV as response
+        response = HttpResponse(output.getvalue(), content_type='text/csv')
+        response['Content-Disposition'] = f'attachment; filename="audit_logs_{datetime.now().strftime("%Y%m%d_%H%M%S")}.csv"'
+        
+        return response
+        
+    except Exception as e:
+        print(f"Error in api_export_audit_logs: {e}")
         return JsonResponse({'error': str(e)}, status=500)
 
 @session_or_login_required

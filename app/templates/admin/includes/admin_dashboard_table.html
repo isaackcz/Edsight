@@ -1,0 +1,114 @@
+<!-- User Management Section -->
+<section class="table-container">
+    <div class="table-header">
+        <h2 class="section-title">User Management</h2>
+        <div class="actions">
+            <button class="btn btn-outline">
+                <i class="fas fa-plus"></i>
+                Add User
+            </button>
+            <button class="btn btn-primary">
+                <i class="fas fa-download"></i>
+                Export
+            </button>
+        </div>
+    </div>
+
+    <div class="table-filters">
+        <div class="search-box">
+            <i class="fas fa-search"></i>
+            <input type="text" placeholder="Search users..." />
+        </div>
+        <div class="filter-group">
+            <select>
+                <option>All Roles</option>
+                <option>Admin</option>
+                <option>Editor</option>
+                <option>Viewer</option>
+            </select>
+            <select>
+                <option>All Status</option>
+                <option>Active</option>
+                <option>Inactive</option>
+                <option>Suspended</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th><input type="checkbox" /></th>
+                    <th>User</th>
+                    <th>Role</th>
+                    <th>Status</th>
+                    <th>Last Login</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for activity in recent_activities|slice:":5" %}
+                <tr>
+                    <td><input type="checkbox" /></td>
+                    <td>
+                        <div class="user-cell">
+                            <div class="avatar">
+                                {% if activity.admin_user.username %}
+                                    {{ activity.admin_user.username|slice:":2"|upper }}
+                                {% else %}
+                                    AD
+                                {% endif %}
+                            </div>
+                            <div class="user-info">
+                                <div class="name">{{ activity.admin_user.username|default:"Admin User" }}</div>
+                                <div class="email">{{ activity.admin_user.email|default:"admin@example.com" }}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>{{ activity.admin_user.get_admin_level_display|default:"Admin" }}</td>
+                    <td><span class="status-badge active">Active</span></td>
+                    <td>{{ activity.timestamp|date:"M d, Y H:i"|default:"Never" }}</td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="icon-btn">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="icon-btn">
+                                <i class="fas fa-key"></i>
+                            </button>
+                            <button class="icon-btn">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" style="text-align: center; padding: 2rem; color: var(--text-muted);">
+                        No recent activity found
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="table-footer">
+        <div class="table-info">Showing 1 to 5 of {{ dashboard_stats.total_users|default:"0" }} entries</div>
+        <div class="pagination">
+            <button class="page-btn disabled">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+            <button class="page-btn active">1</button>
+            <button class="page-btn">2</button>
+            <button class="page-btn">3</button>
+            <span>...</span>
+            <button class="page-btn">25</button>
+            <button class="page-btn">
+                <i class="fas fa-chevron-right"></i>
+            </button>
+        </div>
+    </div>
+</section>
+

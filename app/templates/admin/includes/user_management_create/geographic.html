@@ -1,0 +1,126 @@
+<!-- Geographic Assignment Section -->
+<div class="col-xl-12 mb-4">
+    <div class="card profile-card-modern">
+        <div class="card-body-modern">
+            <h5 class="section-subtitle mb-4">
+                <i class="ph-bold ph-globe-hemisphere-west"></i>
+                Geographic Assignment
+            </h5>
+            
+            <div class="row g-3">
+                <!-- Region -->
+                <div class="col-xl-6 col-lg-6 col-md-12">
+                    <div class="form-group">
+                        <label for="createRegion" class="form-label">
+                            Region
+                        </label>
+                        <div class="autocomplete-wrapper">
+                            <input 
+                                type="text" 
+                                class="form-control autocomplete-input" 
+                                id="createRegion" 
+                                name="region" 
+                                autocomplete="off"
+                                placeholder="Search region..."
+                                data-type="region"
+                            />
+                            <input type="hidden" id="createRegionId" name="region_id" />
+                            <div class="autocomplete-dropdown" id="createRegionDropdown"></div>
+                        </div>
+                        <div class="invalid-feedback" id="createRegionError"></div>
+                    </div>
+                </div>
+                
+                <!-- Division -->
+                <div class="col-xl-6 col-lg-6 col-md-12">
+                    <div class="form-group">
+                        <label for="createDivision" class="form-label">
+                            Division
+                        </label>
+                        <div class="autocomplete-wrapper">
+                            <input 
+                                type="text" 
+                                class="form-control autocomplete-input" 
+                                id="createDivision" 
+                                name="division" 
+                                autocomplete="off"
+                                placeholder="Search division..."
+                                data-type="division"
+                            />
+                            <input type="hidden" id="createDivisionId" name="division_id" />
+                            <div class="autocomplete-dropdown" id="createDivisionDropdown"></div>
+                        </div>
+                        <div class="invalid-feedback" id="createDivisionError"></div>
+                    </div>
+                </div>
+                
+                <!-- District -->
+                <div class="col-xl-6 col-lg-6 col-md-12">
+                    <div class="form-group">
+                        <label for="createDistrict" class="form-label">
+                            District
+                        </label>
+                        <div class="autocomplete-wrapper">
+                            <input 
+                                type="text" 
+                                class="form-control autocomplete-input" 
+                                id="createDistrict" 
+                                name="district" 
+                                autocomplete="off"
+                                placeholder="Search district..."
+                                data-type="district"
+                            />
+                            <input type="hidden" id="createDistrictId" name="district_id" />
+                            <div class="autocomplete-dropdown" id="createDistrictDropdown"></div>
+                        </div>
+                        <div class="invalid-feedback" id="createDistrictError"></div>
+                    </div>
+                </div>
+                
+                <!-- School -->
+                <div class="col-xl-6 col-lg-6 col-md-12">
+                    <div class="form-group">
+                        <label for="createSchool" class="form-label">
+                            School
+                        </label>
+                        <div class="autocomplete-wrapper">
+                            <input 
+                                type="text" 
+                                class="form-control autocomplete-input" 
+                                id="createSchool" 
+                                name="school" 
+                                autocomplete="off"
+                                placeholder="Search by school ID or name..."
+                                data-type="school"
+                            />
+                            <input type="hidden" id="createSchoolId" name="school_id" />
+                            <div class="autocomplete-dropdown" id="createSchoolDropdown"></div>
+                        </div>
+                        <small class="form-text text-muted">
+                            Search by school ID or school name
+                        </small>
+                        <div class="invalid-feedback" id="createSchoolError"></div>
+                    </div>
+                </div>
+                
+                <!-- Assigned Area -->
+                <div class="col-xl-12">
+                    <div class="form-group">
+                        <label for="createAssignedArea" class="form-label">
+                            Assigned Area
+                        </label>
+                        <input 
+                            type="text" 
+                            class="form-control" 
+                            id="createAssignedArea" 
+                            name="assigned_area" 
+                            placeholder="Enter assigned area description"
+                        />
+                        <div class="invalid-feedback" id="createAssignedAreaError"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+

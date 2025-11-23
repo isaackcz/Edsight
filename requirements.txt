@@ -39,3 +39,4 @@ openpyxl>=3.1.2
 djangorestframework>=3.15.2
 whitenoise[brotli]>=6.6.0
 watchdog>=3.0.0
+websockets>=12.0

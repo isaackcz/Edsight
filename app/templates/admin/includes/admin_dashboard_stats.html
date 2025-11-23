@@ -1,0 +1,59 @@
+<!-- Analytics Cards Section -->
+<section class="cards-container">
+    <div class="stat-card">
+        <div class="stat-card-header">
+            <div class="stat-card-title">Total Users</div>
+            <div class="stat-card-icon bg-blue">
+                <i class="fas fa-users"></i>
+            </div>
+        </div>
+        <div class="stat-card-value">{{ dashboard_stats.total_users|default:"0" }}</div>
+        <div class="stat-card-footer">
+            <i class="fas fa-arrow-up positive"></i>
+            <span>Active users in system</span>
+        </div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-card-header">
+            <div class="stat-card-title">Active Sessions</div>
+            <div class="stat-card-icon bg-green">
+                <i class="fas fa-user-check"></i>
+            </div>
+        </div>
+        <div class="stat-card-value">{{ dashboard_stats.active_sessions|default:"0" }}</div>
+        <div class="stat-card-footer">
+            <i class="fas fa-circle positive"></i>
+            <span>Currently active</span>
+        </div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-card-header">
+            <div class="stat-card-title">Pending Requests</div>
+            <div class="stat-card-icon bg-orange">
+                <i class="fas fa-clipboard-list"></i>
+            </div>
+        </div>
+        <div class="stat-card-value">{{ dashboard_stats.pending_requests|default:"0" }}</div>
+        <div class="stat-card-footer">
+            <i class="fas fa-exclamation-circle warning"></i>
+            <span>Requires attention</span>
+        </div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-card-header">
+            <div class="stat-card-title">Upcoming Deadlines</div>
+            <div class="stat-card-icon bg-red">
+                <i class="fas fa-calendar-alt"></i>
+            </div>
+        </div>
+        <div class="stat-card-value">{{ upcoming_deadlines|length|default:"0" }}</div>
+        <div class="stat-card-footer">
+            <i class="fas fa-clock warning"></i>
+            <span>Deadlines approaching</span>
+        </div>
+    </div>
+</section>
+

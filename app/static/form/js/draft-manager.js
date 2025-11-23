@@ -19,6 +19,7 @@ class DraftManager {
     this.searchTerm = '';
     this.filterType = 'all';
     this.filterRequired = 'all';
+    this.sortOrder = 'asc';
     
     this.init();
   }
@@ -196,35 +197,52 @@ class DraftManager {
 
     // Create tree view layout directly in draftsContainer
     this.draftsContainer.innerHTML = `
-      <div class="treeview-sidebar">
-        <div class="sidebar-header">
-          <h3>Draft Questionnaires</h3>
-        </div>
-        <div class="treeview-content">
-          <div class="hierarchy-tree" id="draft-tree">
-            ${this.buildTreeHTML(categoriesList)}
+      <div class="row g-3 align-items-stretch">
+        <div class="col-12 col-lg-5 col-xl-4">
+          <div class="treeview-sidebar card border-0 shadow-sm rounded-4 h-100">
+            <div class="card-header bg-transparent border-0 pb-2">
+              <p class="text-uppercase text-secondary mb-1 small fw-medium">Categories & Topics</p>
+            </div>
+            <div class="treeview-content">
+              <div class="hierarchy-tree" id="draft-tree">
+                ${this.buildTreeHTML(categoriesList)}
+              </div>
+            </div>
           </div>
         </div>
-      </div>
-      <div class="treeview-resizer" id="treeview-resizer"></div>
-      <div class="main-content-area">
-        <div class="content-header">
-          <div class="content-title">
-            <h2>Select a Topic</h2>
-            <p>Choose a topic from the tree to view and edit its questions</p>
-          </div>
-        </div>
-        <div class="questions-container" id="questions-display">
-          <div class="empty-state">
-            <i class="ph ph-bold ph-files"></i>
-            <h3>No Topic Selected</h3>
-            <p>Select a topic from the tree to view its questions</p>
+        <div class="col-12 col-lg-7 col-xl-8">
+          <div class="main-content-area card border-0 shadow-sm rounded-4 h-100">
+            <div class="card-header bg-transparent border-0 pb-2">
+              <p class="text-uppercase text-secondary mb-1 small fw-medium">Topic Workspace</p>
+            </div>
+            <div class="questions-panel-body">
+              <div class="questions-container" id="questions-display">
+                <div class="empty-state text-center py-5">
+                  <i class="ph ph-bold ph-files fs-1 mb-2"></i>
+                  <h3 class="fw-semibold mb-1">No Topic Selected</h3>
+                  <p class="text-muted mb-0">Select a topic from the tree to view its questions</p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
     `;
 
+    const treeRoot = this.draftsContainer.querySelector('#draft-tree');
+    if (treeRoot) {
+      const firstNode = treeRoot.querySelector('.tree-node');
+      if (firstNode) {
+        firstNode.classList.add('expanded');
+        const firstChildren = firstNode.querySelector('.tree-children');
+        if (firstChildren) {
+          firstChildren.classList.remove('d-none');
+        }
+      }
+    }
+
     this.attachTreeEventHandlers();
+    this.updateExpandIcons();
     this.initializeResizer();
   }
 
@@ -236,50 +254,52 @@ class DraftManager {
       const topics = Array.isArray(cat.topics) ? cat.topics : [];
       const categoryIcon = this.getCategoryIcon(categoryName);
       return `
-        <div class="tree-node">
-          <div class="tree-node-item category-node" data-category="${categoryName}" data-category-id="${categoryId}">
-            <div class="tree-expand-icon">
+        <div class="tree-node border rounded-3 mb-3 bg-white">
+          <div class="tree-node-item category-node d-flex align-items-center gap-2 p-3" data-category="${categoryName}" data-category-id="${categoryId}">
+            <div class="tree-expand-icon btn btn-link p-0 text-decoration-none text-dark flex-shrink-0">
               <i class="ph ph-bold ph-caret-right"></i>
             </div>
-            <div class="tree-node-icon">
+            <div class="tree-node-icon text-primary flex-shrink-0">
               <i class="ph ph-bold ph-${categoryIcon}"></i>
             </div>
-            <div class="tree-node-label">${categoryName}</div>
-            <div class="tree-node-count">${topics.length}</div>
-            <div class="tree-node-actions">
-              <button class="tree-action-btn rename-btn" data-type="category" data-id="${categoryId}" title="Rename">
+            <div class="tree-node-label fw-semibold flex-grow-1 min-width-0">${categoryName}</div>
+            <span class="tree-node-count badge bg-light text-dark">${topics.length}</span>
+            <div class="tree-node-actions d-flex gap-2">
+              <button class="tree-action-btn rename-btn btn btn-outline-secondary btn-sm d-inline-flex align-items-center justify-content-center" data-type="category" data-id="${categoryId}" title="Rename">
                 <i class="ph ph-bold ph-pencil"></i>
               </button>
-              <button class="tree-action-btn delete-btn" data-type="category" data-id="${categoryId}" title="Delete">
+              <button class="tree-action-btn delete-btn btn btn-outline-danger btn-sm d-inline-flex align-items-center justify-content-center" data-type="category" data-id="${categoryId}" title="Delete">
                 <i class="ph ph-bold ph-trash"></i>
               </button>
             </div>
           </div>
-          <div class="tree-children">
-            ${topics.map(topic => {
-              const topicName = topic.topic || topic.name || 'Unnamed Topic';
-              return `
-              <div class="tree-node">
-                <div class="tree-node-item topic-node" data-topic-id="${topic.topic_id}" data-topic-name="${topicName}" data-category="${categoryName}">
-                  <div class="tree-node-icon">
+          <div class="tree-children d-none border-top bg-body-tertiary">
+            <div class="p-3 d-flex flex-column gap-2">
+              ${topics.map(topic => {
+                const topicName = topic.topic || topic.name || 'Unnamed Topic';
+                return `
+                <div class="tree-node">
+                <div class="tree-node-item topic-node d-flex align-items-center gap-2 py-2 px-3 rounded-3 bg-white shadow-sm" data-topic-id="${topic.topic_id}" data-topic-name="${topicName}" data-category="${categoryName}">
+                  <div class="tree-node-icon text-secondary flex-shrink-0">
                     <i class="ph ph-bold ph-files"></i>
                   </div>
-                  <div class="tree-node-label">${topicName}</div>
-                  <div class="tree-node-actions">
-                    <button class="tree-action-btn rename-btn" data-type="topic" data-id="${topic.topic_id}" title="Rename">
-                      <i class="ph ph-bold ph-pencil"></i>
-                    </button>
-                    <button class="tree-action-btn delete-btn" data-type="topic" data-id="${topic.topic_id}" title="Delete">
-                      <i class="ph ph-bold ph-trash"></i>
-                    </button>
+                  <div class="tree-node-label flex-grow-1 min-width-0">${topicName}</div>
+                    <div class="tree-node-actions d-flex gap-2">
+                      <button class="tree-action-btn rename-btn btn btn-outline-secondary btn-sm d-inline-flex align-items-center justify-content-center" data-type="topic" data-id="${topic.topic_id}" title="Rename">
+                        <i class="ph ph-bold ph-pencil"></i>
+                      </button>
+                      <button class="tree-action-btn delete-btn btn btn-outline-danger btn-sm d-inline-flex align-items-center justify-content-center" data-type="topic" data-id="${topic.topic_id}" title="Delete">
+                        <i class="ph ph-bold ph-trash"></i>
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            `;
-            }).join('')}
-            <div class="tree-add-button" data-type="topic" data-category-id="${categoryId}">
-              <i class="ph ph-bold ph-plus"></i>
-              <small>Add Topic</small>
+              `;
+              }).join('')}
+              <button type="button" class="tree-add-button btn btn-outline-primary btn-sm d-inline-flex align-items-center justify-content-center gap-2 mt-1" data-type="topic" data-category-id="${categoryId}">
+                <i class="ph ph-bold ph-plus"></i>
+                <span>Add Topic</span>
+              </button>
             </div>
           </div>
         </div>
@@ -288,10 +308,10 @@ class DraftManager {
 
     // Add + button for creating new categories
     const addCategoryButton = `
-      <div class="tree-add-button" data-type="category">
+      <button type="button" class="tree-add-button btn btn-outline-primary w-100 d-inline-flex align-items-center justify-content-center gap-2 mt-2" data-type="category">
         <i class="ph ph-bold ph-plus"></i>
-        <small>Add Category</small>
-      </div>
+        <span>Add Category</span>
+      </button>
     `;
 
     return categoriesHTML + addCategoryButton;
@@ -374,16 +394,46 @@ class DraftManager {
     this.attachHoverTooltips();
   }
 
-  // Toggle category expansion
+  // Toggle category expansion (accordion behavior)
   toggleCategory(categoryNode) {
-    const expandIcon = categoryNode.querySelector('.tree-expand-icon i');
     const treeNode = categoryNode.closest('.tree-node');
-    
-    if (treeNode) {
-      const isExpanded = treeNode.classList.contains('expanded');
-      treeNode.classList.toggle('expanded', !isExpanded);
-      expandIcon.className = isExpanded ? 'ph ph-bold ph-caret-right' : 'ph ph-bold ph-caret-down';
+    if (!treeNode) return;
+
+    const tree = document.getElementById('draft-tree');
+    const shouldExpand = !treeNode.classList.contains('expanded');
+
+    if (tree) {
+      tree.querySelectorAll('.tree-node').forEach((node) => {
+        if (node !== treeNode) {
+          node.classList.remove('expanded');
+          const siblingChildren = node.querySelector('.tree-children');
+          if (siblingChildren) siblingChildren.classList.add('d-none');
+        }
+      });
     }
+
+    const children = treeNode.querySelector('.tree-children');
+    if (shouldExpand) {
+      treeNode.classList.add('expanded');
+      if (children) children.classList.remove('d-none');
+    } else {
+      treeNode.classList.remove('expanded');
+      if (children) children.classList.add('d-none');
+    }
+    this.updateExpandIcons();
+  }
+
+  updateExpandIcons() {
+    const tree = document.getElementById('draft-tree');
+    if (!tree) return;
+
+    tree.querySelectorAll('.category-node').forEach((node) => {
+      const icon = node.querySelector('.tree-expand-icon i');
+      if (icon) {
+        const expanded = node.closest('.tree-node')?.classList.contains('expanded');
+        icon.className = expanded ? 'ph ph-bold ph-caret-down' : 'ph ph-bold ph-caret-right';
+      }
+    });
   }
 
   // Select topic and load questions
@@ -438,66 +488,90 @@ class DraftManager {
     this.currentPage = 1;
 
     questionsDisplay.innerHTML = `
-      <div class="questions-section">
-        <div class="section-header">
-          <div class="section-title">
-            <h3>Questions for "${topicName}"</h3>
-            <p class="section-description">Category: ${categoryName}</p>
-          </div>
-          <div class="section-actions">
-            <button type="button" id="add-question-in-edit" class="btn secondary modern-btn">
-              <i class="ph ph-bold ph-plus"></i>
-              <span>Add Question</span>
-            </button>
-          </div>
-        </div>
-        
-        <!-- Search and Filter Controls -->
-        <div class="questions-controls">
-          <div class="search-filter-row">
-            <div class="search-box">
-              <i class="ph ph-bold ph-magnifying-glass"></i>
-              <input type="text" id="question-search" placeholder="Search questions..." value="${this.searchTerm}">
+      <section class="questions-section card border-0 shadow-sm rounded-4 p-3 p-md-4">
+        <div class="container-fluid px-0">
+          <div class="row gy-3 align-items-center">
+            <div class="col-12 col-lg">
+              <p class="text-uppercase text-secondary mb-1 small fw-medium">Questions</p>
+              <h3 class="mb-1">Questions for "${topicName}"</h3>
+              <p class="text-muted mb-0">Category: ${categoryName}</p>
             </div>
-            <div class="filter-controls">
-              <select id="type-filter" class="filter-select">
-                <option value="all" ${this.filterType === 'all' ? 'selected' : ''}>All Types</option>
-                <option value="text" ${this.filterType === 'text' ? 'selected' : ''}>Text</option>
-                <option value="number" ${this.filterType === 'number' ? 'selected' : ''}>Number</option>
-                <option value="date" ${this.filterType === 'date' ? 'selected' : ''}>Date</option>
-                <option value="percentage" ${this.filterType === 'percentage' ? 'selected' : ''}>Percentage</option>
-              </select>
-              <select id="required-filter" class="filter-select">
-                <option value="all" ${this.filterRequired === 'all' ? 'selected' : ''}>All Questions</option>
-                <option value="required" ${this.filterRequired === 'required' ? 'selected' : ''}>Required Only</option>
-                <option value="optional" ${this.filterRequired === 'optional' ? 'selected' : ''}>Optional Only</option>
-              </select>
-              <select id="page-size" class="filter-select">
-                <option value="10" ${this.questionsPerPage === 10 ? 'selected' : ''}>10 per page</option>
-                <option value="25" ${this.questionsPerPage === 25 ? 'selected' : ''}>25 per page</option>
-                <option value="50" ${this.questionsPerPage === 50 ? 'selected' : ''}>50 per page</option>
-                <option value="100" ${this.questionsPerPage === 100 ? 'selected' : ''}>100 per page</option>
-              </select>
+            <div class="col-12 col-lg-auto">
+              <div class="d-flex justify-content-lg-end justify-content-start align-items-center gap-2 flex-wrap">
+                <button type="button" id="add-question-in-edit" class="btn d-inline-flex align-items-center gap-2"
+                  style="background-color: #4caf50; color: #fff; border: none; transition: background-color 0.2s; min-width: 210px;"
+                  onmouseover="this.style.backgroundColor='#1976d2'"
+                  onmouseout="this.style.backgroundColor='#4caf50'">
+                  <i class="ph ph-bold ph-plus"></i>
+                  <span>Add Question</span>
+                </button>
+                <button type="button" id="update-all-questions" class="btn btn-primary d-inline-flex align-items-center gap-2" style="min-width: 120px;">
+                  <i class="ph ph-bold ph-floppy-disk"></i>
+                  <span>Save Changes</span>
+                </button>
+              </div>
             </div>
           </div>
+          <div class="questions-controls mt-3">
+            <div class="row g-3 align-items-end">
+              <div class="col-12 col-xl-5">
+                <label for="question-search" class="form-label text-muted small mb-1">Search questions</label>
+                <div class="input-group">
+                  <span class="input-group-text bg-transparent border-end-0">
+                    <i class="ph ph-bold ph-magnifying-glass"></i>
+                  </span>
+                  <input type="text" id="question-search" class="form-control border-start-0" placeholder="Search questions..." value="${this.searchTerm}">
+                </div>
+              </div>
+              <div class="col-12 col-sm-4 col-xl-2">
+                <label for="type-filter" class="form-label text-muted small mb-1">Type</label>
+                <select id="type-filter" class="form-select form-select-sm w-100">
+                  <option value="all" ${this.filterType === 'all' ? 'selected' : ''}>All Types</option>
+                  <option value="text" ${this.filterType === 'text' ? 'selected' : ''}>Text</option>
+                  <option value="number" ${this.filterType === 'number' ? 'selected' : ''}>Number</option>
+                  <option value="date" ${this.filterType === 'date' ? 'selected' : ''}>Date</option>
+                  <option value="percentage" ${this.filterType === 'percentage' ? 'selected' : ''}>Percentage</option>
+                </select>
+              </div>
+              <div class="col-12 col-sm-4 col-xl-2">
+                <label for="required-filter" class="form-label text-muted small mb-1">Requirement</label>
+                <select id="required-filter" class="form-select form-select-sm w-100">
+                  <option value="all" ${this.filterRequired === 'all' ? 'selected' : ''}>All Questions</option>
+                  <option value="required" ${this.filterRequired === 'required' ? 'selected' : ''}>Required Only</option>
+                  <option value="optional" ${this.filterRequired === 'optional' ? 'selected' : ''}>Optional Only</option>
+                </select>
+              </div>
+              <div class="col-12 col-sm-4 col-xl-2">
+                <label for="page-size" class="form-label text-muted small mb-1">Per page</label>
+                <select id="page-size" class="form-select form-select-sm w-100">
+                  <option value="10" ${this.questionsPerPage === 10 ? 'selected' : ''}>10 per page</option>
+                  <option value="25" ${this.questionsPerPage === 25 ? 'selected' : ''}>25 per page</option>
+                  <option value="50" ${this.questionsPerPage === 50 ? 'selected' : ''}>50 per page</option>
+                  <option value="100" ${this.questionsPerPage === 100 ? 'selected' : ''}>100 per page</option>
+                </select>
+              </div>
+              <div class="col-12 col-sm-4 col-xl-1">
+                <label for="sort-order" class="form-label text-muted small mb-1">Order</label>
+                <select id="sort-order" class="form-select form-select-sm w-100">
+                  <option value="asc" ${this.sortOrder === 'asc' ? 'selected' : ''}>Asc</option>
+                  <option value="desc" ${this.sortOrder === 'desc' ? 'selected' : ''}>Desc</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          
+          
+          
+          <div class="questions-list mt-4" id="questions-list">
+            ${this.renderPaginatedQuestions()}
+          </div>
+          
+          <!-- Pagination Controls -->
+          <div class="pagination-controls mt-4 pt-3 border-top" id="pagination-controls">
+            ${this.renderPaginationControls()}
+          </div>
         </div>
-
-        <div class="form-actions modern-actions">
-          <button type="button" id="update-all-questions" class="btn primary modern-btn">
-            <i class="ph ph-bold ph-floppy-disk"></i>
-            <span>Save Changes</span>
-          </button>
-        </div>
-        
-        <div class="questions-list" id="questions-list">
-          ${this.renderPaginatedQuestions()}
-        </div>
-        
-        <!-- Pagination Controls -->
-        <div class="pagination-controls" id="pagination-controls">
-          ${this.renderPaginationControls()}
-        </div>
-      </div>
+      </section>
     `;
 
     this.attachQuestionsEventHandlers(questions, topicId, topicName, categoryName);
@@ -530,6 +604,13 @@ class DraftManager {
       filtered = filtered.filter(q => !q.is_required);
     }
     
+    // Apply sort order
+    filtered.sort((a, b) => {
+      const valueA = a.display_order ?? a.question_id ?? 0;
+      const valueB = b.display_order ?? b.question_id ?? 0;
+      return this.sortOrder === 'asc' ? valueA - valueB : valueB - valueA;
+    });
+    
     this.filteredQuestions = filtered;
     this.currentPage = 1; // Reset to first page when filtering
   }
@@ -548,35 +629,37 @@ class DraftManager {
     
     if (this.filteredQuestions.length === 0) {
       return `
-        <div class="empty-questions">
-          <i class="ph ph-bold ph-question-mark"></i>
-          <h4>No Questions Found</h4>
-          <p>Try adjusting your search or filter criteria</p>
+        <div class="empty-questions text-center py-5 border rounded-4 bg-white">
+          <i class="ph ph-bold ph-question-mark fs-1 mb-2"></i>
+          <h4 class="fw-semibold mb-1">No Questions Found</h4>
+          <p class="text-muted mb-0">Try adjusting your search or filter criteria</p>
         </div>
       `;
     }
 
     const startIndex = (this.currentPage - 1) * this.questionsPerPage;
     return paginatedQuestions.map((question, index) => `
-      <div class="question-card" data-question-id="${question.question_id || ''}">
-        <div class="question-header">
-          <div class="question-number">${startIndex + index + 1}</div>
-          <div class="question-type">
-            <span class="type-badge">${question.answer_type || 'text'}</span>
-            ${question.is_required ? '<span class="required-badge">Required</span>' : ''}
+      <div class="question-card border rounded-4 p-3 p-md-4 mb-3 bg-white shadow-sm" data-question-id="${question.question_id || ''}">
+        <div class="question-header d-flex flex-wrap justify-content-between align-items-start gap-3">
+          <div class="d-flex align-items-center gap-2">
+            <span class="question-number badge bg-primary-subtle text-primary fw-semibold">${(question.display_order ?? (startIndex + index + 1))}</span>
+            <div class="question-type d-flex flex-wrap gap-2">
+              <span class="type-badge badge bg-light text-dark text-uppercase">${question.answer_type || 'text'}</span>
+              ${question.is_required ? '<span class="required-badge badge bg-danger-subtle text-danger">Required</span>' : ''}
+            </div>
           </div>
-          <div class="question-actions">
-            <button class="btn-icon edit-question" data-id="${question.question_id || ''}" title="Edit">
+          <div class="question-actions d-flex gap-2">
+            <button class="btn-icon edit-question btn btn-outline-secondary btn-sm d-inline-flex align-items-center justify-content-center" data-id="${question.question_id || ''}" title="Edit">
               <i class="ph ph-bold ph-pencil"></i>
             </button>
-            <button class="btn-icon delete-question" data-id="${question.question_id || ''}" title="Delete">
+            <button class="btn-icon delete-question btn btn-outline-danger btn-sm d-inline-flex align-items-center justify-content-center" data-id="${question.question_id || ''}" title="Delete">
               <i class="ph ph-bold ph-trash"></i>
             </button>
           </div>
         </div>
-        <div class="question-content">
-          <div class="question-text-display">${question.question_text || 'Untitled Question'}</div>
-          ${question.answer_description ? `<div class="question-description">${question.answer_description}</div>` : ''}
+        <div class="question-content mt-3">
+          <div class="question-text-display fw-medium">${question.question_text || 'Untitled Question'}</div>
+          ${question.answer_description ? `<div class="question-description text-muted mt-2">${question.answer_description}</div>` : ''}
         </div>
       </div>
     `).join('');
@@ -588,23 +671,27 @@ class DraftManager {
     const startItem = (this.currentPage - 1) * this.questionsPerPage + 1;
     const endItem = Math.min(this.currentPage * this.questionsPerPage, this.filteredQuestions.length);
     
-    if (totalPages <= 1) return '';
-
-    let paginationHTML = `
-      <div class="pagination-info">
-        Showing ${startItem}-${endItem} of ${this.filteredQuestions.length} questions
+    const infoMarkup = `
+      <div class="col-12 col-lg">
+        <p class="pagination-info text-muted small mb-0">
+          Showing ${this.filteredQuestions.length === 0 ? 0 : startItem}-${endItem} of ${this.filteredQuestions.length} questions
+        </p>
       </div>
-      <div class="pagination-buttons">
     `;
 
-    // Previous button
+    if (totalPages <= 1) {
+      return `<div class="row gy-2 align-items-center">${infoMarkup}</div>`;
+    }
+
+    let buttonsMarkup = '';
+
     if (this.currentPage > 1) {
-      paginationHTML += `<button class="pagination-btn prev-btn" data-page="${this.currentPage - 1}">
-        <i class="ph ph-bold ph-caret-left"></i> Previous
+      buttonsMarkup += `<button type="button" class="pagination-btn prev-btn btn btn-outline-secondary btn-sm d-inline-flex align-items-center gap-1" data-page="${this.currentPage - 1}">
+        <i class="ph ph-bold ph-caret-left"></i>
+        <span>Previous</span>
       </button>`;
     }
 
-    // Page numbers
     const maxVisiblePages = 5;
     let startPage = Math.max(1, this.currentPage - Math.floor(maxVisiblePages / 2));
     let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
@@ -614,32 +701,40 @@ class DraftManager {
     }
 
     if (startPage > 1) {
-      paginationHTML += `<button class="pagination-btn page-btn" data-page="1">1</button>`;
+      buttonsMarkup += `<button type="button" class="pagination-btn page-btn btn btn-outline-secondary btn-sm" data-page="1">1</button>`;
       if (startPage > 2) {
-        paginationHTML += `<span class="pagination-ellipsis">...</span>`;
+        buttonsMarkup += `<span class="pagination-ellipsis d-inline-flex align-items-center text-muted">...</span>`;
       }
     }
 
     for (let i = startPage; i <= endPage; i++) {
-      paginationHTML += `<button class="pagination-btn page-btn ${i === this.currentPage ? 'active' : ''}" data-page="${i}">${i}</button>`;
+      buttonsMarkup += `<button type="button" class="pagination-btn page-btn btn btn-sm ${i === this.currentPage ? 'btn-primary text-white' : 'btn-outline-secondary'}" data-page="${i}">${i}</button>`;
     }
 
     if (endPage < totalPages) {
       if (endPage < totalPages - 1) {
-        paginationHTML += `<span class="pagination-ellipsis">...</span>`;
+        buttonsMarkup += `<span class="pagination-ellipsis d-inline-flex align-items-center text-muted">...</span>`;
       }
-      paginationHTML += `<button class="pagination-btn page-btn" data-page="${totalPages}">${totalPages}</button>`;
+      buttonsMarkup += `<button type="button" class="pagination-btn page-btn btn btn-outline-secondary btn-sm" data-page="${totalPages}">${totalPages}</button>`;
     }
 
-    // Next button
     if (this.currentPage < totalPages) {
-      paginationHTML += `<button class="pagination-btn next-btn" data-page="${this.currentPage + 1}">
-        Next <i class="ph ph-bold ph-caret-right"></i>
+      buttonsMarkup += `<button type="button" class="pagination-btn next-btn btn btn-outline-secondary btn-sm d-inline-flex align-items-center gap-1" data-page="${this.currentPage + 1}">
+        <span>Next</span>
+        <i class="ph ph-bold ph-caret-right"></i>
       </button>`;
     }
 
-    paginationHTML += `</div>`;
-    return paginationHTML;
+    return `
+      <div class="row gy-3 align-items-center">
+        ${infoMarkup}
+        <div class="col-12 col-lg-auto">
+          <div class="d-flex flex-wrap gap-2 justify-content-lg-end">
+            ${buttonsMarkup}
+          </div>
+        </div>
+      </div>
+    `;
   }
 
   // Attach pagination event handlers
@@ -694,6 +789,14 @@ class DraftManager {
       pageSizeSelect.addEventListener('change', (e) => {
         this.questionsPerPage = parseInt(e.target.value);
         this.currentPage = 1;
+        this.refreshQuestionsDisplay();
+      });
+    }
+
+    const sortOrderSelect = document.getElementById('sort-order');
+    if (sortOrderSelect) {
+      sortOrderSelect.addEventListener('change', (e) => {
+        this.sortOrder = e.target.value;
         this.refreshQuestionsDisplay();
       });
     }
@@ -846,30 +949,34 @@ class DraftManager {
 
   // Delete question
   async deleteQuestion(questionId, topicId, topicName, categoryName) {
-    if (confirm('Are you sure you want to delete this question?')) {
-      try {
-        const response = await fetch(`/api/questions/${questionId}/`, {
-          method: 'DELETE',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': this.getCookie('csrftoken')
-          },
-        });
-        
-        if (!response.ok) {
-          throw new Error('Failed to delete question');
+    this.showDeleteConfirmation(
+      'Delete Question',
+      `Are you sure you want to delete this question from "${topicName}"?`,
+      async () => {
+        try {
+          const response = await fetch(`/api/questions/${questionId}/`, {
+            method: 'DELETE',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRFToken': this.getCookie('csrftoken')
+            },
+          });
+          
+          if (!response.ok) {
+            throw new Error('Failed to delete question');
+          }
+          
+          // Refresh the questions display
+          await this.refreshQuestionsDisplay();
+          
+          this.showSnackbar("Question deleted successfully!", { background: "#4caf50" });
+          
+        } catch (error) {
+          console.error('Error deleting question:', error);
+          this.showSnackbar("Failed to delete question: " + (error.message || "Unknown error"), { background: "#f44336" });
         }
-        
-        // Refresh the questions display
-        await this.refreshQuestionsDisplay();
-        
-        this.showSnackbar("Question deleted successfully!", { background: "#4caf50" });
-        
-      } catch (error) {
-        console.error('Error deleting question:', error);
-        this.showSnackbar("Failed to delete question: " + (error.message || "Unknown error"), { background: "#f44336" });
       }
-    }
+    );
   }
 
   // Fetch topic questions
@@ -1119,197 +1226,276 @@ class DraftManager {
 
   // Show create question modal
   showCreateQuestionModal(topicId, categoryName, topicName) {
-    // Remove existing modal if any
     const existingModal = document.getElementById('create-question-modal');
     if (existingModal) {
       existingModal.remove();
     }
 
-    // Create modal HTML
     const modalHTML = `
-      <div id="create-question-modal" class="modal-overlay">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h3>Create New Question</h3>
-            <button class="modal-close" id="close-create-modal">&times;</button>
-          </div>
-          <div class="modal-body">
-            <form id="create-question-form">
-              <div class="form-group">
-                <label for="create-question-text">Question Text *</label>
-                <textarea id="create-question-text" name="question_text" required rows="3" placeholder="Enter your question..."></textarea>
+      <div class="modal fade" id="create-question-modal" tabindex="-1" aria-labelledby="createQuestionModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+          <div class="modal-content border-0 rounded-3 shadow">
+            <div class="modal-header border-0 pb-0">
+              <div class="w-100">
+                <div class="d-flex justify-content-between align-items-start">
+                  <p class="text-uppercase text-secondary mb-1 small fw-medium">Questions</p>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="d-flex flex-wrap justify-content-between align-items-start gap-2">
+                  <h3 class="modal-title mb-1" id="createQuestionModalLabel">Create New Question</h3>
+                  <span class="badge bg-light text-dark border text-uppercase fw-semibold">Draft</span>
+                </div>
+                <div class="d-flex flex-column gap-2 mt-1">
+                  <span class="badge bg-primary-subtle text-primary fw-medium">Category: ${categoryName}</span>
+                  <span class="badge bg-secondary-subtle text-secondary fw-medium">Topic: ${topicName}</span>
+                </div>
               </div>
-              
-              <div class="form-group">
-                <label for="create-answer-type">Answer Type *</label>
-                <select id="create-answer-type" name="answer_type" required>
-                  <option value="text">Text</option>
-                  <option value="number">Number</option>
-                  <option value="date">Date</option>
-                  <option value="percentage">Percentage</option>
-                </select>
-              </div>
+            </div>
+            <div class="modal-body pt-3">
+              <form id="create-question-form" class="rounded-4 shadow-sm bg-light px-3 py-4">
+                <div class="row g-4 align-items-end">
+                  <div class="col-12 mb-2">
+                    <label for="create-question-text" class="form-label text-muted fw-semibold text-uppercase mb-2" style="font-size:1rem;letter-spacing:0.05em;">
+                      <span class="me-1">Question Text</span>
+                      <span class="text-danger">*</span>
+                    </label>
+                    <textarea id="create-question-text" name="question_text" required rows="3"
+                      class="form-control form-control-lg rounded-3 shadow-none px-3 py-2"
+                      style="min-height:92px;font-size:1.1rem;resize:vertical;background-color:#f8fafb;border:1.5px solid #e0e3e8;"
+                      placeholder="Enter your question here..."></textarea>
+                  </div>
 
-              <div class="form-group">
-                <label class="checkbox-label">
-                  <input type="checkbox" id="create-is-required" name="is_required">
-                  <span class="checkmark"></span>
-                  Required Question
-                </label>
+                  <div class="col-md-7 mb-2">
+                    <label for="create-answer-type" class="form-label text-muted fw-semibold text-uppercase mb-2" style="font-size:1rem;letter-spacing:0.05em;">
+                      <span class="me-1">Answer Type</span>
+                      <span class="text-danger">*</span>
+                    </label>
+                    <div class="input-group">
+                      <span class="input-group-text bg-white border-end-0 text-primary px-3" style="font-size:1.3em;">
+                        <i class="ph ph-bold ph-file-text"></i>
+                      </span>
+                      <select id="create-answer-type" name="answer_type" required
+                        class="form-select form-select-lg border-start-0 rounded-end"
+                        style="font-size:1.07rem;">
+                        <option value="text">Text</option>
+                        <option value="number">Number</option>
+                        <option value="date">Date</option>
+                        <option value="percentage">Percentage</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div class="col-md-5 mb-2 d-flex align-items-center" style="margin-top:28px;">
+                    <div class="form-check ms-2 ps-2 flex-fill">
+                      <input type="checkbox" id="create-is-required"
+                        name="is_required"
+                        class="form-check-input bg-primary border-2 border-primary"
+                        checked
+                        style="width:1.35em;height:1.35em;cursor:pointer;">
+                      <label class="form-check-label fw-semibold ms-2 user-select-none" for="create-is-required"
+                        style="font-size:1.05rem;">
+                        Required
+                        <span class="ms-1 text-muted small">(user must answer)</span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+                <div class="row mt-4">
+                  <div class="col-12">
+                    <div class="p-3 border rounded-3 bg-white w-100 shadow-sm">
+                      <p class="fw-semibold mb-2 text-dark">Answer Type Tips</p>
+                      <ul class="mb-0 small text-muted ps-3">
+                        <li><span class="text-primary"><strong>Text</strong></span> – For qualitative responses.</li>
+                        <li><span class="text-primary"><strong>Number</strong></span> – Only numeric values allowed.</li>
+                        <li><span class="text-primary"><strong>Date</strong></span> – Selects a calendar date.</li>
+                        <li><span class="text-primary"><strong>Percentage</strong></span> – Value between 0-100.</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </form>
+            </div>
+            <div class="modal-footer border-0 pt-0 d-flex justify-content-between align-items-center">
+              <div class="text-muted small">Fields marked with <span class="text-danger">*</span> are required.</div>
+              <div class="d-flex gap-2">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="save-create-question">
+                  <i class="ph ph-plus"></i>
+                  Create Question
+                </button>
               </div>
-            </form>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn secondary" id="cancel-create-question">Cancel</button>
-            <button type="button" class="btn primary" id="save-create-question">Create Question</button>
+            </div>
           </div>
         </div>
       </div>
     `;
 
-    // Add modal to page
     document.body.insertAdjacentHTML('beforeend', modalHTML);
 
-    // Attach event listeners
+    const modalElement = document.getElementById('create-question-modal');
+    if (!(window.bootstrap && bootstrap.Modal) || !modalElement) {
+      console.error('Bootstrap modal not available.');
+      return;
+    }
+
+    modalElement.addEventListener('hidden.bs.modal', () => modalElement.remove(), { once: true });
+    const modalInstance = new bootstrap.Modal(modalElement);
+    modalInstance.show();
+
     this.attachCreateModalEventHandlers(topicId, categoryName, topicName);
   }
 
   // Show edit question modal
   showEditQuestionModal(question) {
-    // Remove existing modal if any
     const existingModal = document.getElementById('edit-question-modal');
     if (existingModal) {
       existingModal.remove();
     }
 
-    // Create modal HTML
     const modalHTML = `
-      <div id="edit-question-modal" class="modal-overlay">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h3>Edit Question</h3>
-            <button class="modal-close" id="close-edit-modal">&times;</button>
-          </div>
-          <div class="modal-body">
-            <form id="edit-question-form">
-              <div class="form-group">
-                <label for="edit-question-text">Question Text *</label>
-                <textarea id="edit-question-text" name="question_text" required rows="3" placeholder="Enter your question...">${question.question_text || ''}</textarea>
+      <div class="modal fade" id="edit-question-modal" tabindex="-1" aria-labelledby="editQuestionModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+          <div class="modal-content border-0 rounded-3 shadow">
+            <div class="modal-header border-0 pb-0">
+              <div class="w-100">
+                <div class="d-flex justify-content-between align-items-start">
+                  <p class="text-uppercase text-secondary mb-1 small fw-medium">Questions</p>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="d-flex flex-wrap justify-content-between align-items-start gap-2">
+                  <h3 class="modal-title mb-1" id="editQuestionModalLabel">Edit Question</h3>
+                  <span class="badge bg-light text-dark border text-uppercase fw-semibold">Existing</span>
+                </div>
+                <p class="text-muted mb-0 small">Review or update the question details below.</p>
               </div>
-              
-              <div class="form-group">
-                <label for="edit-answer-type">Answer Type *</label>
-                <select id="edit-answer-type" name="answer_type" required>
-                  <option value="text" ${question.answer_type === 'text' ? 'selected' : ''}>Text</option>
-                  <option value="number" ${question.answer_type === 'number' ? 'selected' : ''}>Number</option>
-                  <option value="date" ${question.answer_type === 'date' ? 'selected' : ''}>Date</option>
-                  <option value="percentage" ${question.answer_type === 'percentage' ? 'selected' : ''}>Percentage</option>
-                </select>
+            </div>
+            <div class="modal-body pt-3">
+              <form id="edit-question-form" class="rounded-4 shadow-sm bg-light px-3 py-4">
+                <div class="row g-4 align-items-end">
+                  <div class="col-12 mb-2">
+                    <label for="edit-question-text" class="form-label text-muted fw-semibold text-uppercase mb-2" style="font-size:1rem;letter-spacing:0.05em;">
+                      <span class="me-1">Question Text</span>
+                      <span class="text-danger">*</span>
+                    </label>
+                    <textarea id="edit-question-text" name="question_text" required rows="3"
+                      class="form-control form-control-lg rounded-3 shadow-none px-3 py-2"
+                      style="min-height:92px;font-size:1.1rem;resize:vertical;background-color:#f8fafb;border:1.5px solid #e0e3e8;"
+                      placeholder="Enter your question here...">${question.question_text || ''}</textarea>
+                  </div>
+                  
+                  <div class="col-md-7 mb-2">
+                    <label for="edit-answer-type" class="form-label text-muted fw-semibold text-uppercase mb-2" style="font-size:1rem;letter-spacing:0.05em;">
+                      <span class="me-1">Answer Type</span>
+                      <span class="text-danger">*</span>
+                    </label>
+                    <div class="input-group">
+                      <span class="input-group-text bg-white border-end-0 text-primary px-3" style="font-size:1.3em;">
+                        <i class="ph ph-bold ph-file-text"></i>
+                      </span>
+                      <select id="edit-answer-type" name="answer_type" required
+                        class="form-select form-select-lg border-start-0 rounded-end"
+                        style="font-size:1.07rem;">
+                        <option value="text" ${question.answer_type === 'text' ? 'selected' : ''}>Text</option>
+                        <option value="number" ${question.answer_type === 'number' ? 'selected' : ''}>Number</option>
+                        <option value="date" ${question.answer_type === 'date' ? 'selected' : ''}>Date</option>
+                        <option value="percentage" ${question.answer_type === 'percentage' ? 'selected' : ''}>Percentage</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div class="col-md-5 mb-2 d-flex align-items-center" style="margin-top:28px;">
+                    <div class="form-check ms-2 ps-2 flex-fill">
+                      <input type="checkbox" id="edit-is-required"
+                        name="is_required"
+                        class="form-check-input bg-primary border-2 border-primary"
+                        ${question.is_required ? 'checked' : ''}
+                        style="width:1.35em;height:1.35em;cursor:pointer;">
+                      <label class="form-check-label fw-semibold ms-2 user-select-none" for="edit-is-required"
+                        style="font-size:1.05rem;">
+                        Required
+                        <span class="ms-1 text-muted small">(user must answer)</span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+                <div class="row mt-4">
+                  <div class="col-12">
+                    <div class="p-3 border rounded-3 bg-white w-100 shadow-sm">
+                      <p class="fw-semibold mb-2 text-dark">Editing Guidance</p>
+                      <ul class="mb-0 small text-muted ps-3">
+                        <li>Keep the question concise and measurable.</li>
+                        <li>Choose the answer type that matches reporting.</li>
+                        <li>Mark as required only when essential.</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </form>
+            </div>
+            <div class="modal-footer border-0 pt-0 d-flex justify-content-between align-items-center">
+              <div class="text-muted small">Fields marked with <span class="text-danger">*</span> are required.</div>
+              <div class="d-flex gap-2">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="save-edit-question">
+                  <i class="ph ph-floppy-disk"></i>
+                  Save Changes
+                </button>
               </div>
-
-
-
-              <div class="form-group">
-                <label class="checkbox-label">
-                  <input type="checkbox" id="edit-is-required" name="is_required" ${question.is_required ? 'checked' : ''}>
-                  <span class="checkmark"></span>
-                  Required Question
-                </label>
-              </div>
-
-            </form>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn secondary" id="cancel-edit-question">Cancel</button>
-            <button type="button" class="btn primary" id="save-edit-question">Save Changes</button>
+            </div>
           </div>
         </div>
       </div>
     `;
 
-    // Add modal to page
     document.body.insertAdjacentHTML('beforeend', modalHTML);
 
-    // Attach event listeners
+    const modalElement = document.getElementById('edit-question-modal');
+    if (!(window.bootstrap && bootstrap.Modal) || !modalElement) {
+      console.error('Bootstrap modal not available.');
+      return;
+    }
+
+    modalElement.addEventListener('hidden.bs.modal', () => modalElement.remove(), { once: true });
+    const modalInstance = new bootstrap.Modal(modalElement);
+    modalInstance.show();
+
     this.attachEditModalEventHandlers(question.question_id);
   }
 
   // Attach create modal event handlers
   attachCreateModalEventHandlers(topicId, categoryName, topicName) {
-    const modal = document.getElementById('create-question-modal');
-    const closeBtn = document.getElementById('close-create-modal');
-    const cancelBtn = document.getElementById('cancel-create-question');
     const saveBtn = document.getElementById('save-create-question');
     const answerTypeSelect = document.getElementById('create-answer-type');
+    const questionText = document.getElementById('create-question-text');
 
-    // Close modal handlers
-    const closeModal = () => modal.remove();
-    
-    closeBtn.addEventListener('click', closeModal);
-    cancelBtn.addEventListener('click', closeModal);
-
-    // Close on overlay click
-    modal.addEventListener('click', (e) => {
-      if (e.target === modal) closeModal();
-    });
-
-    // Handle answer type change
-    answerTypeSelect.addEventListener('change', (e) => {
-      // Clear any errors when user changes selection
+    answerTypeSelect?.addEventListener('change', () => {
       this.clearFieldError('create-answer-type');
     });
 
-    // Add real-time validation
-    const questionText = document.getElementById('create-question-text');
-    
-    if (questionText) {
-      questionText.addEventListener('input', () => {
-        this.clearFieldError('create-question-text');
-      });
-    }
+    questionText?.addEventListener('input', () => {
+      this.clearFieldError('create-question-text');
+    });
 
-    // Save question
-    saveBtn.addEventListener('click', async () => {
+    saveBtn?.addEventListener('click', async () => {
       await this.saveNewQuestion(topicId, categoryName, topicName);
     });
   }
 
   // Attach edit modal event handlers
   attachEditModalEventHandlers(questionId) {
-    const modal = document.getElementById('edit-question-modal');
-    const closeBtn = document.getElementById('close-edit-modal');
-    const cancelBtn = document.getElementById('cancel-edit-question');
     const saveBtn = document.getElementById('save-edit-question');
     const answerTypeSelect = document.getElementById('edit-answer-type');
+    const questionText = document.getElementById('edit-question-text');
 
-    // Close modal handlers
-    const closeModal = () => modal.remove();
-    
-    closeBtn.addEventListener('click', closeModal);
-    cancelBtn.addEventListener('click', closeModal);
-
-    // Close on overlay click
-    modal.addEventListener('click', (e) => {
-      if (e.target === modal) closeModal();
-    });
-
-    // Handle answer type change
-    answerTypeSelect.addEventListener('change', (e) => {
-      // Clear any errors when user changes selection
+    answerTypeSelect?.addEventListener('change', () => {
       this.clearFieldError('edit-answer-type');
     });
 
-    // Add real-time validation
-    const questionText = document.getElementById('edit-question-text');
-    
-    if (questionText) {
-      questionText.addEventListener('input', () => {
-        this.clearFieldError('edit-question-text');
-      });
-    }
+    questionText?.addEventListener('input', () => {
+      this.clearFieldError('edit-question-text');
+    });
 
-    // Save question
-    saveBtn.addEventListener('click', async () => {
+    saveBtn?.addEventListener('click', async () => {
       await this.saveEditedQuestion(questionId);
     });
   }
@@ -1359,11 +1545,9 @@ class DraftManager {
         is_required: isRequired
       };
 
-      // Create question
       await this.createQuestion(payload);
       
-      // Close modal
-      document.getElementById('create-question-modal').remove();
+      this.hideModal('create-question-modal');
       
       // Refresh the questions display
       await this.refreshQuestionsDisplay();
@@ -1424,11 +1608,9 @@ class DraftManager {
         is_required: isRequired
       };
 
-      // Update question
       await this.updateQuestion(questionId, payload);
       
-      // Close modal
-      document.getElementById('edit-question-modal').remove();
+      this.hideModal('edit-question-modal');
       
       // Refresh the questions display
       await this.refreshQuestionsDisplay();
@@ -1444,13 +1626,27 @@ class DraftManager {
     }
   }
 
+  hideModal(modalId) {
+    const modalElement = document.getElementById(modalId);
+    if (!modalElement) return;
+    const instance =
+      window.bootstrap && bootstrap.Modal
+        ? bootstrap.Modal.getInstance(modalElement)
+        : null;
+    if (instance) {
+      instance.hide();
+    } else {
+      modalElement.remove();
+    }
+  }
+
   // Clear validation errors
   clearValidationErrors() {
     document.querySelectorAll('.form-group').forEach(group => {
       group.classList.remove('error');
       const input = group.querySelector('input, textarea, select');
       if (input) {
-        input.classList.remove('error');
+        input.classList.remove('error', 'is-invalid');
       }
       const errorMsg = group.querySelector('.error-message');
       if (errorMsg) {
@@ -1469,7 +1665,7 @@ class DraftManager {
 
     // Add error class
     formGroup.classList.add('error');
-    field.classList.add('error');
+    field.classList.add('error', 'is-invalid');
 
     // Remove existing error message
     const existingError = formGroup.querySelector('.error-message');
@@ -1493,7 +1689,7 @@ class DraftManager {
     if (!formGroup) return;
 
     formGroup.classList.remove('error');
-    field.classList.remove('error');
+    field.classList.remove('error', 'is-invalid');
     
     const errorMsg = formGroup.querySelector('.error-message');
     if (errorMsg) {
@@ -1637,6 +1833,12 @@ class DraftManager {
     input.value = currentValue;
     input.placeholder = placeholder;
     input.className = 'tree-inline-input';
+    input.addEventListener('click', (event) => {
+      event.stopPropagation();
+    });
+    input.addEventListener('mousedown', (event) => {
+      event.stopPropagation();
+    });
     
     let isRemoved = false;
     
@@ -1664,6 +1866,7 @@ class DraftManager {
       if (type === 'category' && id) {
         const categoryNode = document.querySelector(`[data-category-id="${id}"]`);
         if (categoryNode) {
+          categoryNode.classList.remove('editing');
           const label = categoryNode.querySelector('.tree-node-label');
           const icon = categoryNode.querySelector('.tree-node-icon');
           const actions = categoryNode.querySelector('.tree-node-actions');
@@ -1674,6 +1877,7 @@ class DraftManager {
       } else if (type === 'topic' && id) {
         const topicNode = document.querySelector(`[data-topic-id="${id}"]`);
         if (topicNode) {
+          topicNode.classList.remove('editing');
           const label = topicNode.querySelector('.tree-node-label');
           const icon = topicNode.querySelector('.tree-node-icon');
           const actions = topicNode.querySelector('.tree-node-actions');
@@ -1702,6 +1906,7 @@ class DraftManager {
       // Rename category - replace the label with input
       const categoryNode = document.querySelector(`[data-category-id="${id}"]`);
       if (categoryNode) {
+        categoryNode.classList.add('editing');
         const label = categoryNode.querySelector('.tree-node-label');
         const icon = categoryNode.querySelector('.tree-node-icon');
         const actions = categoryNode.querySelector('.tree-node-actions');
@@ -1718,6 +1923,7 @@ class DraftManager {
       const topicNode = document.querySelector(`[data-topic-id="${id}"]`);
       if (topicNode) {
         // Rename topic - replace the label with input
+        topicNode.classList.add('editing');
         const label = topicNode.querySelector('.tree-node-label');
         const icon = topicNode.querySelector('.tree-node-icon');
         const actions = topicNode.querySelector('.tree-node-actions');
@@ -1773,7 +1979,7 @@ class DraftManager {
     modal.className = 'confirm-delete-popup';
     modal.style.cssText = `
       position: relative;
-      background: var(--white);
+      background: white;
       border: 1px solid var(--border-color);
       border-radius: var(--border-radius);
       box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
@@ -1796,7 +2002,7 @@ class DraftManager {
         <button class="btn-cancel" style="
           padding: 10px 20px;
           border: 1px solid var(--border-color);
-          border-radius: 6px;
+          border-radius: 4px;
           background: var(--white);
           color: var(--text-heading);
           cursor: pointer;
@@ -1809,9 +2015,9 @@ class DraftManager {
         <button class="btn-confirm" style="
           padding: 10px 20px;
           border: none;
-          border-radius: 6px;
+          border-radius: 4px;
           background: var(--danger, #dc2626);
-          color: var(--white);
+          color: white;
           cursor: pointer;
           font-size: 0.9rem;
           font-weight: 500;
@@ -1878,7 +2084,7 @@ class DraftManager {
     if (!tree) return;
 
     // Remove existing tooltips
-    document.querySelectorAll('.tree-hover-tooltip').forEach(tooltip => tooltip.remove());
+    document.querySelectorAll('.tree-tooltip').forEach(tooltip => tooltip.remove());
 
     // Add tooltips to category and topic labels
     const labels = tree.querySelectorAll('.tree-node-label');
@@ -1903,11 +2109,10 @@ class DraftManager {
       if (tooltip) return;
       
       tooltip = document.createElement('div');
-      tooltip.className = 'tree-hover-tooltip';
+      tooltip.className = 'tree-tooltip';
       tooltip.textContent = text;
       document.body.appendChild(tooltip);
 
-      // Position tooltip
       const rect = element.getBoundingClientRect();
       const tooltipRect = tooltip.getBoundingClientRect();
       
@@ -1917,12 +2122,7 @@ class DraftManager {
       tooltip.style.left = `${Math.max(8, Math.min(window.innerWidth - tooltipRect.width - 8, left))}px`;
       tooltip.style.top = `${Math.max(8, top)}px`;
 
-      // Show with animation
-      setTimeout(() => {
-        if (tooltip) {
-          tooltip.classList.add('show');
-        }
-      }, 10);
+      requestAnimationFrame(() => tooltip && tooltip.classList.add('show'));
     };
 
     const hideTooltip = () => {
@@ -1938,12 +2138,12 @@ class DraftManager {
     };
 
     element.addEventListener('mouseenter', () => {
+      if (element.closest('.tree-node-item')?.classList.contains('editing')) return;
       clearTimeout(hideTimeout);
-      showTimeout = setTimeout(showTooltip, 300);
+      showTimeout = setTimeout(showTooltip, 250);
     });
 
     element.addEventListener('mouseleave', () => {
-      clearTimeout(showTimeout);
       hideTimeout = setTimeout(hideTooltip, 100);
     });
 

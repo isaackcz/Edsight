@@ -2,9 +2,17 @@ from django.db import models
 from django.contrib.auth import get_user_model
 
 # --- ENUM choices ---
+# Form status: Simple states for form completion
 FORM_STATUS_CHOICES = [
     ('draft', 'Draft'),
+    ('in-progress', 'In Progress'),
     ('submitted', 'Submitted'),
+    ('completed', 'Completed'),
+]
+
+# Workflow status: Tracks position in approval workflow
+WORKFLOW_STATUS_CHOICES = [
+    ('draft', 'Draft'),
     ('district_pending', 'Pending District Review'),
     ('district_approved', 'District Approved'),
     ('district_returned', 'Returned to School'),
@@ -183,10 +191,14 @@ class QuestionChoice(models.Model):
 
 class Form(models.Model):
     form_id = models.AutoField(primary_key=True)
-    user = models.ForeignKey('auth.User', on_delete=models.CASCADE, db_column='user_id')
+    # References AdminUser table - admin_id is the primary key
+    admin_user = models.ForeignKey('AdminUser', on_delete=models.CASCADE, db_column='admin_id', related_name='forms')
     # This points to schools.id (auto-increment), which is correct for the current database
     school = models.ForeignKey(School, on_delete=models.CASCADE, db_column='school_id')
-    status = models.CharField(max_length=20, choices=FORM_STATUS_CHOICES, default='draft')
+    status = models.CharField(max_length=20, choices=FORM_STATUS_CHOICES, default='draft', 
+                              help_text='Form status: draft, in-progress, submitted, or completed')
+    workflow_status = models.CharField(max_length=20, choices=WORKFLOW_STATUS_CHOICES, default='draft',
+                                       help_text='Workflow position: tracks approval level and state')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
@@ -210,13 +222,15 @@ class Form(models.Model):
     class Meta:
         db_table = 'forms'
         indexes = [
-            models.Index(fields=['user'], name='form_user_id_idx'),
+            models.Index(fields=['admin_user'], name='form_admin_id_idx'),
             models.Index(fields=['school'], name='form_school_id_idx'),
             models.Index(fields=['status'], name='form_status_idx'),
+            models.Index(fields=['workflow_status'], name='form_workflow_status_idx'),
             models.Index(fields=['current_level'], name='form_current_level_idx'),
             models.Index(fields=['submitted_at'], name='form_submitted_at_idx'),
+            models.Index(fields=['school', 'workflow_status'], name='form_school_workflow_idx'),
         ]
-        unique_together = ['user', 'school', 'academic_year']  # Ensure one form per user per school per academic year
+        unique_together = ['admin_user', 'school', 'academic_year']  # Ensure one form per admin per school per academic year
     
     def get_next_level(self):
         """Get the next approval level in the workflow"""
@@ -654,7 +668,7 @@ class AuditLog(models.Model):
     ]
     
     id = models.AutoField(primary_key=True)
-    user = models.ForeignKey('auth.User', on_delete=models.SET_NULL, blank=True, null=True)
+    admin = models.ForeignKey('AdminUser', on_delete=models.SET_NULL, blank=True, null=True, db_column='admin_id')
     session_id = models.CharField(max_length=100, blank=True, null=True)
     action_type = models.CharField(max_length=20, choices=ACTION_TYPE_CHOICES)
     resource_type = models.CharField(max_length=50)
@@ -673,7 +687,7 @@ class AuditLog(models.Model):
         db_table = 'audit_logs'
         ordering = ['-timestamp']
         indexes = [
-            models.Index(fields=['user', 'timestamp'], name='audit_logs_user_id_88267f_idx'),
+            models.Index(fields=['admin', 'timestamp'], name='audit_logs_admin_id_88267f_idx'),
             models.Index(fields=['action_type', 'timestamp'], name='audit_logs_action__11f9f1_idx'),
             models.Index(fields=['severity', 'timestamp'], name='audit_logs_severit_549d29_idx'),
             models.Index(fields=['ip_address', 'timestamp'], name='audit_logs_ip_addr_932507_idx'),
@@ -913,17 +927,37 @@ class FormNotification(models.Model):
             models.Index(fields=['created_at']),
             models.Index(fields=['priority', 'created_at']),
         ]
+
+
+class FormRemark(models.Model):
+    """Store remarks added by admins during form review at category, topic, or question level"""
+    REMARK_TYPE_CHOICES = [
+        ('category', 'Category'),
+        ('topic', 'Topic'),
+        ('question', 'Question'),
+    ]
+    
+    remark_id = models.AutoField(primary_key=True)
+    form = models.ForeignKey('Form', on_delete=models.CASCADE, related_name='remarks')
+    admin_user = models.ForeignKey(AdminUser, on_delete=models.CASCADE, related_name='remarks_made')
+    remark_type = models.CharField(max_length=10, choices=REMARK_TYPE_CHOICES, help_text='Type of entity this remark is attached to')
+    entity_id = models.IntegerField(help_text='ID of the category, topic, or question')
+    remark_text = models.TextField(help_text='The remark content')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        db_table = 'form_remarks'
+        indexes = [
+            models.Index(fields=['form'], name='idx_form_remarks_form'),
+            models.Index(fields=['remark_type', 'entity_id'], name='idx_form_remarks_type_entity'),
+            models.Index(fields=['admin_user'], name='idx_form_remarks_admin'),
+            models.Index(fields=['created_at'], name='idx_form_remarks_created'),
+        ]
         ordering = ['-created_at']
     
     def __str__(self):
-        return f"{self.get_notification_type_display()} - {self.title}"
-    
-    def mark_as_read(self):
-        """Mark notification as read"""
-        from django.utils import timezone
-        self.is_read = True
-        self.read_at = timezone.now()
-        self.save()
+        return f"Remark on {self.remark_type} {self.entity_id} for Form {self.form_id} by {self.admin_user.username}"
 
 
 class UserCreationRequest(models.Model):

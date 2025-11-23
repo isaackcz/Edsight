@@ -4,94 +4,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Settings | Frosted Admin</title>
+    <title>Admin Settings | EdSight Admin</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    
+    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Admin CSS -->
+    <link rel="stylesheet" href="{% static 'components/admin/css/admin_base.css' %}">
+    <link rel="stylesheet" href="{% static 'components/admin/css/admin_components.css' %}">
+    
+    <!-- Page Specific CSS -->
     <link rel="stylesheet" href="{% static 'admin/css/settings.css' %}">
     <link rel="stylesheet" href="{% static 'admin/css/settings_responsive.css' %}">
-    <link rel="stylesheet" href="{% static 'admin/css/admin_dark_theme.css' %}">
+    
     <link rel="icon" type="image/png" href="{% static 'auth/img/logo_big.png' %}">
 </head>
-<body class="dark-theme">
+<body>
     <div class="admin-container">
-        <!-- Sidebar Navigation -->
-        <nav class="sidebar">
-            <div class="logo-container">
-                <i class="fas fa-shield-alt logo"></i>
-                <span class="logo-text">Frosted Admin</span>
-            </div>
-            
-            <div class="sidebar-menu">
-                <div class="menu-title">MAIN</div>
-                <a href="{% url 'admin-page' %}" class="menu-item">
-                    <i class="fas fa-home"></i>
-                    <span>Dashboard</span>
-                </a>
-                
-                <div class="menu-title">MANAGEMENT</div>
-                <a href="{% url 'user-management-page' %}" class="menu-item">
-                    <i class="fas fa-users"></i>
-                    <span>User Management</span>
-                </a>
-                <a href="{% url 'role-page' %}" class="menu-item">
-                    <i class="fas fa-user-shield"></i>
-                    <span>Role & Access</span>
-                </a>
-                <a href="{% url 'logs-page' %}" class="menu-item">
-                    <i class="fas fa-history"></i>
-                    <span>Logs & Auditing</span>
-                </a>
-                <a href="#" class="menu-item">
-                    <i class="fas fa-user-clock"></i>
-                    <span>Session Controls</span>
-                </a>
-                
-                <div class="menu-title">TOOLS</div>
-                <a href="#" class="menu-item">
-                    <i class="fas fa-tools"></i>
-                    <span>System Tools</span>
-                </a>
-                <a href="#" class="menu-item">
-                    <i class="fas fa-comment-alt"></i>
-                    <span>Communication</span>
-                </a>
-                <a href="{% url 'settings-page' %}" class="menu-item active">
-                    <i class="fas fa-cog"></i>
-                    <span>Admin Controls</span>
-                </a>
-            </div>
-            
-            <!-- Logout Section -->
-            <div class="sidebar-footer">
-                <a href="{% url 'logout' %}" class="menu-item logout-btn">
-                    <i class="fas fa-sign-out-alt"></i>
-                    <span>Sign Out</span>
-                </a>
-            </div>
-        </nav>
+        <!-- Sidebar Component -->
+        {% include 'components/admin/sidebar.html' %}
 
         <!-- Main Content -->
         <main class="main-content">
-            <!-- Header -->
-            <header class="header">
-                <div class="header-title">
-                    <h1>Admin Settings</h1>
-                    <p>Configure system settings and preferences</p>
-                </div>
-                
-                <div class="header-actions">
-                    <button class="btn btn-outline">
-                        <i class="fas fa-bell"></i>
-                        <span class="badge">1</span>
-                    </button>
-                    <div class="user-profile">
-                        <div class="user-avatar">AD</div>
-                        <div class="user-info">
-                            <div class="user-name">Admin User</div>
-                            <div class="user-role">Super Admin</div>
-                        </div>
-                    </div>
-                </div>
-            </header>
+            <!-- Header Component -->
+            {% with page_title="Admin Settings" page_subtitle="Configure system settings and preferences" %}
+                {% include 'components/admin/header.html' %}
+            {% endwith %}
             
             <!-- Settings Navigation Tabs -->
             <div class="settings-tabs">
@@ -777,9 +718,16 @@
                 <button class="btn btn-outline">Reset to Defaults</button>
                 <button class="btn btn-primary">Save All Changes</button>
             </div>
+            <!-- Footer Component -->
+            {% include 'components/admin/footer.html' %}
         </main>
     </div>
     
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Page Specific JS -->
     <script src="{% static 'admin/js/settings.js' %}"></script>
+    <script src="{% static 'components/admin/js/admin_sidebar.js' %}"></script>
 </body>
 </html>

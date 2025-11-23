@@ -1,0 +1,68 @@
+/* User Management Statistics Charts Styles */
+
+.user-management-stats-section {
+    margin-bottom: 32px;
+}
+
+.chart-card {
+    background: var(--admin-white);
+    border-radius: 8px;
+    padding: 24px;
+    box-shadow: var(--subtle-shadow);
+    transition: var(--transition);
+    border: 1px solid var(--admin-border);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.chart-card:hover {
+    box-shadow: var(--soft-shadow);
+}
+
+.chart-header {
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--admin-border);
+}
+
+.chart-header h4 {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--admin-text);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.chart-header h4 i {
+    font-size: 18px;
+    color: #3a6ea5ff;
+}
+
+.chart-container {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 300px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1200px) {
+    .chart-container {
+        min-height: 280px;
+    }
+}
+
+@media (max-width: 768px) {
+    .chart-card {
+        padding: 20px;
+    }
+    
+    .chart-container {
+        min-height: 250px;
+    }
+}
+

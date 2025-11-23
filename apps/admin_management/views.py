@@ -11,6 +11,7 @@ from django.db import transaction
 from django.db.models import Q, Count
 from django.utils import timezone
 from django.core.paginator import Paginator
+from django.core.exceptions import PermissionDenied
 import json
 import bcrypt
 import csv
@@ -24,9 +25,33 @@ from apps.core.models import (
 )
 from .utils import (
     AdminUserManager, DeadlineManager, PermissionChecker, AuditLogger,
-    require_admin_permission, log_admin_activity
+    require_admin_permission, require_admin_level, log_admin_activity
 )
 from apps.utils.enhanced_logging import EnhancedSystemLogger
+
+
+def get_admin_division_filter(request):
+    """
+    Get division filter for admin endpoints.
+    Only division and central office admins have access to admin page.
+    Returns division_id if admin is division-level, None for central office.
+    """
+    admin_id = request.session.get('admin_id')
+    if not admin_id:
+        return None
+    
+    try:
+        admin_user = AdminUser.objects.get(admin_id=admin_id)
+        # Only division and central office admins have access
+        if admin_user.admin_level == 'division':
+            return admin_user.division_id
+        # Central office admins see all data - return None (no filter)
+        elif admin_user.admin_level == 'central':
+            return None
+        # Other admin levels should not have access (handled by decorator)
+        return None
+    except AdminUser.DoesNotExist:
+        return None
 
 
 def get_admin_context(request):
@@ -88,7 +113,7 @@ def get_admin_context(request):
         return None
 
 
-@require_admin_permission('view_admin_dashboard')
+@require_admin_level(blocked_levels=['district'])
 def admin_page(request):
     """Enhanced admin dashboard with role-based content"""
     context = get_admin_context(request)
@@ -98,41 +123,76 @@ def admin_page(request):
     # Get dashboard statistics based on admin's scope
     admin_scope = context['admin_scope']
     
+    # Apply division filter (only division and central office admins have access)
+    division_id = get_admin_division_filter(request)
+    
     # Get recent activity
-    recent_activities = AdminActivityLog.objects.filter(
-        admin_user_id=context['admin_id']
-    ).order_by('-timestamp')[:10]
+    recent_activities_query = AdminActivityLog.objects.all()
+    if division_id:
+        # Filter activities for division-level admins
+        accessible_admin_ids = AdminUser.objects.filter(
+            division_id=division_id
+        ).values_list('admin_id', flat=True)
+        recent_activities_query = recent_activities_query.filter(admin_user_id__in=accessible_admin_ids)
+    recent_activities = recent_activities_query.order_by('-timestamp')[:10]
     
     # Get pending approvals (if admin can approve)
     pending_approvals = []
     if admin_scope.get('permissions', {}).get('can_approve_submissions'):
-        pending_approvals = FormApproval.objects.filter(
+        pending_approvals_query = FormApproval.objects.filter(
             status='pending',
             approval_level=admin_scope['admin_level']
-        )[:5]
+        )
+        if division_id:
+            # Filter approvals by division
+            pending_approvals_query = pending_approvals_query.filter(
+                form__school__division_id=division_id
+            )
+        pending_approvals = pending_approvals_query[:5]
     
     # Get deadline alerts (if admin can set deadlines)
     upcoming_deadlines = []
     if admin_scope.get('permissions', {}).get('can_set_deadlines'):
-        upcoming_deadlines = FormDeadline.objects.filter(
+        upcoming_deadlines_query = FormDeadline.objects.filter(
             is_active=True,
             deadline_date__gte=timezone.now()
-        ).order_by('deadline_date')[:5]
+        )
+        if division_id:
+            # Filter deadlines by division
+            upcoming_deadlines_query = upcoming_deadlines_query.filter(division_id=division_id)
+        upcoming_deadlines = upcoming_deadlines_query.order_by('deadline_date')[:5]
+    
+    # Get dashboard stats with division filter
+    users_query = AdminUser.objects.filter(status='active')
+    if division_id:
+        users_query = users_query.filter(division_id=division_id)
+    
+    requests_query = UserCreationRequest.objects.filter(status='pending')
+    if division_id:
+        requests_query = requests_query.filter(division_id=division_id)
+    
+    sessions_query = AdminSession.objects.filter(is_active=True)
+    if division_id:
+        accessible_admin_ids = AdminUser.objects.filter(
+            division_id=division_id
+        ).values_list('admin_id', flat=True)
+        sessions_query = sessions_query.filter(admin_user_id__in=accessible_admin_ids)
     
     context.update({
         'recent_activities': recent_activities,
         'pending_approvals': pending_approvals,
         'upcoming_deadlines': upcoming_deadlines,
         'dashboard_stats': {
-            'total_users': AdminUser.objects.filter(status='active').count(),
-            'pending_requests': UserCreationRequest.objects.filter(status='pending').count(),
-            'active_sessions': AdminSession.objects.filter(is_active=True).count(),
+            'total_users': users_query.count(),
+            'pending_requests': requests_query.count(),
+            'active_sessions': sessions_query.count(),
         }
     })
     
     return render(request, 'admin/admin.html', context)
 
 
+@require_admin_level(blocked_levels=['district'])
 @require_admin_permission('manage_users')
 def user_management_page(request):
     """User management page with scope-based filtering"""
@@ -144,15 +204,10 @@ def user_management_page(request):
     admin_scope = context['admin_scope']
     users_query = AdminUser.objects.filter(status='active')
     
-    # Apply geographic filtering based on admin level
-    if admin_scope['admin_level'] == 'region':
-        users_query = users_query.filter(region_id=admin_scope.get('region_id'))
-    elif admin_scope['admin_level'] == 'division':
-        users_query = users_query.filter(division_id=admin_scope.get('division_id'))
-    elif admin_scope['admin_level'] == 'district':
-        users_query = users_query.filter(district_id=admin_scope.get('district_id'))
-    elif admin_scope['admin_level'] == 'school':
-        users_query = users_query.filter(school_id=admin_scope.get('school_id'))
+    # Apply division filter (only division and central office admins have access)
+    division_id = get_admin_division_filter(request)
+    if division_id:
+        users_query = users_query.filter(division_id=division_id)
     
     # Pagination
     paginator = Paginator(users_query.order_by('-created_at'), 25)
@@ -160,9 +215,12 @@ def user_management_page(request):
     users = paginator.get_page(page_number)
     
     # Get pending user creation requests
-    pending_requests = UserCreationRequest.objects.filter(
+    pending_requests_query = UserCreationRequest.objects.filter(
         status='pending'
-    ).order_by('-created_at')[:10]
+    )
+    if division_id:
+        pending_requests_query = pending_requests_query.filter(division_id=division_id)
+    pending_requests = pending_requests_query.order_by('-created_at')[:10]
     
     context.update({
         'users': users,
@@ -173,6 +231,7 @@ def user_management_page(request):
     return render(request, 'admin/user_management.html', context)
 
 
+@require_admin_level(blocked_levels=['district'])
 @require_admin_permission('manage_users')
 def role_page(request):
     """Role and permissions management page"""
@@ -756,6 +815,21 @@ def export_logs_csv(request):
     return response
 
 
+def profile_page(request):
+    """Admin profile/settings page - accessible to all admin levels including District"""
+    context = get_admin_context(request)
+    if not context:
+        return redirect('/auth/login/')
+
+    admin_scope = context.get('admin_scope') or {}
+    if admin_scope.get('admin_level') == 'school':
+        return redirect('user-dashboard:overview')
+
+    # Minimal context - APIs will handle data loading
+    return render(request, 'admin/profile.html', context)
+
+
+@require_admin_level(blocked_levels=['district'])
 def settings_page(request):
     """Admin settings and configuration page"""
     context = get_admin_context(request)
@@ -780,6 +854,46 @@ def settings_page(request):
 
 
 # API Endpoints for Admin Operations
+
+@require_admin_permission('create_users')
+@csrf_exempt
+@require_GET
+def api_check_user_exists(request):
+    """API endpoint to check if username, email, or school already has an account"""
+    try:
+        username = request.GET.get('username', '').strip()
+        email = request.GET.get('email', '').strip()
+        school_id = request.GET.get('school_id', '').strip()
+        
+        result = {
+            'username_exists': False,
+            'email_exists': False,
+            'school_has_account': False
+        }
+        
+        # Check username
+        if username:
+            result['username_exists'] = AdminUser.objects.filter(username=username).exists()
+        
+        # Check email
+        if email:
+            result['email_exists'] = AdminUser.objects.filter(email=email).exists()
+        
+        # Check if school already has an account (only one account per school)
+        if school_id:
+            try:
+                school_id_int = int(school_id)
+                result['school_has_account'] = AdminUser.objects.filter(
+                    school_id=school_id_int,
+                    admin_level='school'
+                ).exists()
+            except (ValueError, TypeError):
+                pass
+        
+        return JsonResponse(result)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
 
 @require_admin_permission('create_users')
 @csrf_exempt
@@ -820,10 +934,56 @@ def api_create_admin_user(request):
                         'error': 'Email already exists'
                     }, status=400)
                 
+                # For school-level users: validate that email matches school_id
+                if data.get('admin_level') == 'school':
+                    email = data.get('email', '')
+                    school_db_id = data.get('school_id')  # This is the database primary key
+                    
+                    if school_db_id:
+                        try:
+                            school_db_id_int = int(school_db_id)
+                            # Get the School object to access its school_id field (the 6-digit identifier)
+                            try:
+                                school = School.objects.get(id=school_db_id_int)
+                                school_id_value = school.school_id  # This is the 6-digit identifier like "100611"
+                            except School.DoesNotExist:
+                                return JsonResponse({
+                                    'success': False,
+                                    'error': 'Selected school not found.'
+                                }, status=400)
+                            
+                            # Extract school ID from email (should be email prefix before @deped.gov.ph)
+                            email_prefix = email.replace('@deped.gov.ph', '').strip()
+                            
+                            # Check if email prefix matches school's school_id field (the 6-digit identifier)
+                            if email_prefix != str(school_id_value):
+                                    return JsonResponse({
+                                        'success': False,
+                                        'error': 'Email must match the selected school ID. The email should be the same as the school ID.'
+                                }, status=400)
+                            
+                            # Check if school already has an account (only one account per school)
+                            # Use the database id for the filter
+                            if AdminUser.objects.filter(school_id=school_db_id_int, admin_level='school').exists():
+                                return JsonResponse({
+                                    'success': False,
+                                    'error': 'This school already has an account. Only one account per school is allowed.'
+                                }, status=400)
+                        except (ValueError, TypeError) as e:
+                            return JsonResponse({
+                                'success': False,
+                                'error': f'Invalid school ID format: {str(e)}'
+                            }, status=400)
+                    else:
+                        return JsonResponse({
+                            'success': False,
+                            'error': 'School ID is required for school-level users.'
+                    }, status=400)
+                
                 # Create the admin user directly in development
                 with transaction.atomic():
-                    # Hash password
-                    password = data.get('password', 'TempPassword123!')
+                    # Hash password (default: Edsight.123)
+                    password = data.get('password', 'Edsight.123')
                     password_hash = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
                     
                     # Set default permissions based on admin level
@@ -1181,21 +1341,14 @@ def api_admin_users(request):
             'error': f'Failed to load users: {str(e)}'
         }, status=400)
     
-    admin_scope = AdminUserManager.get_user_access_scope(admin_id)
-    
     if request.method == 'GET':
         # Get users within admin's scope
         users_query = AdminUser.objects.filter(status='active')
         
-        # Apply geographic filtering
-        if admin_scope['admin_level'] == 'region':
-            users_query = users_query.filter(region_id=admin_scope.get('region_id'))
-        elif admin_scope['admin_level'] == 'division':
-            users_query = users_query.filter(division_id=admin_scope.get('division_id'))
-        elif admin_scope['admin_level'] == 'district':
-            users_query = users_query.filter(district_id=admin_scope.get('district_id'))
-        elif admin_scope['admin_level'] == 'school':
-            users_query = users_query.filter(school_id=admin_scope.get('school_id'))
+        # Apply division filter (only division and central office admins have access)
+        division_id = get_admin_division_filter(request)
+        if division_id:
+            users_query = users_query.filter(division_id=division_id)
         
         users_data = []
         for user in users_query.select_related('region', 'division', 'district', 'school'):
@@ -1221,8 +1374,7 @@ def api_admin_users(request):
         return JsonResponse({
             'success': True,
             'users': users_data,
-            'total': len(users_data),
-            'admin_scope': admin_scope
+            'total': len(users_data)
         })
     
     elif request.method == 'POST':
@@ -1232,29 +1384,302 @@ def api_admin_users(request):
 
 @require_admin_permission('set_deadlines')
 @csrf_exempt
-@require_POST
-@log_admin_activity('SET_DEADLINE', 'form_deadline')
+@require_http_methods(['GET', 'POST'])
 def api_set_deadline(request):
-    """API endpoint to set form deadlines"""
+    """API endpoint to get and set form deadlines - Only Region admins can access this endpoint"""
     try:
-        data = json.loads(request.body.decode())
         admin_id = request.session.get('admin_id')
+        if not admin_id:
+            return JsonResponse({
+                'success': False,
+                'error': 'Not authenticated'
+            }, status=403)
         
-        # Create the deadline
-        deadline = DeadlineManager.set_deadline(
-            admin_id=admin_id,
-            deadline_data=data,
-            ip_address=request.META.get('REMOTE_ADDR')
-        )
+        # Query admin_user table directly to get accurate admin_level
+        try:
+            admin_user = AdminUser.objects.get(admin_id=admin_id, status='active')
+        except AdminUser.DoesNotExist:
+            return JsonResponse({
+                'success': False,
+                'error': 'Admin user not found or inactive'
+            }, status=403)
+        
+        # Check admin_level directly from database
+        admin_level = admin_user.admin_level
+        
+        # Only Region admins can access this endpoint
+        if admin_level != 'region':
+            return JsonResponse({
+                'success': False,
+                'error': f'Only Region admins can manage deadlines. Your admin level: {admin_level}'
+            }, status=403)
+        
+        # Verify admin has set_deadlines permission
+        if not admin_user.can_set_deadlines:
+            return JsonResponse({
+                'success': False,
+                'error': 'You do not have permission to set deadlines. Please contact your administrator.'
+            }, status=403)
+        
+        # Get admin scope for region_id and other data
+        admin_scope = AdminUserManager.get_user_access_scope(admin_id)
+        
+        if request.method == 'GET':
+            # Get deadlines filtered by admin's region
+            deadlines_query = FormDeadline.objects.select_related('region', 'division', 'district', 'created_by').filter(is_active=True)
+            
+            # Region admins can only see deadlines for their region
+            region_id = admin_user.region_id
+            if region_id:
+                deadlines_query = deadlines_query.filter(region_id=region_id)
+            else:
+                deadlines_query = deadlines_query.none()
+            
+            # Optional filters
+            form_type = request.GET.get('form_type')
+            if form_type:
+                deadlines_query = deadlines_query.filter(form_type=form_type)
+            
+            # Order by deadline date
+            deadlines_query = deadlines_query.order_by('deadline_date')
+            
+            deadlines_data = []
+            for deadline in deadlines_query:
+                deadlines_data.append({
+                    'deadline_id': deadline.deadline_id,
+                    'form_type': deadline.form_type,
+                    'deadline_date': deadline.deadline_date.isoformat(),
+                    'description': deadline.description,
+                    'is_active': deadline.is_active,
+                    'region_id': deadline.region_id,
+                    'region_name': deadline.region.name if deadline.region else None,
+                    'division_id': deadline.division_id,
+                    'division_name': deadline.division.name if deadline.division else None,
+                    'district_id': deadline.district_id,
+                    'district_name': deadline.district.name if deadline.district else None,
+                    'created_by': deadline.created_by.username if deadline.created_by else None,
+                    'created_at': deadline.created_at.isoformat(),
+                    'updated_at': deadline.updated_at.isoformat(),
+                })
+            
+            return JsonResponse({
+                'success': True,
+                'deadlines': deadlines_data,
+                'count': len(deadlines_data)
+            })
+        
+        elif request.method == 'POST':
+            # Set a new deadline
+            data = json.loads(request.body.decode())
+            
+            # Automatically set region_id to the Region admin's assigned region
+            region_id = admin_user.region_id
+            if not region_id:
+                return JsonResponse({
+                    'success': False,
+                    'error': 'Region admin must have an assigned region'
+                }, status=400)
+            # Override any region_id in the request data
+            data['region_id'] = region_id
+            # Region admins cannot set division or district-specific deadlines
+            data['division_id'] = None
+            data['district_id'] = None
+            
+            # Validate required fields
+            required_fields = ['form_type', 'deadline_date']
+            for field in required_fields:
+                if not data.get(field):
+                    return JsonResponse({
+                        'success': False,
+                        'error': f'{field} is required'
+                    }, status=400)
+            
+            # Validate and convert deadline_date to datetime object
+            from datetime import datetime
+            from django.utils import timezone
+            deadline_date_str = data.get('deadline_date')
+            try:
+                # Parse the date string (format: YYYY-MM-DD from HTML date input)
+                if isinstance(deadline_date_str, str):
+                    # Parse as date first
+                    parsed_date = datetime.strptime(deadline_date_str, '%Y-%m-%d').date()
+                    
+                    # Validate that deadline is not in the past
+                    if parsed_date < timezone.now().date():
+                        return JsonResponse({
+                            'success': False,
+                            'error': 'Deadline date cannot be in the past'
+                        }, status=400)
+                    
+                    # Convert to datetime (use start of day - midnight)
+                    deadline_datetime = timezone.make_aware(
+                        datetime.combine(parsed_date, datetime.min.time())
+                    )
+                    
+                    # Replace string with datetime object
+                    data['deadline_date'] = deadline_datetime
+                else:
+                    return JsonResponse({
+                        'success': False,
+                        'error': 'Invalid deadline date format. Expected YYYY-MM-DD'
+                    }, status=400)
+                
+            except ValueError as e:
+                return JsonResponse({
+                    'success': False,
+                    'error': f'Invalid deadline date format: {str(e)}. Expected YYYY-MM-DD'
+                }, status=400)
+            
+            # Validate form_type
+            valid_form_types = ['annual', 'quarterly', 'monthly']
+            form_type = data.get('form_type', '').lower()
+            if form_type not in valid_form_types:
+                return JsonResponse({
+                    'success': False,
+                    'error': f'Invalid form type. Must be one of: {", ".join(valid_form_types)}'
+                }, status=400)
+            data['form_type'] = form_type
+            
+            # Validate description length if provided
+            if 'description' in data and data['description']:
+                description = str(data['description']).strip()
+                if len(description) > 500:
+                    return JsonResponse({
+                        'success': False,
+                        'error': 'Description cannot exceed 500 characters'
+                    }, status=400)
+                data['description'] = description if description else None
+            else:
+                data['description'] = None
+            
+            # Check if a deadline already exists for this region and form_type
+            # Only one deadline per region per form_type is allowed
+            existing_deadline = FormDeadline.objects.filter(
+                region_id=region_id,
+                form_type=form_type,
+                is_active=True
+            ).first()
+            
+            if existing_deadline:
+                # Update existing deadline instead of creating a new one
+                deadline = DeadlineManager.update_deadline(
+                    existing_deadline.deadline_id,
+                    admin_id=admin_id,
+                    deadline_data=data,
+                    ip_address=request.META.get('REMOTE_ADDR')
+                )
+                action = 'updated'
+            else:
+                # Create new deadline
+                deadline = DeadlineManager.set_deadline(
+                    admin_id=admin_id,
+                    deadline_data=data,
+                    ip_address=request.META.get('REMOTE_ADDR')
+                )
+                action = 'created'
         
         return JsonResponse({
             'success': True,
             'deadline_id': deadline.deadline_id,
             'form_type': deadline.form_type,
             'deadline_date': deadline.deadline_date.isoformat(),
-            'message': 'Deadline set successfully'
+            'region_id': deadline.region_id,
+            'message': f'Deadline {action} successfully',
+            'action': action
         })
         
+    except PermissionDenied as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=403)
+    except json.JSONDecodeError:
+        return JsonResponse({
+            'success': False,
+            'error': 'Invalid JSON data'
+        }, status=400)
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=400)
+
+
+@require_admin_permission('set_deadlines')
+@csrf_exempt
+@require_http_methods(['DELETE'])
+def api_delete_deadline(request, deadline_id):
+    """Deactivate a deadline within the region admin's scope."""
+    try:
+        admin_id = request.session.get('admin_id')
+        if not admin_id:
+            return JsonResponse({
+                'success': False,
+                'error': 'Not authenticated'
+            }, status=403)
+
+        try:
+            admin_user = AdminUser.objects.get(admin_id=admin_id, status='active')
+        except AdminUser.DoesNotExist:
+            return JsonResponse({
+                'success': False,
+                'error': 'Admin user not found or inactive'
+            }, status=403)
+
+        if admin_user.admin_level != 'region':
+            return JsonResponse({
+                'success': False,
+                'error': f'Only Region admins can delete deadlines. Your admin level: {admin_user.admin_level}'
+            }, status=403)
+
+        if not admin_user.can_set_deadlines:
+            return JsonResponse({
+                'success': False,
+                'error': 'You do not have permission to delete deadlines.'
+            }, status=403)
+
+        try:
+            deadline = FormDeadline.objects.get(deadline_id=deadline_id, is_active=True)
+        except FormDeadline.DoesNotExist:
+            return JsonResponse({
+                'success': False,
+                'error': 'Deadline not found or already deleted.'
+            }, status=404)
+
+        if admin_user.region_id and deadline.region_id != admin_user.region_id:
+            return JsonResponse({
+                'success': False,
+                'error': 'You can only delete deadlines within your region.'
+            }, status=403)
+
+        deadline.is_active = False
+        deadline.save(update_fields=['is_active', 'updated_at'])
+
+        AdminActivityLog.objects.create(
+            admin_user_id=admin_id,
+            action='DELETE_DEADLINE',
+            resource_type='form_deadline',
+            resource_id=str(deadline.deadline_id),
+            details={
+                'form_type': deadline.form_type,
+                'deadline_date': deadline.deadline_date.isoformat(),
+                'region_id': deadline.region_id,
+                'division_id': deadline.division_id,
+                'district_id': deadline.district_id
+            },
+            ip_address=request.META.get('REMOTE_ADDR')
+        )
+
+        return JsonResponse({
+            'success': True,
+            'message': 'Deadline deleted successfully.'
+        })
+
+    except PermissionDenied as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=403)
     except Exception as e:
         return JsonResponse({
             'success': False,
@@ -1461,30 +1886,16 @@ def api_assign_role(request):
 @require_GET
 def api_activity_logs(request):
     """API endpoint to get activity logs"""
-    admin_id = request.session.get('admin_id')
-    admin_scope = AdminUserManager.get_user_access_scope(admin_id)
-    
     # Get logs based on admin's scope
     logs_query = AdminActivityLog.objects.all()
     
-    if admin_scope['admin_level'] != 'central':
-        # Filter logs for non-central admins
-        accessible_admin_ids = [admin_id]
-        
-        # Add subordinate admin IDs
-        if admin_scope['admin_level'] == 'region':
-            subordinates = AdminUser.objects.filter(
-                region_id=admin_scope.get('region_id'),
-                admin_level__in=['division', 'district', 'school']
+    # Apply division filter (only division and central office admins have access)
+    division_id = get_admin_division_filter(request)
+    if division_id:
+        # Filter logs for division-level admins - get all admins in this division
+        accessible_admin_ids = AdminUser.objects.filter(
+            division_id=division_id
             ).values_list('admin_id', flat=True)
-            accessible_admin_ids.extend(subordinates)
-        elif admin_scope['admin_level'] == 'division':
-            subordinates = AdminUser.objects.filter(
-                division_id=admin_scope.get('division_id'),
-                admin_level__in=['district', 'school']
-            ).values_list('admin_id', flat=True)
-            accessible_admin_ids.extend(subordinates)
-        
         logs_query = logs_query.filter(admin_user_id__in=accessible_admin_ids)
     
     # Pagination
@@ -1622,8 +2033,43 @@ def api_edit_admin_user(request, user_id):
                 }, status=404)
         
         elif request.method == 'PUT':
-            # Update user
-            data = json.loads(request.body.decode())
+            # Get the user to edit (needed for both DEBUG and non-DEBUG modes)
+            try:
+                user_to_edit = AdminUser.objects.get(admin_id=user_id)
+            except AdminUser.DoesNotExist:
+                return JsonResponse({
+                    'success': False,
+                    'error': 'User not found'
+                }, status=404)
+            
+            # Check if the admin can edit this user (scope-based access)
+            if not AdminUserManager.can_access_user(admin_id, user_id):
+                return JsonResponse({
+                    'success': False,
+                    'error': 'Access denied'
+                }, status=403)
+            
+            # Update user - Parse JSON data
+            try:
+                if not request.body:
+                    return JsonResponse({
+                        'success': False,
+                        'error': 'Request body is empty'
+                    }, status=400)
+                
+                # Try to decode and parse JSON
+                body_str = request.body.decode('utf-8')
+                data = json.loads(body_str)
+            except UnicodeDecodeError as e:
+                return JsonResponse({
+                    'success': False,
+                    'error': f'Invalid request encoding: {str(e)}'
+                }, status=400)
+            except json.JSONDecodeError as e:
+                return JsonResponse({
+                    'success': False,
+                    'error': f'Invalid JSON data: {str(e)}'
+                }, status=400)
             
             # Update user fields
             if 'full_name' in data:
@@ -1631,6 +2077,13 @@ def api_edit_admin_user(request, user_id):
             if 'email' in data:
                 user_to_edit.email = data['email']
             if 'status' in data:
+                # Validate status value
+                valid_statuses = ['active', 'inactive', 'suspended']
+                if data['status'] not in valid_statuses:
+                    return JsonResponse({
+                        'success': False,
+                        'error': f'Invalid status value. Must be one of: {", ".join(valid_statuses)}'
+                    }, status=400)
                 user_to_edit.status = data['status']
             if 'admin_level' in data:
                 user_to_edit.admin_level = data['admin_level']
@@ -1659,7 +2112,16 @@ def api_edit_admin_user(request, user_id):
             
             # Set updated_by
             user_to_edit.updated_by_id = admin_id
-            user_to_edit.save()
+            
+            # Save the user with validation
+            try:
+                user_to_edit.full_clean()  # Validate model fields
+                user_to_edit.save()
+            except Exception as save_error:
+                return JsonResponse({
+                    'success': False,
+                    'error': f'Validation error: {str(save_error)}'
+                }, status=400)
             
             return JsonResponse({
                 'success': True,
@@ -1674,9 +2136,13 @@ def api_edit_admin_user(request, user_id):
             })
             
     except Exception as e:
+        import traceback
+        from django.conf import settings
+        error_trace = traceback.format_exc()
         return JsonResponse({
             'success': False,
-            'error': str(e)
+            'error': f'Unexpected error: {str(e)}',
+            'details': error_trace if getattr(settings, 'DEBUG', False) else None
         }, status=400)
 
 
@@ -2138,7 +2604,7 @@ def api_assign_role(request):
 @require_POST
 @log_admin_activity('DELETE_ADMIN_USER', 'admin_user')
 def api_delete_admin_user(request, user_id):
-    """API endpoint to delete admin users (soft delete)"""
+    """API endpoint to delete admin users (permanent delete)"""
     try:
         admin_id = request.session.get('admin_id')
         
@@ -2165,23 +2631,29 @@ def api_delete_admin_user(request, user_id):
                 'error': 'Cannot delete your own account'
             }, status=400)
         
-        # Soft delete - change status to inactive
-        user_to_delete.status = 'inactive'
-        user_to_delete.updated_by_id = admin_id
-        user_to_delete.save()
+        # Store username for response message before deletion
+        username = user_to_delete.username
         
-        # Deactivate all sessions for this user
-        AdminSession.objects.filter(admin_user=user_to_delete).update(is_active=False)
+        # Permanently delete the user
+        # Related records will be handled by CASCADE or SET_NULL based on model definitions:
+        # - AdminSession: CASCADE (sessions will be deleted)
+        # - AdminActivityLog: CASCADE (activity logs will be deleted)
+        # - created_by/updated_by: SET_NULL (will be set to NULL in related records)
+        user_to_delete.delete()
         
         return JsonResponse({
             'success': True,
-            'message': f'User {user_to_delete.username} deactivated successfully'
+            'message': f'User {username} deleted successfully'
         })
         
     except Exception as e:
+        import traceback
+        from django.conf import settings
+        error_trace = traceback.format_exc()
         return JsonResponse({
             'success': False,
-            'error': str(e)
+            'error': f'Error deleting user: {str(e)}',
+            'details': error_trace if getattr(settings, 'DEBUG', False) else None
         }, status=400)
 
 
@@ -2855,9 +3327,20 @@ def api_geographic_data(request, data_type=None):
         
         parent_id = request.GET.get('parent_id')
         
+        # Apply division filter (only division and central office admins have access)
+        division_id = get_admin_division_filter(request)
+        
         if data_type == 'regions':
             # Only load regions initially - no parent required
-            regions = Region.objects.all().values('id', 'name').order_by('name')
+            regions_query = Region.objects.all()
+            # For division-level admins, only show their own region
+            if division_id:
+                try:
+                    division = Division.objects.get(id=division_id)
+                    regions_query = regions_query.filter(id=division.region_id)
+                except Division.DoesNotExist:
+                    regions_query = Region.objects.none()
+            regions = regions_query.values('id', 'name').order_by('name')
             return JsonResponse({
                 'success': True,
                 'data': list(regions),
@@ -2870,7 +3353,25 @@ def api_geographic_data(request, data_type=None):
                     'success': False,
                     'error': 'Region ID required to load divisions'
                 }, status=400)
-            divisions = Division.objects.filter(region_id=parent_id).values('id', 'name').order_by('name')
+            # Verify division-level admin can only access their own region
+            if division_id:
+                try:
+                    division = Division.objects.get(id=division_id)
+                    if str(division.region_id) != str(parent_id):
+                        return JsonResponse({
+                            'success': False,
+                            'error': 'Access denied to this region'
+                        }, status=403)
+                except Division.DoesNotExist:
+                    return JsonResponse({
+                        'success': False,
+                        'error': 'Access denied'
+                    }, status=403)
+            divisions_query = Division.objects.filter(region_id=parent_id)
+            # Filter by division if division-level admin
+            if division_id:
+                divisions_query = divisions_query.filter(id=division_id)
+            divisions = divisions_query.values('id', 'name').order_by('name')
             return JsonResponse({
                 'success': True,
                 'data': list(divisions),
@@ -2883,7 +3384,14 @@ def api_geographic_data(request, data_type=None):
                     'success': False,
                     'error': 'Division ID required to load districts'
                 }, status=400)
-            districts = District.objects.filter(division_id=parent_id).values('id', 'name').order_by('name')
+            # Verify division-level admin can only access their own division
+            if division_id and str(division_id) != str(parent_id):
+                return JsonResponse({
+                    'success': False,
+                    'error': 'Access denied to this division'
+                }, status=403)
+            districts_query = District.objects.filter(division_id=parent_id)
+            districts = districts_query.values('id', 'name').order_by('name')
             return JsonResponse({
                 'success': True,
                 'data': list(districts),
@@ -2896,7 +3404,25 @@ def api_geographic_data(request, data_type=None):
                     'success': False,
                     'error': 'District ID required to load schools'
                 }, status=400)
-            schools = School.objects.filter(district_id=parent_id).values('id', 'school_name').order_by('school_name')
+            # Verify division-level admin can only access districts in their division
+            if division_id:
+                try:
+                    district = District.objects.get(id=parent_id)
+                    if str(district.division_id) != str(division_id):
+                        return JsonResponse({
+                            'success': False,
+                            'error': 'Access denied to this district'
+                        }, status=403)
+                except District.DoesNotExist:
+                    return JsonResponse({
+                        'success': False,
+                        'error': 'District not found'
+                    }, status=404)
+            schools_query = School.objects.filter(district_id=parent_id)
+            # Filter by division if division-level admin (additional safety check)
+            if division_id:
+                schools_query = schools_query.filter(division_id=division_id)
+            schools = schools_query.values('id', 'school_name').order_by('school_name')
             return JsonResponse({
                 'success': True,
                 'data': list(schools),

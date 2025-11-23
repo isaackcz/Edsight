@@ -12,6 +12,7 @@
       type="text/css"
       href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.2/src/bold/style.css"
     />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -28,26 +29,35 @@
         --font-weight-medium: 600;
         --font-weight-bold: 700;
         --heading-line-height: 1.15;
-        /* Base palette tokens provided by user */
-        --pumpkin: #ff6700ff; /* Accent color (buttons, links) */
-        --antiflash-white: #ebebebff; /* Light background for cards/panels */
-        --silver: #c0c0c0ff; /* Secondary text and borders */
-        --bice-blue: #3a6ea5ff; /* Primary brand color for nav/icons */
-        --polynesian-blue: #004e98ff; /* Strong header/banner color */
-        --white: #f7f9f9ff; /* Main background */
-        --black: #1e1e24ff; /* Primary text */
+        
+        /* Admin color scheme: 80% white, 20% #cde1f1 */
+        --admin-white: #ffffff;
+        --admin-accent: #cde1f1;
+        --admin-accent-dark: #3a6ea5ff;
+        --admin-bg: var(--admin-white);
+        --admin-text: #1e1e24ff;
+        --admin-text-muted: #333333;
+        --admin-text-light: #666666;
+        --admin-border: rgba(30, 30, 36, 0.08);
+        
+        /* Legacy variables for backward compatibility */
+        --pumpkin: #ff6700ff;
+        --antiflash-white: var(--admin-accent);
+        --silver: #c0c0c0ff;
+        --bice-blue: #3a6ea5ff;
+        --polynesian-blue: #004e98ff;
+        --white: var(--admin-white);
+        --black: var(--admin-text);
 
-        /* Core UI tokens (no mapping to other variables) */
+        /* Core UI tokens */
         --success: #4caf50;
         --warning: #ff9800;
         --danger: #f44336;
-        --border-radius: 18px;
+        --border-radius: 4px;
         --soft-shadow: 0 8px 24px rgba(30, 30, 36, 0.06);
         --subtle-shadow: 0 4px 12px rgba(30, 30, 36, 0.04);
         --transition: all 0.22s ease;
-
-        /* focus outline color (slightly transparent primary) */
-        --focus-outline: rgba(58, 110, 165, 0.16);
+        --focus-outline: rgba(205, 225, 241, 0.3);
       }
 
       * {
@@ -58,9 +68,7 @@
       }
 
       body {
-        /* Background (60%) */
-        background-color: var(--antiflash-white);
-        color: var(--black); /* main text */
+        color: var(--admin-text);
         min-height: 100vh;
         overflow-x: hidden;
         -webkit-font-smoothing: antialiased;
@@ -100,11 +108,26 @@
       }
     </style>
 
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    
     <!-- Internal CSS -->
     <link rel="stylesheet" href="{% static 'shared/css/sidebar.css' %}" />
     <link rel="stylesheet" href="{% static 'shared/css/header.css' %}" />
     <link rel="stylesheet" href="{% static 'shared/css/main-content.css' %}" />
     <link rel="stylesheet" href="{% static 'shared/css/responsive.css' %}" />
+
+    <!-- Override any CSS that might set white background - must be after all other CSS -->
+    <style>
+      html, body {
+        background-color: var(--admin-accent) !important;
+      }
+      .dashboard-container,
+      .main-content {
+        background: transparent !important;
+      }
+
+    </style>
 
     <link rel="icon" type="image/png" href="{% static 'auth/img/logo.png' %}" />
   </head>
@@ -132,6 +155,12 @@
             <i class="ph-bold ph-chart-pie"></i>
             <span>Reports</span>
           </a>
+          {% if admin_level and admin_level != 'school' %}
+          <a href="{% url 'admin-profile-page' %}" class="menu-item">
+            <i class="ph-bold ph-user-circle"></i>
+            <span>Admin</span>
+          </a>
+          {% endif %}
         </div>
       </div>
 
@@ -141,13 +170,13 @@
         <div class="header">
           <div class="header-left">
             <button class="hamburger" aria-label="Open menu" title="Menu">
-              <i class="ph-bold ph-list"></i>
+              <i class="fas fa-bars"></i>
             </button>
           </div>
           <div class="header-actions">
-            <div class="notification" title="Notifications">
+            <div class="notification" title="Notifications" data-notifications-endpoint="{% url 'api-form-management-notifications' %}" data-default-avatar="{% static 'auth/img/default-profile.jpg' %}">
               <i class="ph-bold ph-bell"></i>
-              <span class="notif-badge">3</span>
+              <span class="notif-badge">0</span>
 
               <!-- Notifications panel -->
               <div class="notifications-panel" aria-hidden="true">
@@ -158,58 +187,9 @@
                   </button>
                 </div>
                 <div class="panel-body">
-                  <!-- Sample notification items -->
-                  <div class="notif-item">
-                    <div class="notif-avatar">
-                      <img
-                        src="{% static 'auth/img/default-profile.jpg' %}"
-                        alt="u"
-                      />
-                    </div>
-                    <div class="notif-content">
-                      <div class="notif-title">
-                        <div class="notif-name">Jackie Monroe</div>
-                        <div class="notif-message">
-                          requests permission to change
-                          <strong>Design System</strong>
-                        </div>
-                      </div>
-                      <div class="notif-meta">Project • 5 min ago</div>
-                    </div>
-                  </div>
-                  <div class="notif-item">
-                    <div class="notif-avatar">
-                      <img
-                        src="{% static 'auth/img/default-profile.jpg' %}"
-                        alt="u"
-                      />
-                    </div>
-                    <div class="notif-content">
-                      <div class="notif-title">
-                        <div class="notif-name">Chris Graham</div>
-                        <div class="notif-message">
-                          has added a new employee
-                        </div>
-                      </div>
-                      <div class="notif-meta">Employee • 28 min ago</div>
-                    </div>
-                  </div>
-                  <div class="notif-item">
-                    <div class="notif-avatar">
-                      <img
-                        src="{% static 'auth/img/default-profile.jpg' %}"
-                        alt="u"
-                      />
-                    </div>
-                    <div class="notif-content">
-                      <div class="notif-title">
-                        <div class="notif-name">Paul Miller</div>
-                        <div class="notif-message">
-                          has added a new project <strong>Mobile App</strong>
-                        </div>
-                      </div>
-                      <div class="notif-meta">Project • 12 hours ago</div>
-                    </div>
+                  <div data-notifications-list></div>
+                  <div data-notifications-empty style="display: none; padding: 1rem; text-align: center; color: #666;">
+                    No notifications yet.
                   </div>
                 </div>
               </div>
@@ -258,10 +238,7 @@
                   </div>
                 </div>
 
-                <a href="/profile/"
-                  ><i class="ph-bold ph-user"></i>View profile</a
-                >
-                <a href="/settings/"><i class="ph-bold ph-gear"></i>Settings</a>
+                <a href="{% url 'user-dashboard:settings' %}#security-section"><i class="ph-bold ph-user-circle"></i>Settings</a>
                 <div class="dropdown-logout">
                   <form method="post" action="/logout/">
                     {% csrf_token %}
@@ -281,127 +258,170 @@
           <div class="dashboard-title">
             <h1>Form Analytics Dashboard</h1>
             <div class="controls">
-              <div class="date-selector">
+              <div class="date-selector" id="date-range-selector">
                 <i class="ph-bold ph-calendar"></i>
-                <span>Last 30 Days</span>
+                <span id="date-range-text">Last 30 Days</span>
                 <i class="ph-bold ph-caret-down"></i>
+                <div class="date-dropdown" id="date-dropdown" style="display: none;">
+                  <div class="date-option" data-days="7">Last 7 Days</div>
+                  <div class="date-option" data-days="30">Last 30 Days</div>
+                  <div class="date-option" data-days="90">Last 90 Days</div>
+                  <div class="date-option" data-days="365">Last Year</div>
+                  <div class="date-option" data-days="0">All Time</div>
+                  <div class="date-option" data-custom="true">Custom Range</div>
+                </div>
               </div>
-              <button class="btn primary">
+              <div class="date-range-modal-backdrop" id="date-range-modal-backdrop" style="display: none;"></div>
+              <div class="date-range-picker" id="date-range-picker" style="display: none;">
+                <div class="date-range-inputs">
+                  <div class="date-range-header">
+                    <h3>Select Date Range</h3>
+                  </div>
+                  <div class="date-input-group">
+                    <label>From:</label>
+                    <input type="date" id="start-date" class="date-input">
+                  </div>
+                  <div class="date-input-group">
+                    <label>To:</label>
+                    <input type="date" id="end-date" class="date-input">
+                  </div>
+                  <div class="date-range-actions">
+                    <button class="btn secondary" id="apply-date-range">Apply</button>
+                    <button class="btn tertiary" id="cancel-date-range">Cancel</button>
+                  </div>
+                </div>
+              </div>
+              <button class="btn primary" id="export-report-btn">
                 <i class="ph-bold ph-download"></i> Export Report
               </button>
             </div>
           </div>
 
           <!-- Stats Cards -->
-          <div class="stats-cards">
-            <div class="card">
-              <div class="card-header">
-                <i class="ph-bold ph-file-text"></i>
-                <h3>Total Forms</h3>
-              </div>
-              <div class="card-value" id="total-forms">--</div>
-              <div class="card-trend" id="total-forms-trend">
-                <i class="ph-bold ph-arrow-up"></i> Loading...
-              </div>
-            </div>
-
-            <div class="card">
-              <div class="card-header">
-                <i class="ph-bold ph-check-circle"></i>
-                <h3>Completion Rate</h3>
-              </div>
-              <div class="card-value" id="completion-rate">--</div>
-              <div class="card-trend" id="completion-rate-trend">
-                <i class="ph-bold ph-arrow-up"></i> Loading...
+          <div class="row g-3 mb-4">
+            <div class="col-xl-3 col-lg-6 col-md-6 col-sm-12">
+              <div class="card">
+                <div class="card-header">
+                  <i class="ph-bold ph-file-text"></i>
+                  <h3>Total Forms</h3>
+                </div>
+                <div class="card-value" id="total-forms">--</div>
+                <div class="card-trend" id="total-forms-trend">
+                  <i class="ph-bold ph-arrow-up"></i> Loading...
+                </div>
               </div>
             </div>
 
-            <div class="card">
-              <div class="card-header">
-                <i class="ph-bold ph-clock"></i>
-                <h3>Avg. Time</h3>
-              </div>
-              <div class="card-value" id="avg-time">--</div>
-              <div class="card-trend" id="avg-time-trend">
-                <i class="ph-bold ph-arrow-down"></i> Loading...
+            <div class="col-xl-3 col-lg-6 col-md-6 col-sm-12">
+              <div class="card">
+                <div class="card-header">
+                  <i class="ph-bold ph-check-circle"></i>
+                  <h3>Completion Rate</h3>
+                </div>
+                <div class="card-value" id="completion-rate">--</div>
+                <div class="card-trend" id="completion-rate-trend">
+                  <i class="ph-bold ph-arrow-up"></i> Loading...
+                </div>
               </div>
             </div>
 
-            <div class="card">
-              <div class="card-header">
-                <i class="ph-bold ph-users"></i>
-                <h3>Active Schools</h3>
+            <div class="col-xl-3 col-lg-6 col-md-6 col-sm-12">
+              <div class="card">
+                <div class="card-header">
+                  <i class="ph-bold ph-clock"></i>
+                  <h3>Avg. Time</h3>
+                </div>
+                <div class="card-value" id="avg-time">--</div>
+                <div class="card-trend" id="avg-time-trend">
+                  <i class="ph-bold ph-arrow-down"></i> Loading...
+                </div>
               </div>
-              <div class="card-value" id="active-schools">--</div>
-              <div class="card-trend" id="active-schools-trend">
-                <i class="ph-bold ph-arrow-up"></i> Loading...
+            </div>
+
+            <div class="col-xl-3 col-lg-6 col-md-6 col-sm-12">
+              <div class="card">
+                <div class="card-header">
+                  <i class="ph-bold ph-users"></i>
+                  <h3>Active Schools</h3>
+                </div>
+                <div class="card-value" id="active-schools">--</div>
+                <div class="card-trend" id="active-schools-trend">
+                  <i class="ph-bold ph-arrow-up"></i> Loading...
+                </div>
               </div>
             </div>
           </div>
 
           <!-- Charts Section -->
-          <div class="charts-row">
-            <div class="chart-container">
-              <div class="chart-header">
-                <h3>Completion Rate by Region</h3>
-                <div class="chart-actions">
-                  <button class="btn-icon">
-                    <i class="ph-bold ph-arrows-out-simple"></i>
-                  </button>
-                  <button class="btn-icon">
-                    <i class="ph-bold ph-download"></i>
-                  </button>
+          <div class="row g-3 mb-4">
+            <div class="col-xl-6 col-lg-6 col-md-12">
+              <div class="chart-container">
+                <div class="chart-header">
+                  <h3>Completion Rate by Region</h3>
+                  <div class="chart-actions">
+                    <button class="btn-icon">
+                      <i class="ph-bold ph-arrows-out-simple"></i>
+                    </button>
+                    <button class="btn-icon">
+                      <i class="ph-bold ph-download"></i>
+                    </button>
+                  </div>
                 </div>
+                <canvas id="completionChart"></canvas>
               </div>
-              <canvas id="completionChart"></canvas>
             </div>
 
-            <div class="chart-container">
-              <div class="chart-header">
-                <h3>Forms Completed Over Time</h3>
-                <div class="chart-actions">
-                  <button class="btn-icon">
-                    <i class="ph-bold ph-arrows-out-simple"></i>
-                  </button>
-                  <button class="btn-icon">
-                    <i class="ph-bold ph-download"></i>
-                  </button>
+            <div class="col-xl-6 col-lg-6 col-md-12">
+              <div class="chart-container">
+                <div class="chart-header">
+                  <h3>Forms Completed Over Time</h3>
+                  <div class="chart-actions">
+                    <button class="btn-icon">
+                      <i class="ph-bold ph-arrows-out-simple"></i>
+                    </button>
+                    <button class="btn-icon">
+                      <i class="ph-bold ph-download"></i>
+                    </button>
+                  </div>
                 </div>
+                <canvas id="timelineChart"></canvas>
               </div>
-              <canvas id="timelineChart"></canvas>
             </div>
           </div>
 
           <!-- Data Tables -->
-          <div class="tables-row">
-            <div class="table-container">
-              <div class="table-header">
-                <h3>Top Performing Schools</h3>
-              </div>
-              <div class="table-body">
-                <table class="data-table" id="schools-table">
-                  <thead>
-                    <tr>
-                      <th>School</th>
-                      <th>Region</th>
-                      <th>Completion Rate</th>
-                      <th>Avg. Score</th>
-                      <th>Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <!-- Data will be populated by JS -->
-                  </tbody>
-                </table>
+          <div class="row g-3 mb-4">
+            <div class="col-xl-6 col-lg-6 col-md-12">
+              <div class="table-container">
+                <div class="table-header">
+                  <h3>Form Workflow Status</h3>
+                </div>
+                <div class="table-body">
+                  <canvas id="workflowChart"></canvas>
+                </div>
               </div>
             </div>
 
-            <div class="table-container">
-              <div class="table-header">
-                <h3>Response Distribution</h3>
-              </div>
-              <div class="table-body">
-                <canvas id="distributionChart"></canvas>
+            <div class="col-xl-6 col-lg-6 col-md-12">
+              <div class="table-container">
+                <div class="table-header">
+                  <h3>Recent Form Activity</h3>
+                </div>
+                <div class="table-body">
+                  <table class="data-table" id="activity-table">
+                    <thead>
+                      <tr>
+                        <th>School</th>
+                        <th>Status</th>
+                        <th>Updated</th>
+                        <th>Level</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <!-- Data will be populated by JS -->
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
           </div>

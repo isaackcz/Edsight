@@ -1,0 +1,105 @@
+{% load static %}
+
+<!-- User Table Section -->
+<div class="user-management-table-section">
+    <div class="table-card">
+        <div class="table-header">
+            <h3>
+                <i class="ph-bold ph-table"></i>
+                User Management Table
+            </h3>
+            
+            <!-- Search and Filters -->
+            <div class="table-controls">
+                <div class="search-box">
+                    <i class="ph-bold ph-magnifying-glass"></i>
+                    <input type="text" id="userTableSearch" placeholder="Search users..." />
+                </div>
+                
+                <div class="filter-group">
+                    <select id="userTableAdminLevelFilter">
+                        <option value="">All Admin Levels</option>
+                        <option value="central">Central Office</option>
+                        <option value="region">Region</option>
+                        <option value="division">Division</option>
+                        <option value="district">District</option>
+                        <option value="school">School</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <select id="userTableStatusFilter">
+                        <option value="">All Status</option>
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive</option>
+                        <option value="suspended">Suspended</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        
+        <div class="table-wrapper">
+            <div class="table-loading" id="tableLoading">
+                <div class="spinner-border spinner-border-sm" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <span>Loading users...</span>
+            </div>
+            
+            <table class="table table-hover" id="userManagementTable" style="display: none;">
+                <thead>
+                    <tr>
+                        <th class="sortable" data-sort="full_name">
+                            <span>Full Name</span>
+                            <i class="ph-bold ph-arrows-up-down sort-icon"></i>
+                        </th>
+                        <th class="sortable" data-sort="email">
+                            <span>Email</span>
+                            <i class="ph-bold ph-arrows-up-down sort-icon"></i>
+                        </th>
+                        <th class="sortable" data-sort="admin_level">
+                            <span>Admin Level</span>
+                            <i class="ph-bold ph-arrows-up-down sort-icon"></i>
+                        </th>
+                        <th class="sortable" data-sort="status">
+                            <span>Status</span>
+                            <i class="ph-bold ph-arrows-up-down sort-icon"></i>
+                        </th>
+                        <th class="sortable" data-sort="assigned_area">
+                            <span>Assigned Area</span>
+                            <i class="ph-bold ph-arrows-up-down sort-icon"></i>
+                        </th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="userTableBody">
+                    <!-- Table rows will be dynamically inserted here -->
+                </tbody>
+            </table>
+            
+            <div class="table-empty" id="tableEmpty" style="display: none;">
+                <i class="ph-bold ph-users"></i>
+                <p>No users found</p>
+            </div>
+        </div>
+        
+        <!-- Pagination -->
+        <div class="table-pagination" id="tablePagination" style="display: none;">
+            <div class="pagination-info">
+                <span id="paginationInfo">Showing 0-0 of 0</span>
+            </div>
+            <div class="pagination-controls">
+                <button class="btn btn-sm btn-outline" id="prevPageBtn" disabled>
+                    <i class="ph-bold ph-caret-left"></i> Previous
+                </button>
+                <span class="pagination-page-info">
+                    Page <span id="currentPage">1</span> of <span id="totalPages">1</span>
+                </span>
+                <button class="btn btn-sm btn-outline" id="nextPageBtn" disabled>
+                    Next <i class="ph-bold ph-caret-right"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+

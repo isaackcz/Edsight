@@ -1,0 +1,33 @@
+{% load static %}
+
+<!-- Tree View Section -->
+<div class="user-management-tree-section">
+    <div class="tree-view-card">
+        <div class="tree-view-header">
+            <h3>
+                <i class="ph-bold ph-tree-structure"></i>
+                Geographic Hierarchy
+            </h3>
+            <p class="tree-view-subtitle">Click on regions, divisions, or districts to view users</p>
+        </div>
+        
+        <div class="tree-view-container" id="userManagementTree">
+            <div class="tree-loading" id="treeLoading">
+                <div class="spinner-border spinner-border-sm" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <span>Loading regions...</span>
+            </div>
+            
+            <div class="tree-content" id="treeContent" style="display: none;">
+                <!-- Tree nodes will be dynamically inserted here -->
+            </div>
+            
+            <div class="tree-empty" id="treeEmpty" style="display: none;">
+                <i class="ph-bold ph-folder-open"></i>
+                <p>No regions found</p>
+            </div>
+        </div>
+    </div>
+</div>
+

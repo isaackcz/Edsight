@@ -1,20 +1,19 @@
 .sidebar {
   width: 220px;
-  /* Sidebar as structure (30%) using a soft UI surface */
-  background: var(--white);
-  color: var(--black);
+  background: var(--admin-white, var(--white));
+  color: var(--admin-text, var(--black));
   display: flex;
   flex-direction: column;
   padding: 20px 18px;
   transition: var(--transition);
   box-shadow: var(--subtle-shadow);
-  border-radius: 14px;
+  border-radius: 4px;
   height: calc(100vh - 48px);
-  position: sticky; /* keep sidebar in view while scrolling */
-  top: 24px; /* required for sticky to take effect */
-  align-self: flex-start; /* ensure it sticks within the flex row */
-  z-index: 2; /* sit above content when overlapping */
-  overflow: visible; /* allow shadows and children to render correctly */
+  position: sticky;
+  top: 24px;
+  align-self: flex-start;
+  z-index: 2;
+  overflow: visible;
 }
 
 /* Collapsed sidebar state: visually slide/hide the sidebar and let
@@ -52,25 +51,24 @@
   gap: 12px;
   padding: 8px 6px 14px 6px;
   margin-bottom: 12px;
-  /* subtle divider between logo and menu */
-  border-bottom: 1px solid rgba(30, 30, 36, 0.04);
+  border-bottom: 1px solid var(--admin-border, rgba(30, 30, 36, 0.08));
   justify-content: center;
 }
 
 .logo i {
   font-size: 20px;
-  /* icon uses UI color (blue) with subtle pumpkin tint behind for brand */
-  color: var(--bice-blue);
+  color: #3a6ea5ff;
   width: 36px;
   height: 36px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 10px;
+  border-radius: 4px;
+  background: rgba(205, 225, 241, 0.3);
 }
 
 .logo span {
-  color: var(--black);
+  color: var(--admin-text, var(--black));
   letter-spacing: 0.5px;
   display: inline-block;
   line-height: 1;
@@ -84,7 +82,7 @@
 /* Ensure sidebar links look like menu items (no underlines) */
 .menu a {
   text-decoration: none;
-  color: inherit;
+  color: black;
   display: block;
 }
 
@@ -96,6 +94,7 @@
   gap: 12px;
   cursor: pointer;
   transition: var(--transition);
+  border-radius: 4px;
 }
 
 .menu-item i {
@@ -103,21 +102,21 @@
   margin-right: 8px;
   width: 30px;
   text-align: center;
-  color: var(--black); /* icons default to black */
+  color: var(--admin-text-light, #666666);
   opacity: 0.95;
 }
 
 .menu-item:hover {
-  background: rgba(0, 78, 152, 0.06);
+  background: rgba(58, 110, 165, 0.06);
 }
 
 .menu-item.active {
-  border-left: 0;
-  color: var(--polynesian-blue);
+  background: rgba(58, 110, 165, 0.1);
+  color: var(--admin-accent-dark, #3a6ea5ff);
 }
 
 .menu-item.active i {
-  color: var(--polynesian-blue); /* active icon color */
+  color: var(--admin-accent-dark, #3a6ea5ff);
 }
 
 /* Hide focus outline for interactions that are not keyboard-driven (modern browsers) */
@@ -130,4 +129,102 @@
 .dashboard-container :focus-visible {
   outline: 3px solid rgba(0, 123, 255, 0.18);
   outline-offset: 2px;
+}
+
+/* Dropdown Menu Styles */
+.menu-item-dropdown {
+  flex-direction: column;
+  align-items: stretch;
+  padding: 0;
+}
+
+.menu-item-header {
+  display: flex;
+  align-items: center;
+  padding: 12px 10px;
+  gap: 12px;
+  cursor: pointer;
+  transition: var(--transition);
+  border-radius: 4px;
+}
+
+.menu-item-header i {
+  font-size: 16px;
+  width: 30px;
+  text-align: center;
+  color: var(--admin-text-light, #666666);
+  opacity: 0.95;
+}
+
+.menu-item-header .dropdown-icon {
+  margin-left: auto;
+  transition: transform 0.22s ease;
+  font-size: 12px;
+  width: auto;
+}
+
+.menu-item-dropdown.active .menu-item-header .dropdown-icon {
+  transform: rotate(180deg);
+}
+
+.menu-item-dropdown.active .menu-item-header,
+.menu-item-dropdown.active .menu-item-header i {
+  color: var(--admin-accent-dark, #3a6ea5ff);
+  background: rgba(58, 110, 165, 0.1);
+}
+
+.menu-item-header:hover {
+  background: rgba(58, 110, 165, 0.06);
+}
+
+.submenu {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+  padding-left: 0;
+}
+
+.menu-item-dropdown.active .submenu {
+  max-height: 1000px;
+  padding-left: 0;
+}
+
+.submenu-item {
+  display: flex;
+  align-items: center;
+  padding: 10px 10px 10px 42px;
+  margin: 2px 0;
+  gap: 12px;
+  cursor: pointer;
+  transition: var(--transition);
+  border-radius: 4px;
+  text-decoration: none;
+  color: var(--admin-text, var(--black));
+  font-size: 0.9rem;
+}
+
+.submenu-item i {
+  font-size: 14px;
+  width: 20px;
+  text-align: center;
+  color: var(--admin-text-light, #666666);
+}
+
+.submenu-item:hover {
+  background: rgba(58, 110, 165, 0.06);
+  color: var(--admin-accent-dark, #3a6ea5ff);
+}
+
+.submenu-item:hover i {
+  color: var(--admin-accent-dark, #3a6ea5ff);
+}
+
+.submenu-item.active {
+  background: rgba(58, 110, 165, 0.1);
+  color: var(--admin-accent-dark, #3a6ea5ff);
+  font-weight: 500;
+}
+
+.submenu-item.active i {
+  color: var(--admin-accent-dark, #3a6ea5ff);
 }

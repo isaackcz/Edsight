@@ -1,0 +1,40 @@
+{% load static %}
+<!-- Sidebar Navigation -->
+<div class="sidebar">
+    <div class="logo">
+        <span>EdSight</span>
+    </div>
+    <div class="menu">
+        <a href="{% url 'dashboard-page' %}" class="menu-item {% if request.resolver_match.url_name == 'dashboard-page' %}active{% endif %}">
+            <i class="ph-bold ph-arrow-left"></i>
+            <span>Back to Dashboard</span>
+        </a>
+        {% if admin_level != 'district' %}
+        <a href="{% url 'admin-page' %}" class="menu-item {% if request.resolver_match.url_name == 'admin-page' %}active{% endif %}">
+            <i class="ph-bold ph-house"></i>
+            <span>Dashboard</span>
+        </a>
+        {% endif %}
+        <a href="{% url 'admin-profile-page' %}" class="menu-item {% if request.resolver_match.url_name == 'admin-profile-page' %}active{% endif %}">
+            <i class="ph-bold ph-user-circle"></i>
+            <span>My Profile</span>
+        </a>
+        
+        {% if admin_level != 'district' %}
+        <a href="{% url 'user-management-page' %}" class="menu-item {% if request.resolver_match.url_name == 'user-management-page' %}active{% endif %}">
+            <i class="ph-bold ph-users"></i>
+            <span>User Management</span>
+        </a>
+        <a href="{% url 'role-analytics-page' %}" class="menu-item {% if request.resolver_match.url_name == 'role-analytics-page' %}active{% endif %}">
+            <i class="ph-bold ph-shield"></i>
+            <span>Role & Access</span>
+        </a>
+        {% endif %}
+        
+        <a href="{% url 'logout' %}" class="menu-item logout-btn">
+            <i class="ph-bold ph-sign-out"></i>
+            <span>Sign Out</span>
+        </a>
+    </div>
+</div>
+

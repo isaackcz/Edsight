@@ -24,6 +24,10 @@
 .ph.ph-sign-out::before { content: "↩️"; }
 .ph.ph-arrow-up::before { content: "⬆️"; }
 .ph.ph-arrow-down::before { content: "⬇️"; }
+.ph.ph-list::before { content: "☰"; }
+.ph.ph-caret-right::before { content: "▶"; }
+.ph.ph-caret-down::before { content: "▼"; }
+.ph.ph-gear::before { content: "⚙"; }
 
 /* Minor sizing adjustments */
 .ph::before { font-size: 0.95em; line-height: 1; }

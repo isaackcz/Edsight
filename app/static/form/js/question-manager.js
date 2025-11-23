@@ -103,55 +103,52 @@ class QuestionManager {
     card.setAttribute("data-qidx", idx);
     
     card.innerHTML = `
-      <div class="question-header" style="display:flex;align-items:center;gap:16px;margin-bottom:24px;">
-        <span class="question-circle" style="display:inline-flex;align-items:center;justify-content:center;width:48px;height:48px;border-radius:50%;background:#cbd5e0;color:#25303a;font-weight:700;font-size:20px;flex:0 0 auto;">${idx + 1}</span>
-        <div style="display:flex;flex-direction:column;">
-          <span class="question-title" style="font-weight:700;font-size:20px;color:#111;">Question ${idx + 1}</span>
+      <div class="question-header d-flex align-items-center gap-3 mb-4">
+        <span class="question-circle">${idx + 1}</span>
+        <div class="question-heading">
+          <span class="question-title">Question ${idx + 1}</span>
         </div>
-        
       </div>
       
-      <div class="question-details">
-        <!-- Left Column: Question Text -->
-        <div class="question-content-column">
+      <div class="question-details row g-3 align-items-stretch">
+        <div class="col-12 col-lg-7">
           <div class="question-text-container">
-            <textarea class="question-text" data-id="${q.question_id !== undefined ? q.question_id : ""}" placeholder="Enter your question text here..." style="width:100%;min-height:70px;padding:16px;border-radius:12px;border:1px solid rgba(0,0,0,0.08);font-size:16px;color:var(--black);box-shadow:none;resize:vertical;font-family:inherit;">${(q.question_text || q.text || "").replace(/"/g, "&quot;")}</textarea>
-            <div class="inline-error" style="display:none;"></div>
+            <textarea class="question-text form-control" data-id="${q.question_id !== undefined ? q.question_id : ""}" placeholder="Enter your question text here...">${(q.question_text || q.text || "").replace(/"/g, "&quot;")}</textarea>
+            <div class="inline-error text-danger small"></div>
           </div>
         </div>
         
-        <!-- Right Column: Question Settings -->
-        <div class="question-settings-column">
-          <div class="settings-inline-row" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-            <div class="form-group" style="flex:1;min-width:120px;">
-              <select class="answer-type" data-id="${q.question_id !== undefined ? q.question_id : ""}" style="width:100%;padding:8px 10px;border-radius:4px;border:1px solid rgba(0,0,0,0.08);font-size:13px;background:#fff;">
+        <div class="col-12 col-lg-5">
+          <div class="question-settings card border-0 shadow-sm h-100">
+            <div class="card-body">
+              <div class="settings-inline-row row g-3">
+                <div class="col-12">
+                  <label class="form-label small fw-semibold text-uppercase text-muted mb-1">Answer Type</label>
+                  <select class="answer-type form-select" data-id="${q.question_id !== undefined ? q.question_id : ""}">
                 <option value="text" ${q.answer_type === "text" || !q.answer_type ? "selected" : ""}>Text</option>
                 <option value="number" ${q.answer_type === "number" ? "selected" : ""}>Number</option>
                 <option value="date" ${q.answer_type === "date" ? "selected" : ""}>Date</option>
                 <option value="percentage" ${q.answer_type === "percentage" ? "selected" : ""}>Percentage</option>
               </select>
             </div>
-            
-            <div class="form-group" style="flex:0 0 auto;">
-              <div style="display:flex;align-items:center;gap:6px;">
+                <div class="col-12 d-flex align-items-center justify-content-between gap-2 flex-wrap">
+                  <div class="required-toggle d-flex align-items-center gap-2">
                 <div class="toggle-switch">
                   <input type="checkbox" class="is-required" ${q.is_required || q.required ? "checked" : ""} data-id="${q.question_id !== undefined ? q.question_id : idx}" id="required-${q.question_id !== undefined ? q.question_id : idx}" />
                   <label for="required-${q.question_id !== undefined ? q.question_id : idx}"></label>
+                    </div>
+                    <span class="toggle-label">Required</span>
+                  </div>
+                  <button class="btn btn-outline-danger btn-sm d-inline-flex align-items-center gap-2 delete-question" data-id="${q.question_id !== undefined ? q.question_id : idx}">
+                    <i class="ph ph-bold ph-trash"></i>
+                    <span>Delete</span>
+                  </button>
                 </div>
-                <span class="toggle-label" style="font-weight:600;color:var(--black);font-size:13px;">Required</span>
               </div>
-            </div>
-            
-            <div class="form-group" style="flex:0 0 auto;">
-              <button class="btn danger delete-question" data-id="${q.question_id !== undefined ? q.question_id : idx}" style="background:var(--danger);color: #fff;border:none;padding:8px 12px;border-radius:4px;font-weight:600;font-size:13px;white-space:nowrap;">
-                <i class="ph ph-bold ph-trash" style="margin-right:6px;color:inherit;"></i>Delete
-              </button>
             </div>
           </div>
         </div>
       </div>
-      
-      
     `;
     
     return card;

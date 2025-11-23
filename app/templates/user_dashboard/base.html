@@ -6,16 +6,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>{% block title %}User Dashboard{% endblock %} | EdSight</title>
     
-    <!-- Favicon -->
-    <link rel="icon" type="image/x-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📊</text></svg>" />
+    <link rel="icon" type="image/png" href="{% static 'auth/img/logo.png' %}" />
     
     <!-- PWA Manifest -->
     <link rel="manifest" href="{% static 'shared/manifest.json' %}" />
-    <meta name="theme-color" content="#3a6ea5" />
+    <meta name="theme-color" content="#004e98" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="EdSight" />
-    <link rel="apple-touch-icon" href="{% static 'shared/img/icon-192x192.png' %}" />
     
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -23,8 +21,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
     
     <!-- Phosphor Icons -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.2/dist/phosphor.css" />
-    <link rel="stylesheet" href="{% static 'shared/phosphor/phosphor.css' %}" />
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.2/src/bold/style.css" />
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     
     <!-- Design System & Core Styles -->
     <style>
@@ -36,24 +35,34 @@
         --font-weight-bold: 700;
         --heading-line-height: 1.15;
         
-        /* Base palette tokens */
-        --pumpkin: #ff6700ff; /* Accent color (buttons, links) */
-        --antiflash-white: #ebebebff; /* Light background for cards/panels */
-        --silver: #c0c0c0ff; /* Secondary text and borders */
-        --bice-blue: #3a6ea5ff; /* Primary brand color for nav/icons */
-        --polynesian-blue: #004e98ff; /* Strong header/banner color */
-        --white: #f7f9f9ff; /* Main background */
-        --black: #1e1e24ff; /* Primary text */
+        /* Admin color scheme: 80% white, 20% #cde1f1 */
+        --admin-white: #ffffff;
+        --admin-accent: #cde1f1;
+        --admin-accent-dark: #3a6ea5ff;
+        --admin-bg: var(--admin-white);
+        --admin-text: #1e1e24ff;
+        --admin-text-muted: #333333;
+        --admin-text-light: #666666;
+        --admin-border: rgba(30, 30, 36, 0.08);
+        
+        /* Legacy variables for backward compatibility */
+        --pumpkin: #ff6700ff;
+        --antiflash-white: var(--admin-accent);
+        --silver: #c0c0c0ff;
+        --bice-blue: #3a6ea5ff;
+        --polynesian-blue: #004e98ff;
+        --white: var(--admin-white);
+        --black: var(--admin-text);
 
         /* Core UI tokens */
         --success: #4caf50;
         --warning: #ff9800;
         --danger: #f44336;
-        --border-radius: 18px;
+        --border-radius: 4px;
         --soft-shadow: 0 8px 24px rgba(30, 30, 36, 0.06);
         --subtle-shadow: 0 4px 12px rgba(30, 30, 36, 0.04);
         --transition: all 0.22s ease;
-        --focus-outline: rgba(58, 110, 165, 0.16);
+        --focus-outline: rgba(205, 225, 241, 0.3);
       }
 
       * {
@@ -64,8 +73,7 @@
       }
 
       body {
-        background-color: var(--antiflash-white);
-        color: var(--black);
+        color: var(--admin-text);
         min-height: 100vh;
         overflow-x: hidden;
         -webkit-font-smoothing: antialiased;
@@ -103,13 +111,52 @@
         font-weight: 600;
         letter-spacing: 0.2px;
       }
+
+      /* PWA Install Button */
+      #pwa-install-button {
+        display: none;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: var(--polynesian-blue);
+        color: white;
+        border: none;
+        cursor: pointer;
+        transition: var(--transition);
+      }
+
+      #pwa-install-button:hover {
+        background: var(--bice-blue);
+        transform: scale(1.05);
+      }
+
+      #pwa-install-button i {
+        font-size: 18px;
+      }
     </style>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
     
     <!-- Shared CSS -->
     <link rel="stylesheet" href="{% static 'shared/css/sidebar.css' %}" />
     <link rel="stylesheet" href="{% static 'shared/css/header.css' %}" />
     <link rel="stylesheet" href="{% static 'shared/css/main-content.css' %}" />
     <link rel="stylesheet" href="{% static 'shared/css/responsive.css' %}" />
+    <link rel="stylesheet" href="{% static 'shared/css/dialog.css' %}" />
+    
+    <!-- Override any CSS that might set white background - must be after all other CSS -->
+    <style>
+      html, body {
+        background-color: var(--admin-accent) !important;
+      }
+      .dashboard-container,
+      .main-content {
+        background: transparent !important;
+      }
+    </style>
     
     <!-- Page-specific CSS -->
     {% block extra_css %}{% endblock %}
@@ -117,12 +164,22 @@
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
+    <!-- Cleanup old storage (runs once) -->
+    <script src="{% static 'shared/js/cleanup-old-storage.js' %}"></script>
+    
+    <!-- PWA Scripts -->
+    <script src="{% static 'shared/js/pwa/pwa-config.js' %}"></script>
+    <script src="{% static 'shared/js/pwa/queue-manager.js' %}"></script>
+    <script src="{% static 'shared/js/pwa/pwa-manager.js' %}"></script>
+    <script src="{% static 'shared/js/pwa/install-prompt.js' %}"></script>
+    <script src="{% static 'shared/js/pwa/api-cache-helper.js' %}"></script>
+    
     <!-- Shared JavaScript -->
     <script src="{% static 'shared/js/sidebar.js' %}" defer></script>
     <script src="{% static 'shared/js/header.js' %}" defer></script>
     <script src="{% static 'shared/js/charts.js' %}" defer></script>
     <script src="{% static 'shared/js/dashboard.js' %}" defer></script>
-    <script src="{% static 'shared/js/pwa-manager.js' %}" defer></script>
+    <script src="{% static 'shared/js/dialog.js' %}" defer></script>
     
     <!-- Page-specific JavaScript -->
     {% block extra_js %}{% endblock %}
@@ -138,20 +195,25 @@
             <!-- Header -->
             <header class="header">
                 <div class="header-left">
-                    <button class="hamburger-btn" id="sidebar-toggle">
-                        <i class="ph-bold ph-list"></i>
+                    <button class="hamburger" aria-label="Open menu" title="Menu" id="sidebar-toggle">
+                        <i class="fas fa-bars"></i>
                     </button>
                     <div class="breadcrumb">
                         <span class="breadcrumb-item">Dashboard</span>
-                        <i class="ph ph-caret-right breadcrumb-separator"></i>
+                        <i class="fas fa-chevron-right breadcrumb-separator"></i>
                         <span class="breadcrumb-current">{% block breadcrumb %}{% endblock %}</span>
                     </div>
                 </div>
                 
                 <div class="header-actions">
-                    <div class="notification" title="Notifications">
+                    <!-- PWA Install Button -->
+                    <button id="pwa-install-button" class="btn-icon" title="Install EdSight App" style="display: none;">
+                        <i class="ph-bold ph-download"></i>
+                    </button>
+                    
+                    <div class="notification" title="Notifications" data-notifications-endpoint="{% url 'user-dashboard:api-notifications' %}" data-default-avatar="{% static 'auth/img/default-profile.jpg' %}">
                         <i class="ph-bold ph-bell"></i>
-                        <span class="notif-badge">2</span>
+                        <span class="notif-badge">0</span>
                         <!-- Notifications panel -->
                         <div class="notifications-panel" aria-hidden="true">
                             <div class="panel-header">
@@ -161,29 +223,9 @@
                                 </button>
                             </div>
                             <div class="panel-body">
-                                <div class="notif-item">
-                                    <div class="notif-avatar">
-                                        <img src="{% static 'auth/img/default-profile.jpg' %}" alt="u" />
-                                    </div>
-                                    <div class="notif-content">
-                                        <div class="notif-title">
-                                            <div class="notif-name">System</div>
-                                            <div class="notif-message">Form submission deadline approaching</div>
-                                        </div>
-                                        <div class="notif-meta">System • 1 hour ago</div>
-                                    </div>
-                                </div>
-                                <div class="notif-item">
-                                    <div class="notif-avatar">
-                                        <img src="{% static 'auth/img/default-profile.jpg' %}" alt="u" />
-                                    </div>
-                                    <div class="notif-content">
-                                        <div class="notif-title">
-                                            <div class="notif-name">EdSight</div>
-                                            <div class="notif-message">Your progress has been saved</div>
-                                        </div>
-                                        <div class="notif-meta">System • 3 hours ago</div>
-                                    </div>
+                                <div data-notifications-list></div>
+                                <div data-notifications-empty style="display: none; padding: 1rem; text-align: center; color: #666;">
+                                    No notifications yet.
                                 </div>
                             </div>
                         </div>
@@ -193,23 +235,22 @@
                     <div class="profile">
                         <button class="avatar-btn" aria-haspopup="true" aria-expanded="false" aria-label="Open profile menu">
                             <span class="avatar">
-                                <img src="{% static 'auth/img/default-profile.jpg' %}" alt="Profile" />
+                                <i class="ph-bold ph-user"></i>
                             </span>
                         </button>
                         <div class="profile-dropdown" role="menu" aria-label="Profile menu">
                             <div class="profile-header">
-                                <div class="avatar" style="width: 40px; height: 40px; flex: 0 0 auto">
-                                    <img src="{% static 'auth/img/default-profile.jpg' %}" alt="Profile" />
+                                <div class="avatar">
+                                    <i class="ph-bold ph-user"></i>
                                 </div>
                                 <div>
                                     <div class="name">{{ user.username|default:"User" }}</div>
                                     <div class="subtext">{{ user.email|default:"School User" }}</div>
                                 </div>
                             </div>
-                            <a href="{% url 'user-dashboard:settings' %}"><i class="ph-bold ph-user"></i>View profile</a>
-                            <a href="{% url 'user-dashboard:settings' %}"><i class="ph-bold ph-gear"></i>Settings</a>
+                            <a href="{% url 'user-dashboard:settings' %}#security-section"><i class="ph-bold ph-user-circle"></i>Settings</a>
                             <div class="dropdown-logout">
-                                <form method="post" action="{% url 'logout' %}">
+                                <form method="post" action="/logout/">
                                     {% csrf_token %}
                                     <button type="submit">
                                         <i class="ph-bold ph-sign-out"></i>Logout

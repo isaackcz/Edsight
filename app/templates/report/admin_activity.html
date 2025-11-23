@@ -1,0 +1,174 @@
+{% extends "report/base.html" %}
+{% load static %}
+
+{% block page_title %}Admin Activity - Reports{% endblock %}
+{% block admin_activity_active %}active{% endblock %}
+
+{% block content %}
+<!-- Page Title -->
+<div class="dashboard-title mb-4">
+  <h1>Admin Activity Report</h1>
+</div>
+
+<!-- Filters -->
+<div class="filters-section mb-4">
+  <div class="card p-3">
+    <div class="row g-3">
+      <!-- Date Range Filter -->
+      <div class="col-md-3 col-sm-6">
+        <label class="form-label">Date Range</label>
+        <div class="date-selector" id="date-range-selector">
+          <i class="ph-bold ph-calendar"></i>
+          <span id="date-range-text">Last 30 Days</span>
+          <i class="ph-bold ph-caret-down"></i>
+          <div class="date-range-dropdown" id="date-range-dropdown">
+            <div class="date-range-option" data-range="7days">Last 7 Days</div>
+            <div class="date-range-option" data-range="30days">Last 30 Days</div>
+            <div class="date-range-option" data-range="90days">Last 90 Days</div>
+            <div class="date-range-option" data-range="6months">Last 6 Months</div>
+            <div class="date-range-option" data-range="year">Last Year</div>
+            <div class="date-range-option" data-range="all">All Time</div>
+            <div class="date-range-divider"></div>
+            <div class="date-range-option" data-range="custom" id="custom-date-range-option">
+              <i class="ph-bold ph-calendar-blank"></i> Custom Range
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="col-md-3 col-sm-6">
+        <label class="form-label">Level</label>
+        <select class="form-select" id="admin-level-filter">
+          <option value="">All Levels</option>
+          <option value="central">Central</option>
+          <option value="region">Region</option>
+          <option value="division">Division</option>
+          <option value="district">District</option>
+          <option value="school">School</option>
+        </select>
+      </div>
+      
+      <!-- Export Button -->
+      <div class="col-md-3 col-sm-6 d-flex align-items-end">
+        <button class="btn primary w-100" id="export-btn">
+          <i class="ph-bold ph-download"></i> Export
+        </button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Custom Date Range Modal -->
+  <div class="custom-date-modal" id="custom-date-modal">
+    <div class="custom-date-modal-content">
+      <div class="custom-date-modal-header">
+        <h3>Select Date Range</h3>
+        <button class="close-modal" id="close-custom-date-modal">
+          <i class="ph-bold ph-x"></i>
+        </button>
+      </div>
+      <div class="custom-date-modal-body">
+        <div class="date-input-group">
+          <label>From Date</label>
+          <input type="date" id="custom-date-from" class="date-input">
+        </div>
+        <div class="date-input-group">
+          <label>To Date</label>
+          <input type="date" id="custom-date-to" class="date-input">
+        </div>
+      </div>
+      <div class="custom-date-modal-footer">
+        <button class="btn secondary" id="cancel-custom-date">Cancel</button>
+        <button class="btn primary" id="apply-custom-date">Apply</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Report Table -->
+<div class="row g-3 mb-4">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <i class="ph-bold ph-users"></i>
+          <h3 style="margin: 0;">Admin Activity</h3>
+        </div>
+        <div style="position: relative; max-width: 300px; width: 100%;">
+          <input 
+            type="text" 
+            id="admin-activity-search" 
+            class="form-control" 
+            placeholder="Search admins..." 
+            style="padding-left: 36px;"
+          >
+          <i class="ph-bold ph-magnifying-glass" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--admin-text-muted); pointer-events: none;"></i>
+        </div>
+      </div>
+      <div class="table-responsive">
+        <table class="table" id="admin-activity-table">
+          <thead>
+            <tr>
+              <th data-sort="username">Username</th>
+              <th data-sort="full_name">Full Name</th>
+              <th data-sort="admin_level">Admin Level</th>
+              <th data-sort="activity_count">Activity Count</th>
+              <th data-sort="login_count">Login Count</th>
+              <th data-sort="active_sessions">Active Sessions</th>
+              <th data-sort="avg_session_duration_hours">Avg. Session (hours)</th>
+              <th data-sort="last_activity">Last Activity</th>
+            </tr>
+          </thead>
+          <tbody id="admin-activity-tbody">
+            <tr>
+              <td colspan="8" class="text-center">Loading admin data...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <!-- Pagination -->
+      <div id="admin-activity-pagination" style="padding: 16px; border-top: 1px solid var(--admin-border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+        <div style="font-size: 0.875rem; color: var(--admin-text-muted);">
+          <span id="pagination-info">Showing 0-0 of 0</span>
+        </div>
+        <div style="display: flex; gap: 8px; align-items: center;">
+          <button class="btn secondary" id="prev-page" disabled style="padding: 6px 12px; font-size: 0.875rem;">
+            <i class="ph-bold ph-caret-left"></i> Previous
+          </button>
+          <span id="page-numbers" style="display: flex; gap: 4px;"></span>
+          <button class="btn secondary" id="next-page" disabled style="padding: 6px 12px; font-size: 0.875rem;">
+            Next <i class="ph-bold ph-caret-right"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Export Modal -->
+<div class="custom-date-modal" id="export-modal">
+  <div class="custom-date-modal-content" style="max-width: 600px;">
+    <div class="custom-date-modal-header">
+      <h3>Export Data</h3>
+      <button class="close-modal" id="close-export-modal">
+        <i class="ph-bold ph-x"></i>
+      </button>
+    </div>
+    <div class="custom-date-modal-body">
+      <div class="mb-3">
+        <p><strong>Export Options:</strong></p>
+        <p id="export-filter-info" style="font-size: 0.875rem; color: var(--admin-text-muted); margin-bottom: 16px;"></p>
+        <div id="export-columns-checkboxes"></div>
+      </div>
+    </div>
+    <div class="custom-date-modal-footer">
+      <button class="btn secondary" id="cancel-export">Cancel</button>
+      <button class="btn primary" id="confirm-export">Export</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'report/js/admin_activity.js' %}"></script>
+{% endblock %}
+

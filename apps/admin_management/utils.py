@@ -9,7 +9,14 @@ from django.utils import timezone
 from django.db import transaction
 import re
 import json
-from apps.core.models import AdminUser, AdminActivityLog, AdminUserPermission, FormDeadline, UserCreationRequest
+from apps.core.models import (
+    AdminUser,
+    AdminActivityLog,
+    AdminUserPermission,
+    FormDeadline,
+    UserCreationRequest,
+    District,
+)
 
 
 class AdminUserManager:
@@ -95,13 +102,19 @@ class AdminUserManager:
                 'school_ids': 'all'
             })
         elif admin.admin_level == 'region':
+            accessible_divisions = list(admin.region.division_set.values_list('id', flat=True)) if admin.region else []
+            accessible_districts = list(
+                District.objects.filter(division__region_id=admin.region_id).values_list('id', flat=True)
+            ) if admin.region_id else []
+            accessible_schools = list(admin.region.school_set.values_list('id', flat=True)) if admin.region else []
+
             scope_data.update({
                 'scope': 'regional',
                 'coverage': f'Region: {admin.region.name}' if admin.region else 'No region assigned',
                 'region_id': admin.region_id,
-                'accessible_divisions': list(admin.region.division_set.values_list('id', flat=True)) if admin.region else [],
-                'accessible_districts': list(admin.region.district_set.values_list('id', flat=True)) if admin.region else [],
-                'accessible_schools': list(admin.region.school_set.values_list('id', flat=True)) if admin.region else []
+                'accessible_divisions': accessible_divisions,
+                'accessible_districts': accessible_districts,
+                'accessible_schools': accessible_schools
             })
         elif admin.admin_level == 'division':
             scope_data.update({
@@ -156,6 +169,11 @@ class AdminUserManager:
         
         # Validate email format
         AdminUserManager.validate_email_format(user_data['email'], user_data['admin_level'])
+        
+        # Check if school already has an account (only one account per school)
+        if user_data.get('admin_level') == 'school' and user_data.get('school_id'):
+            if AdminUser.objects.filter(school_id=user_data['school_id'], admin_level='school').exists():
+                raise ValidationError('This school already has an account. Only one account per school is allowed.')
         
         # Set default permissions based on admin level
         permissions = AdminUserManager._get_default_permissions(user_data['admin_level'])
@@ -289,7 +307,9 @@ class DeadlineManager:
     @staticmethod
     @transaction.atomic
     def set_deadline(admin_id, deadline_data, ip_address=None):
-        """Set a form deadline with proper validation"""
+        """Set a form deadline with proper validation and create notifications"""
+        from apps.core.models import FormNotification, Form, AdminUser
+        
         can_set, message = DeadlineManager.can_set_deadline(
             admin_id,
             deadline_data.get('region_id'),
@@ -305,7 +325,7 @@ class DeadlineManager:
             **deadline_data
         )
         
-        # Log the activity
+        # Log the activity (audit log)
         AdminActivityLog.objects.create(
             admin_user_id=admin_id,
             action='SET_DEADLINE',
@@ -320,6 +340,134 @@ class DeadlineManager:
             },
             ip_address=ip_address
         )
+        
+        # Create notifications for admins with forms in the affected region
+        # Get all forms for schools in this region that match the form_type
+        # Region-level deadlines affect ALL schools in the region (no division/district filtering)
+        forms_query = Form.objects.filter(
+            form_type=deadline.form_type,
+            school__region_id=deadline.region_id
+        ).select_related('admin_user', 'school')
+        
+        # Get the admin who set the deadline (for sender)
+        try:
+            sender_admin = AdminUser.objects.get(admin_id=admin_id)
+        except AdminUser.DoesNotExist:
+            sender_admin = None
+        
+        # Format deadline date for display
+        deadline_date_str = deadline.deadline_date.strftime('%B %d, %Y')
+        region_name = deadline.region.name if deadline.region else 'your region'
+        
+        # Create notifications for each affected form
+        notifications_to_create = []
+        for form in forms_query:
+            notifications_to_create.append(
+                FormNotification(
+                    form=form,
+                    recipient=form.admin_user,
+                    sender=sender_admin,
+                    notification_type='deadline_reminder',
+                    title=f'New Deadline Set: {deadline.form_type}',
+                    message=f'A new deadline has been set for {deadline.form_type} forms in {region_name}. '
+                           f'Deadline: {deadline_date_str}. '
+                           f'{deadline.description if deadline.description else "Please ensure your forms are submitted before this date."}',
+                    priority='high',
+                    action_required=True,
+                    action_url=f'/form-management/',
+                    metadata={
+                        'deadline_id': deadline.deadline_id,
+                        'deadline_date': deadline.deadline_date.isoformat(),
+                        'form_type': deadline.form_type,
+                        'region_id': deadline.region_id
+                    }
+                )
+            )
+        
+        # Bulk create notifications
+        if notifications_to_create:
+            FormNotification.objects.bulk_create(notifications_to_create, batch_size=100)
+        
+        return deadline
+    
+    @staticmethod
+    @transaction.atomic
+    def update_deadline(deadline_id, admin_id, deadline_data, ip_address=None):
+        """Update an existing deadline and create notifications"""
+        from apps.core.models import FormNotification, Form, AdminUser
+        
+        try:
+            deadline = FormDeadline.objects.get(deadline_id=deadline_id, is_active=True)
+        except FormDeadline.DoesNotExist:
+            raise PermissionDenied("Deadline not found")
+        
+        # Update deadline fields
+        deadline.deadline_date = deadline_data.get('deadline_date', deadline.deadline_date)
+        deadline.description = deadline_data.get('description', deadline.description)
+        deadline.is_active = True
+        deadline.save()
+        
+        # Log the activity (audit log)
+        AdminActivityLog.objects.create(
+            admin_user_id=admin_id,
+            action='UPDATE_DEADLINE',
+            resource_type='form_deadline',
+            resource_id=str(deadline.deadline_id),
+            details={
+                'form_type': deadline.form_type,
+                'deadline_date': deadline.deadline_date.isoformat(),
+                'region_id': deadline.region_id,
+                'division_id': deadline.division_id,
+                'district_id': deadline.district_id
+            },
+            ip_address=ip_address
+        )
+        
+        # Create notifications for admins with forms in the affected region
+        # Get all forms for schools in this region that match the form_type
+        forms_query = Form.objects.filter(
+            form_type=deadline.form_type,
+            school__region_id=deadline.region_id
+        ).select_related('admin_user', 'school')
+        
+        # Get the admin who updated the deadline (for sender)
+        try:
+            sender_admin = AdminUser.objects.get(admin_id=admin_id)
+        except AdminUser.DoesNotExist:
+            sender_admin = None
+        
+        # Format deadline date for display
+        deadline_date_str = deadline.deadline_date.strftime('%B %d, %Y')
+        region_name = deadline.region.name if deadline.region else 'your region'
+        
+        # Create notifications for each affected form
+        notifications_to_create = []
+        for form in forms_query:
+            notifications_to_create.append(
+                FormNotification(
+                    form=form,
+                    recipient=form.admin_user,
+                    sender=sender_admin,
+                    notification_type='deadline_reminder',
+                    title=f'Deadline Updated: {deadline.form_type}',
+                    message=f'The deadline for {deadline.form_type} forms in {region_name} has been updated. '
+                           f'New deadline: {deadline_date_str}. '
+                           f'{deadline.description if deadline.description else "Please ensure your forms are submitted before this date."}',
+                    priority='high',
+                    action_required=True,
+                    action_url=f'/form-management/',
+                    metadata={
+                        'deadline_id': deadline.deadline_id,
+                        'deadline_date': deadline.deadline_date.isoformat(),
+                        'form_type': deadline.form_type,
+                        'region_id': deadline.region_id
+                    }
+                )
+            )
+        
+        # Bulk create notifications
+        if notifications_to_create:
+            FormNotification.objects.bulk_create(notifications_to_create, batch_size=100)
         
         return deadline
 
@@ -420,10 +568,12 @@ def require_admin_permission(permission_type, resource_type=None):
             # DEVELOPMENT BYPASS - Remove this in production
             from django.conf import settings
             if getattr(settings, 'DEBUG', False):
-                # Always create a mock admin session for development using existing admin
-                request.session['admin_id'] = 2  # Use existing admin ID from database
-                request.session['admin_level'] = 'central'
-                request.session['admin_username'] = 'admin'
+                # If admin_id is already in session, use it; otherwise create mock session
+                if not request.session.get('admin_id'):
+                    request.session['admin_id'] = 2  # Use existing admin ID from database
+                    request.session['admin_level'] = 'central'
+                    request.session['admin_username'] = 'admin'
+                # Don't override existing session - let the actual user's session persist
                 return func(request, *args, **kwargs)
             
             admin_id = request.session.get('admin_id')
@@ -479,5 +629,69 @@ def log_admin_activity(action, resource_type):
                 )
             
             return result
+        return wrapper
+    return decorator
+
+
+def require_admin_level(allowed_levels=None, blocked_levels=None):
+    """
+    Decorator to check admin level before executing a function.
+    
+    Args:
+        allowed_levels: List of admin levels allowed to access (e.g., ['central', 'division'])
+        blocked_levels: List of admin levels blocked from access (e.g., ['district', 'school'])
+    
+    If both are provided, allowed_levels takes precedence.
+    """
+    def decorator(func):
+        def wrapper(request, *args, **kwargs):
+            from django.shortcuts import redirect
+            from django.http import HttpResponseForbidden
+            
+            # DEVELOPMENT BYPASS - Remove this in production
+            from django.conf import settings
+            if getattr(settings, 'DEBUG', False):
+                if not request.session.get('admin_id'):
+                    request.session['admin_id'] = 2
+                    request.session['admin_level'] = 'central'
+                    request.session['admin_username'] = 'admin'
+                return func(request, *args, **kwargs)
+            
+            admin_id = request.session.get('admin_id')
+            if not admin_id:
+                raise PermissionDenied("Admin authentication required")
+            
+            # Get admin user and check level
+            try:
+                admin = AdminUser.objects.get(admin_id=admin_id, status='active')
+                admin_level = admin.admin_level
+            except AdminUser.DoesNotExist:
+                raise PermissionDenied("Admin user not found or inactive")
+            
+            # Check if level is blocked
+            if blocked_levels and admin_level in blocked_levels:
+                # Log access attempt for audit
+                AuditLogger.log_activity(
+                    admin_id=admin_id,
+                    action='BLOCKED_ACCESS_ATTEMPT',
+                    resource_type='admin_page',
+                    details={
+                        'page': func.__name__,
+                        'admin_level': admin_level,
+                        'reason': f'Access blocked for {admin_level} level'
+                    },
+                    ip_address=request.META.get('REMOTE_ADDR'),
+                    user_agent=request.META.get('HTTP_USER_AGENT')
+                )
+                # Redirect District to profile page, others get 403
+                if admin_level == 'district':
+                    return redirect('/admin/profile/')
+                raise PermissionDenied(f"Access denied for {admin_level} level")
+            
+            # Check if level is allowed
+            if allowed_levels and admin_level not in allowed_levels:
+                raise PermissionDenied(f"Access denied. Required level: {', '.join(allowed_levels)}")
+            
+            return func(request, *args, **kwargs)
         return wrapper
     return decorator

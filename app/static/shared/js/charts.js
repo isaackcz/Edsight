@@ -1,85 +1,114 @@
 // Charts functionality
-let completionChart, timelineChart, distributionChart;
+let completionChart, timelineChart, workflowChart;
 
 function initCharts() {
+  // Destroy existing charts if they exist to prevent "Canvas already in use" error
+  if (completionChart) {
+    completionChart.destroy();
+    completionChart = null;
+  }
+  if (timelineChart) {
+    timelineChart.destroy();
+    timelineChart = null;
+  }
+  if (workflowChart) {
+    workflowChart.destroy();
+    workflowChart = null;
+  }
+
+  const completionCanvas = document.getElementById("completionChart");
+  const timelineCanvas = document.getElementById("timelineChart");
+  const workflowCanvas = document.getElementById("workflowChart");
+
+  if (!completionCanvas && !timelineCanvas && !workflowCanvas) {
+    console.debug("No dashboard chart canvases found; skipping chart init");
+    return false;
+  }
+
   // Completion Rate by Region Chart
-  const completionCtx = document
-    .getElementById("completionChart")
-    .getContext("2d");
-  completionChart = new Chart(completionCtx, {
-    type: "bar",
-    data: {
-      labels: [],
-      datasets: [
-        {
-          label: "Completion Rate (%)",
-          data: [],
-          /* use UI blues for charts, ensure accessible contrast */
-          backgroundColor: "rgba(58,110,165,0.18)",
-          borderColor: "rgba(58,110,165,0.9)",
-          borderWidth: 1,
-          borderRadius: 8,
-        },
-      ],
-    },
-    options: Object.assign({}, getBarChartOptions("Completion Rate (%)"), {
-      maintainAspectRatio: false,
-    }),
-  });
+  if (completionCanvas) {
+    const completionCtx = completionCanvas.getContext("2d");
+    completionChart = new Chart(completionCtx, {
+      type: "bar",
+      data: {
+        labels: [],
+        datasets: [
+          {
+            label: "Completion Rate (%)",
+            data: [],
+            /* use UI blues for charts, ensure accessible contrast */
+            backgroundColor: "rgba(58,110,165,0.18)",
+            borderColor: "rgba(58,110,165,0.9)",
+            borderWidth: 1,
+            borderRadius: 8,
+          },
+        ],
+      },
+      options: Object.assign({}, getBarChartOptions("Completion Rate (%)"), {
+        maintainAspectRatio: false,
+      }),
+    });
+  }
 
   // Forms Completed Over Time Chart
-  const timelineCtx = document.getElementById("timelineChart").getContext("2d");
-  timelineChart = new Chart(timelineCtx, {
-    type: "line",
-    data: {
-      labels: [],
-      datasets: [
-        {
-          label: "Forms Completed",
-          data: [],
-          fill: true,
-          backgroundColor: "rgba(58,110,165,0.12)",
-          borderColor: "rgba(0,78,152,0.95)",
-          borderWidth: 3,
-          tension: 0.3,
-          pointBackgroundColor: "rgba(0,78,152,0.95)",
-          pointRadius: 5,
-          pointHoverRadius: 7,
-        },
-      ],
-    },
-    options: Object.assign({}, getLineChartOptions(), {
-      maintainAspectRatio: false,
-    }),
-  });
+  if (timelineCanvas) {
+    const timelineCtx = timelineCanvas.getContext("2d");
+    timelineChart = new Chart(timelineCtx, {
+      type: "line",
+      data: {
+        labels: [],
+        datasets: [
+          {
+            label: "Forms Completed",
+            data: [],
+            fill: true,
+            backgroundColor: "rgba(58,110,165,0.12)",
+            borderColor: "rgba(0,78,152,0.95)",
+            borderWidth: 3,
+            tension: 0.3,
+            pointBackgroundColor: "rgba(0,78,152,0.95)",
+            pointRadius: 5,
+            pointHoverRadius: 7,
+          },
+        ],
+      },
+      options: Object.assign({}, getLineChartOptions(), {
+        maintainAspectRatio: false,
+      }),
+    });
+  }
 
-  // Response Distribution Chart
-  const distributionCtx = document
-    .getElementById("distributionChart")
-    .getContext("2d");
-  distributionChart = new Chart(distributionCtx, {
-    type: "doughnut",
-    data: {
-      labels: [],
-      datasets: [
-        {
-          data: [],
-          backgroundColor: [
-            "#004e98" /* polynesian-blue */,
-            "#3a6ea5" /* bice-blue */,
-            "#789dbf",
-            "#bcd6ea",
-            "#e9f3fb",
-          ],
-          borderWidth: 0,
-          hoverOffset: 10,
-        },
-      ],
-    },
-    options: Object.assign({}, getDoughnutChartOptions(), {
-      maintainAspectRatio: false,
-    }),
-  });
+  // Form Workflow Status Chart
+  if (workflowCanvas) {
+    const workflowCtx = workflowCanvas.getContext("2d");
+    workflowChart = new Chart(workflowCtx, {
+      type: "doughnut",
+      data: {
+        labels: [],
+        datasets: [
+          {
+            data: [],
+            backgroundColor: [
+              "#004e98" /* polynesian-blue */,
+              "#3a6ea5" /* bice-blue */,
+              "#789dbf",
+              "#bcd6ea",
+              "#e9f3fb",
+              "#cde1f1",
+              "#f0f7ff",
+            ],
+            borderWidth: 0,
+            hoverOffset: 10,
+          },
+        ],
+      },
+      options: Object.assign({}, getDoughnutChartOptions(), {
+        maintainAspectRatio: false,
+      }),
+    });
+  }
+
+  return true;
 }
 
 function getBarChartOptions(label) {
@@ -131,32 +160,31 @@ function getDoughnutChartOptions() {
 }
 
 function updateCompletionChart(data) {
+  if (!completionChart || !data || !data.regions || !data.completion_rates) {
+    console.warn('Unable to update completion chart: chart or data not available');
+    return;
+  }
   completionChart.data.labels = data.regions;
   completionChart.data.datasets[0].data = data.completion_rates;
   completionChart.update();
 }
 
 function updateTimelineChart(data) {
+  if (!timelineChart || !data || !data.dates || !data.counts) {
+    console.warn('Unable to update timeline chart: chart or data not available');
+    return;
+  }
   timelineChart.data.labels = data.dates;
   timelineChart.data.datasets[0].data = data.counts;
   timelineChart.update();
 }
 
-function updateDistributionChart(data) {
-  distributionChart.data.labels = data.labels;
-  distributionChart.data.datasets[0].data = data.values;
-  distributionChart.update();
-}
-
-async function fetchResponseDistribution(questionId) {
-  try {
-    const API_BASE = "http://localhost:8000";
-    const response = await fetch(
-      `${API_BASE}/api/dashboard/response_distribution/?question=${questionId}`
-    );
-    const data = await response.json();
-    updateDistributionChart(data);
-  } catch (error) {
-    console.error("Error fetching response distribution:", error);
+function updateWorkflowChart(data) {
+  if (!workflowChart || !data || !data.labels || !data.values) {
+    console.warn('Unable to update workflow chart: chart or data not available');
+    return;
   }
+  workflowChart.data.labels = data.labels;
+  workflowChart.data.datasets[0].data = data.values;
+  workflowChart.update();
 }

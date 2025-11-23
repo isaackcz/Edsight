@@ -1,15 +1,18 @@
+version: "3.9"
+
 services:
   # Fully containerized MySQL database
   mysql:
     image: mysql:8.0
+    container_name: edsight_mysql
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: edsight_root
-      MYSQL_DATABASE: edsight
-      MYSQL_USER: edsight
-      MYSQL_PASSWORD: edsight_pass
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-edsight_root}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-edsight}
+      MYSQL_USER: ${MYSQL_USER:-edsight}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-edsight_pass}
     ports:
-      - "3307:3306"
+      - "${MYSQL_PORT:-3307}:3306"
     volumes:
       - mysql_data:/var/lib/mysql
       - ./database_updates/edsight.sql:/docker-entrypoint-initdb.d/init.sql:ro
@@ -18,23 +21,46 @@ services:
       interval: 10s
       timeout: 5s
       retries: 10
-    command: --default-authentication-plugin=mysql_native_password
+      start_period: 30s
+    command: --default-authentication-plugin=mysql_native_password --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    networks:
+      - edsight_network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   redis:
     image: redis:7-alpine
+    container_name: edsight_redis
     restart: unless-stopped
     ports:
-      - "6380:6379"
+      - "${REDIS_PORT:-6380}:6379"
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-}
+    volumes:
+      - redis_data:/data
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
       timeout: 5s
       retries: 10
+      start_period: 10s
+    networks:
+      - edsight_network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   django:
     build:
       context: .
       dockerfile: Dockerfile.django
+      args:
+        - PYTHON_VERSION=3.11-slim
+    container_name: edsight_django
     depends_on:
       mysql:
         condition: service_healthy
@@ -46,9 +72,9 @@ services:
       DJANGO_SETTINGS_MODULE: config.settings
       DB_HOST: mysql
       DB_PORT: 3306
-      DB_NAME: edsight
-      DB_USER: edsight
-      DB_PASSWORD: edsight_pass
+      DB_NAME: ${DB_NAME:-edsight}
+      DB_USER: ${DB_USER:-edsight}
+      DB_PASSWORD: ${DB_PASSWORD:-edsight_pass}
       SECRET_KEY: ${SECRET_KEY:-change-me-in-production}
       DEBUG: ${DEBUG:-False}
       ALLOWED_HOSTS: ${ALLOWED_HOSTS:-*}
@@ -58,15 +84,17 @@ services:
       CELERY_BROKER_URL: redis://redis:6379/0
       CELERY_RESULT_BACKEND: redis://redis:6379/0
     ports:
-      - "8000:8000"
+      - "${DJANGO_PORT:-8000}:8000"
     volumes:
       - .:/app
       - staticfiles:/vol/static
+      - django_logs:/app/logs
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/" ]
-      interval: 10s
-      timeout: 5s
-      retries: 10
+      test: ["CMD", "curl", "-f", "http://localhost:8000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
     deploy:
       resources:
         limits:
@@ -76,35 +104,49 @@ services:
           memory: 512M
           cpus: '0.25'
     restart: unless-stopped
+    networks:
+      - edsight_network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   fastapi:
     build:
       context: .
       dockerfile: Dockerfile.fastapi
+      args:
+        - PYTHON_VERSION=3.11-slim
+    container_name: edsight_fastapi
     depends_on:
       mysql:
         condition: service_healthy
       django:
         condition: service_started
+      redis:
+        condition: service_healthy
     env_file:
       - .env.docker
     environment:
       DB_HOST: mysql
       DB_PORT: 3306
-      DB_NAME: edsight
-      DB_USER: edsight
-      DB_PASSWORD: edsight_pass
+      DB_NAME: ${DB_NAME:-edsight}
+      DB_USER: ${DB_USER:-edsight}
+      DB_PASSWORD: ${DB_PASSWORD:-edsight_pass}
       DJANGO_HOST: django
       REDIS_URL: redis://redis:6379/0
     ports:
-      - "9000:9000"
+      - "${FASTAPI_PORT:-9000}:9000"
     volumes:
       - .:/app
+      - fastapi_logs:/app/logs
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/health" ]
-      interval: 10s
-      timeout: 5s
-      retries: 10
+      test: ["CMD", "curl", "-f", "http://localhost:9000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
     deploy:
       resources:
         limits:
@@ -114,33 +156,46 @@ services:
           memory: 256M
           cpus: '0.1'
     restart: unless-stopped
+    networks:
+      - edsight_network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   celery:
     build:
       context: .
-      dockerfile: Dockerfile.django
+      dockerfile: Dockerfile.celery
+      args:
+        - PYTHON_VERSION=3.11-slim
+    container_name: edsight_celery
     depends_on:
       mysql:
         condition: service_healthy
       redis:
         condition: service_healthy
+      django:
+        condition: service_started
     env_file:
       - .env.docker
     environment:
       DJANGO_SETTINGS_MODULE: config.settings
       DB_HOST: mysql
       DB_PORT: 3306
-      DB_NAME: edsight
-      DB_USER: edsight
-      DB_PASSWORD: edsight_pass
+      DB_NAME: ${DB_NAME:-edsight}
+      DB_USER: ${DB_USER:-edsight}
+      DB_PASSWORD: ${DB_PASSWORD:-edsight_pass}
       REDIS_HOST: redis
       REDIS_PORT: 6379
       REDIS_DB: 0
       CELERY_BROKER_URL: redis://redis:6379/0
       CELERY_RESULT_BACKEND: redis://redis:6379/0
-    command: ["bash", "-lc", "celery -A app worker -l info"]
+      CELERY_BEAT: "false"
     volumes:
       - .:/app
+      - celery_logs:/app/logs
     deploy:
       resources:
         limits:
@@ -150,24 +205,109 @@ services:
           memory: 256M
           cpus: '0.1'
     restart: unless-stopped
+    networks:
+      - edsight_network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
-  # phpMyAdmin removed - use XAMPP's phpMyAdmin instead
-  # Access via: http://localhost/phpmyadmin
+  celery-beat:
+    build:
+      context: .
+      dockerfile: Dockerfile.celery
+      args:
+        - PYTHON_VERSION=3.11-slim
+    container_name: edsight_celery_beat
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      django:
+        condition: service_started
+    env_file:
+      - .env.docker
+    environment:
+      DJANGO_SETTINGS_MODULE: config.settings
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: ${DB_NAME:-edsight}
+      DB_USER: ${DB_USER:-edsight}
+      DB_PASSWORD: ${DB_PASSWORD:-edsight_pass}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_DB: 0
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
+      CELERY_BEAT: "true"
+    volumes:
+      - .:/app
+      - celery_beat_logs:/app/logs
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.1'
+        reservations:
+          memory: 128M
+          cpus: '0.05'
+    restart: unless-stopped
+    networks:
+      - edsight_network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   nginx:
     image: nginx:1.27-alpine
+    container_name: edsight_nginx
     depends_on:
       django:
-        condition: service_started
+        condition: service_healthy
       fastapi:
-        condition: service_started
+        condition: service_healthy
     ports:
-      - "8082:80"
+      - "${NGINX_PORT:-8082}:80"
     volumes:
       - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
       - staticfiles:/vol/static:ro
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+    networks:
+      - edsight_network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  edsight_network:
+    driver: bridge
+    name: edsight_network
 
 volumes:
   staticfiles:
+    name: edsight_staticfiles
   mysql_data:
+    name: edsight_mysql_data
+  redis_data:
+    name: edsight_redis_data
+  django_logs:
+    name: edsight_django_logs
+  fastapi_logs:
+    name: edsight_fastapi_logs
+  celery_logs:
+    name: edsight_celery_logs
+  celery_beat_logs:
+    name: edsight_celery_beat_logs
 

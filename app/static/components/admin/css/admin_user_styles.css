@@ -1,7 +1,7 @@
 /* Additional styles for enhanced admin user management */
 
-/* Notification Styles */
-.notification {
+/* Toast Notification Styles (for error messages) */
+.toast-notification {
     position: fixed;
     top: 20px;
     right: 20px;
@@ -12,12 +12,12 @@
     transition: all 0.3s ease;
 }
 
-.notification.show {
+.toast-notification.show {
     opacity: 1;
     transform: translateX(0);
 }
 
-.notification-content {
+.toast-notification-content {
     display: flex;
     align-items: center;
     gap: 0.75rem;
@@ -27,30 +27,30 @@
     border-left: 4px solid;
 }
 
-.notification-success .notification-content {
+.toast-notification-success .toast-notification-content {
     background: #424242;
     color: #ffffff;
     border-left-color: #363636;
 }
 
-.notification-error .notification-content {
+.toast-notification-error .toast-notification-content {
     background: #555555;
     color: #721c24;
     border-left-color: #dc3545;
 }
 
-.notification-info .notification-content {
+.toast-notification-info .toast-notification-content {
     background: #353535;
     color: #ffffff;
     border-left-color: #3b3b3b;
 }
 
-.notification-message {
+.toast-notification-message {
     flex: 1;
     font-weight: 500;
 }
 
-.notification-close {
+.toast-notification-close {
     background: none;
     border: none;
     color: inherit;
@@ -61,7 +61,7 @@
     transition: opacity 0.2s ease;
 }
 
-.notification-close:hover {
+.toast-notification-close:hover {
     opacity: 1;
 }
 
@@ -1333,36 +1333,36 @@
 
 /* Admin level badges */
 .admin-level-badge {
-    padding: 0.25rem 0.5rem;
-    border-radius: 4px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-transform: uppercase;
+    display: inline-block;
+    padding: 0.3rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 500;
 }
 
 .admin-level-badge.central {
-    background: #dc3545;
-    color: white;
+    background-color: rgba(220, 53, 69, 0.1);
+    color: #dc3545;
 }
 
 .admin-level-badge.region {
-    background: #fd7e14;
-    color: white;
+    background-color: rgba(253, 126, 20, 0.1);
+    color: #fd7e14;
 }
 
 .admin-level-badge.division {
-    background: #ffc107;
-    color: #212529;
+    background-color: rgba(255, 193, 7, 0.1);
+    color: #856404;
 }
 
 .admin-level-badge.district {
-    background: #20c997;
-    color: white;
+    background-color: rgba(32, 201, 151, 0.1);
+    color: #0c5460;
 }
 
 .admin-level-badge.school {
-    background: #6f42c1;
-    color: white;
+    background-color: rgba(111, 66, 193, 0.1);
+    color: #6f42c1;
 }
 
 /* Assigned area column */
@@ -1865,6 +1865,15 @@ select:disabled {
     background: #c82333;
 }
 
+.action-btn.suspend {
+    background: #ffc107;
+    color: #212529;
+}
+
+.action-btn.suspend:hover {
+    background: #e0a800;
+}
+
 /* Status badges */
 .status-badge {
     padding: 0.25rem 0.5rem;
@@ -2337,13 +2346,13 @@ select option:disabled {
 }
 
 /* Enhanced notification styles for RBAC */
-.notification-warning {
+.toast-notification-warning {
     background: #555555;
     color: #fff;
     border-left-color: #ffc107;
 }
 
-.notification-warning .notification-content {
+.toast-notification-warning .toast-notification-content {
     background: #555555;
     color: #fff;
     border-left-color: #ffc107;

@@ -1,0 +1,240 @@
+<!-- User Information Section -->
+<div class="col-xl-12 mb-4">
+    <div class="card profile-card-modern">
+        <!-- <div class="card-header-modern">
+            <div class="header-icon">
+                <i class="ph-bold ph-user"></i>
+            </div>
+            <div class="header-content">
+                <h3>User Information</h3>
+                <p class="text-muted mb-0">Account details and administrative information</p>
+            </div>
+        </div> -->
+        <div class="card-body-modern">
+            <!-- Loading State -->
+            <div id="userInfoLoading" class="text-center py-5" style="display: none;">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-3 text-muted">Loading user information...</p>
+            </div>
+            
+            <!-- User Info Content -->
+            <div id="userInfoContent">
+                <!-- Main Info Grid -->
+                <div class="row g-4">
+                    <!-- Basic Information Card -->
+                    <div class="col-xl-4 col-lg-6 col-md-6">
+                        <div class="info-card-modern">
+                            <div class="info-card-header">
+                                <i class="ph-bold ph-user-circle"></i>
+                                <h6>Basic Information</h6>
+                            </div>
+                            <div class="info-card-body">
+                                <div class="info-item-modern">
+                                    <div class="info-icon">
+                                        <i class="ph-bold ph-user"></i>
+                                    </div>
+                                    <div class="info-content">
+                                        <span class="info-label">Username</span>
+                                        <span class="info-value" id="info-username">--</span>
+                                    </div>
+                                </div>
+                                <div class="info-item-modern">
+                                    <div class="info-icon">
+                                        <i class="ph-bold ph-envelope"></i>
+                                    </div>
+                                    <div class="info-content">
+                                        <span class="info-label">Email</span>
+                                        <span class="info-value" id="info-email">--</span>
+                                    </div>
+                                </div>
+                                <div class="info-item-modern">
+                                    <div class="info-icon">
+                                        <i class="ph-bold ph-user-circle"></i>
+                                    </div>
+                                    <div class="info-content">
+                                        <span class="info-label">Full Name</span>
+                                        <span class="info-value" id="info-full-name">--</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Account Status Card -->
+                    <div class="col-xl-4 col-lg-6 col-md-6">
+                        <div class="info-card-modern">
+                            <div class="info-card-header">
+                                <i class="ph-bold ph-shield-check"></i>
+                                <h6>Account Status</h6>
+                            </div>
+                            <div class="info-card-body">
+                                <div class="info-item-modern">
+                                    <div class="info-icon">
+                                        <i class="ph-bold ph-shield"></i>
+                                    </div>
+                                    <div class="info-content">
+                                        <span class="info-label">Admin Level</span>
+                                        <span class="info-value" id="info-admin-level">--</span>
+                                    </div>
+                                </div>
+                                <div class="info-item-modern">
+                                    <div class="info-icon">
+                                        <i class="ph-bold ph-toggle-left"></i>
+                                    </div>
+                                    <div class="info-content">
+                                        <span class="info-label">Status</span>
+                                        <span class="info-value" id="info-status">--</span>
+                                    </div>
+                                </div>
+                                <div class="info-item-modern">
+                                    <div class="info-icon">
+                                        <i class="ph-bold ph-map-pin"></i>
+                                    </div>
+                                    <div class="info-content">
+                                        <span class="info-label">Assigned Area</span>
+                                        <span class="info-value" id="info-assigned-area">--</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Account Timeline Card -->
+                    <div class="col-xl-4 col-lg-6 col-md-6">
+                        <div class="info-card-modern">
+                            <div class="info-card-header">
+                                <i class="ph-bold ph-clock"></i>
+                                <h6>Account Timeline</h6>
+                            </div>
+                            <div class="info-card-body">
+                                <div class="info-item-modern">
+                                    <div class="info-icon">
+                                        <i class="ph-bold ph-calendar-plus"></i>
+                                    </div>
+                                    <div class="info-content">
+                                        <span class="info-label">Created At</span>
+                                        <span class="info-value" id="info-created-at">--</span>
+                                    </div>
+                                </div>
+                                <div class="info-item-modern">
+                                    <div class="info-icon">
+                                        <i class="ph-bold ph-calendar-check"></i>
+                                    </div>
+                                    <div class="info-content">
+                                        <span class="info-label">Last Updated</span>
+                                        <span class="info-value" id="info-updated-at">--</span>
+                                    </div>
+                                </div>
+                                <div class="info-item-modern">
+                                    <div class="info-icon">
+                                        <i class="ph-bold ph-sign-in"></i>
+                                    </div>
+                                    <div class="info-content">
+                                        <span class="info-label">Last Login</span>
+                                        <span class="info-value" id="info-last-login">--</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Geographic Assignment Card -->
+                    <div class="col-xl-6 col-lg-6 col-md-6">
+                        <div class="info-card-modern">
+                            <div class="info-card-header">
+                                <i class="ph-bold ph-globe-hemisphere-west"></i>
+                                <h6>Geographic Assignment</h6>
+                            </div>
+                            <div class="info-card-body">
+                                <div class="row g-3">
+                                    <div class="col-xl-6 col-md-6" id="info-region-row" style="display: none;">
+                                        <div class="info-item-modern">
+                                            <div class="info-icon">
+                                                <i class="ph-bold ph-globe"></i>
+                                            </div>
+                                            <div class="info-content">
+                                                <span class="info-label">Region</span>
+                                                <span class="info-value" id="info-region">--</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-xl-6 col-md-6" id="info-division-row" style="display: none;">
+                                        <div class="info-item-modern">
+                                            <div class="info-icon">
+                                                <i class="ph-bold ph-buildings"></i>
+                                            </div>
+                                            <div class="info-content">
+                                                <span class="info-label">Division</span>
+                                                <span class="info-value" id="info-division">--</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-xl-6 col-md-6" id="info-district-row" style="display: none;">
+                                        <div class="info-item-modern">
+                                            <div class="info-icon">
+                                                <i class="ph-bold ph-map-trifold"></i>
+                                            </div>
+                                            <div class="info-content">
+                                                <span class="info-label">District</span>
+                                                <span class="info-value" id="info-district">--</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-xl-6 col-md-6" id="info-school-row" style="display: none;">
+                                        <div class="info-item-modern">
+                                            <div class="info-icon">
+                                                <i class="ph-bold ph-school"></i>
+                                            </div>
+                                            <div class="info-content">
+                                                <span class="info-label">School</span>
+                                                <span class="info-value" id="info-school">--</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Audit Information Card -->
+                    <div class="col-xl-6 col-lg-6 col-md-6">
+                        <div class="info-card-modern">
+                            <div class="info-card-header">
+                                <i class="ph-bold ph-file-text"></i>
+                                <h6>Audit Information</h6>
+                            </div>
+                            <div class="info-card-body">
+                                <div class="row g-3">
+                                    <div class="col-xl-6 col-md-6">
+                                        <div class="info-item-modern">
+                                            <div class="info-icon">
+                                                <i class="ph-bold ph-user-plus"></i>
+                                            </div>
+                                            <div class="info-content">
+                                                <span class="info-label">Created By</span>
+                                                <span class="info-value" id="info-created-by">--</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-xl-6 col-md-6">
+                                        <div class="info-item-modern">
+                                            <div class="info-icon">
+                                                <i class="ph-bold ph-user-check"></i>
+                                            </div>
+                                            <div class="info-content">
+                                                <span class="info-label">Updated By</span>
+                                                <span class="info-value" id="info-updated-by">--</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

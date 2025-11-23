@@ -1,0 +1,40 @@
+<!-- Recent Activity Section -->
+<section class="activity-container">
+    <div class="activity-header">
+        <h2 class="section-title">Recent Activity</h2>
+        <button class="btn btn-outline">View All</button>
+    </div>
+
+    <div class="activity-list">
+        {% for activity in recent_activities|slice:":4" %}
+        <div class="activity-item">
+            <div class="activity-icon">
+                <i class="fas fa-{{ activity.action_type|default:'circle' }}"></i>
+            </div>
+            <div class="activity-details">
+                <div class="activity-title">{{ activity.action_type|title|default:"Activity" }}</div>
+                <div class="activity-description">
+                    {{ activity.description|default:"No description available" }}
+                </div>
+                <div class="activity-meta">
+                    <span><i class="fas fa-user"></i> {{ activity.admin_user.username|default:"System" }}</span>
+                    <span><i class="fas fa-clock"></i> {{ activity.timestamp|timesince|default:"Recently" }} ago</span>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="activity-item">
+            <div class="activity-icon">
+                <i class="fas fa-info-circle"></i>
+            </div>
+            <div class="activity-details">
+                <div class="activity-title">No Recent Activity</div>
+                <div class="activity-description">
+                    There is no recent activity to display at this time.
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+

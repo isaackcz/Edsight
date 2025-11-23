@@ -5,251 +5,440 @@
 {% block breadcrumb %}Form Management{% endblock %}
 
 {% block extra_css %}
-<!-- Custom focus styles for question text fields -->
+<!-- Bootstrap CSS for Grid System -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+
+<!-- Shared Theme CSS -->
+<link rel="stylesheet" href="{% static 'components/user_dash/css/theme.css' %}" />
+
+<!-- School Form System CSS -->
+<link rel="stylesheet" href="{% static 'user_dashboard/css/school-form.css' %}" />
+<link rel="stylesheet" href="{% static 'user_dashboard/css/school-form-tree.css' %}" />
+<link rel="stylesheet" href="{% static 'user_dashboard/css/school-form-questions.css' %}" />
+<link rel="stylesheet" href="{% static 'user_dashboard/css/school-form-responsive.css' %}" />
+<link rel="stylesheet" href="{% static 'user_dashboard/css/school-form-dialogs.css' %}" />
+
+<!-- Override content padding for form page -->
 <style>
-  /* Remove the strong blue focus ring for question text fields only.
-     Keep other focus outlines (e.g., keyboard focus for accessibility)
-     intact elsewhere. This targets both input.question-text and
-     textarea.question-text used in the questions UI. */
-  .question-text:focus {
-    outline: none !important;
-    box-shadow: none !important;
-    border-color: rgba(0, 0, 0, 0.08) !important; /* keep subtle border */
+  body{
+    background-color: var(--admin-accent) !important;
   }
-  /* Also ensure the inline error state doesn't reintroduce a colored outline */
-  .question-text.input-error:focus,
-  .question-text.input-error {
-    outline: none !important;
-    box-shadow: none !important;
+  
+  /* Make content sticky at top */
+  .content {
+    padding: 24px !important;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: white !important;
+    margin-top: -20px;
+    padding-top: 24px !important;
+  }
+  
+  .page-header {
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 24px;
+    padding: 18px 15px;
+    background: var(--admin-white) !important;
+    border-radius: 8px 8px 0 0 !important;
+    border: none !important;
+    box-shadow: var(--subtle-shadow);
+  }
+  
+  /* Add padding to rows */
+  .container-fluid .row {
+    padding-left: 15px;
+    padding-right: 15px;
+  }
+  
+  .page-header-content {
+    flex: 1;
+    min-width: 200px;
+  }
+  
+  .page-header h1 {
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--polynesian-blue);
+    margin-bottom: 8px;
+    margin-right: 24px;
+  }
+  
+  .page-header p {
+    color: var(--admin-text-muted);
+    margin: 0;
+    font-size: 0.9rem;
+  }
+  
+  .page-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-left: auto;
+  }
+  
+  /* Responsive adjustments for header */
+  @media (max-width: 991px) {
+    .page-header {
+      padding-left: 0;
+      padding-right: 0;
+    }
+    
+    .container-fluid .row {
+      padding-left: 0;
+      padding-right: 0;
+    }
+  }
+  
+  @media (max-width: 767px) {
+    .page-header {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 16px;
+      padding-left: 0;
+      padding-right: 0;
+    }
+    
+    .page-header h1 {
+      margin-right: 0;
+    }
+    
+    .page-header-actions {
+      width: 100%;
+      margin-top: 0;
+      margin-left: 0;
+    }
+    
+    .page-header-actions #saveChangesBtn {
+      width: 100%;
+    }
+    
+    .container-fluid .row {
+      padding-left: 0;
+      padding-right: 0;
+    }
+  }
+
+  /* Make questions-container flex column with fixed height when sticky */
+  .questions-container {
+    display: flex !important;
+    flex-direction: column !important;
+    height: calc(100vh - 140px) !important; /* Viewport minus header and padding */
+    max-height: calc(100vh - 140px) !important;
+  }
+
+  /* Ensure header, controls, and pagination don't flex */
+  .questions-header,
+  .questions-controls,
+  .pagination-controls {
+    flex-shrink: 0;
+  }
+
+  /* Make questions-list scrollable */
+  .questions-list {
+    flex: 1 1 auto !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    min-height: 0 !important; /* Critical for flex scrolling */
+    -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+  }
+
+  /* Ensure tree content has height relative to content, not matching right column */
+  .tree-view-sidebar {
+    height: auto !important;
+    min-height: 100px !important;
+    max-height: calc(100vh - 140px) !important;
+    align-self: flex-start !important;
+  }
+  
+  /* Make tree content adjust to content, but allow scrolling if exceeds max-height */
+  .tree-view-sidebar .tree-content {
+    flex: 0 1 auto !important;
+    overflow-y: auto !important;
+  }
+  
+  /* Disable form inputs when deadline has passed */
+  /* Exclude search, filter, and pagination controls from being disabled */
+  body.form-disabled textarea:not(#questionSearch),
+  body.form-disabled input[type="text"]:not(#questionSearch),
+  body.form-disabled input[type="number"]:not([id*="pagination"]):not([id*="rowsPerPage"]),
+  body.form-disabled input[type="date"],
+  body.form-disabled select:not(#filterStatus):not(#rowsPerPage) {
+    background-color: #f5f5f5 !important;
+    cursor: not-allowed !important;
+    opacity: 0.6 !important;
+    pointer-events: none !important;
+  }
+  
+  /* Ensure search, filter, and pagination controls remain enabled */
+  body.form-disabled #questionSearch,
+  body.form-disabled #filterStatus,
+  body.form-disabled #rowsPerPage,
+  body.form-disabled .pagination-controls input,
+  body.form-disabled .pagination-controls select,
+  body.form-disabled .pagination-controls button,
+  body.form-disabled .questions-controls input,
+  body.form-disabled .questions-controls select {
+    background-color: var(--admin-white) !important;
+    cursor: pointer !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+  }
+  
+  body.form-disabled .questions-list {
+    position: relative;
+  }
+  
+  body.form-disabled .questions-list::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.7);
+    z-index: 10;
+    pointer-events: none;
+  }
+  
+  /* Ensure search, filter, and pagination are above the overlay */
+  body.form-disabled .questions-controls,
+  body.form-disabled .pagination-controls {
+    position: relative;
+    z-index: 20;
+    pointer-events: auto;
   }
 </style>
-
-<!-- Form-specific CSS from existing form module -->
-<link rel="stylesheet" href="{% static 'form/css/main_form.css' %}" />
-<link rel="stylesheet" href="{% static 'form/css/tree-view.css' %}" />
-<link rel="stylesheet" href="{% static 'form/css/tabs.css' %}" />
-<link rel="stylesheet" href="{% static 'form/css/edit-question-modal.css' %}" />
-<link rel="stylesheet" href="{% static 'form/css/form-responsive.css' %}" />
-
-<!-- Sidebar Reset - Ensures uniformity with shared sidebar component -->
-<link rel="stylesheet" href="{% static 'form/css/sidebar-reset.css' %}" />
-
-<!-- Overrides: ensure cards do not move on hover -->
-<style>
-  /* Strong, specific overrides loaded after other CSS files */
-  .form-section,
-  .form-section:hover,
-  .modern-card,
-  .modern-card:hover,
-  .modern-section,
-  .modern-section:hover,
-  .draft-col,
-  .draft-col:hover,
-  .question-card,
-  .question-card:hover {
-    transform: none !important;
-    transition: none !important;
-    box-shadow: none !important;
-  }
-  /* Also prevent subtle shift caused by translateZ/translateY on children */
-  .form-section *,
-  .modern-card * {
-    transition: none !important;
-  }
-  /* Make answer-type selects match the Category select design, but
-     remove the terminal chevron/triangle so they appear plain */
-  select.answer-type {
-    width: 100%;
-    padding: 12px 16px !important; /* no right padding for an icon */
-    border-radius: var(--border-radius) !important;
-    border: 1.5px solid #e2e8f0 !important;
-    background: #fff !important;
-    font-size: 15px !important;
-    appearance: none !important;
-    -webkit-appearance: none !important;
-  }
-  select.answer-type:focus {
-    outline: none !important;
-    border-color: var(--light) !important;
-    background: #f7fafd !important;
-    box-shadow: 0 0 0 3px rgba(171, 199, 214, 0.18) !important;
-  }
-</style>
-
-<!-- Skeleton Loader Component -->
-<link rel="stylesheet" href="{% static 'components/skeleton-loader/skeleton-loader.css' %}">
-
-<!-- Fade Animations Component -->
-<link rel="stylesheet" href="{% static 'components/animations/fade-animations.css' %}">
 {% endblock %}
 
 {% block extra_js %}
-<!-- Skeleton Loader Component Scripts -->
-<script src="{% static 'components/skeleton-loader/skeleton-loader.js' %}"></script>
-<script src="{% static 'components/skeleton-loader/crud-loader-utils.js' %}"></script>
-<script src="{% static 'components/skeleton-loader/loader-integration.js' %}"></script>
+<!-- School Form System JavaScript (Order matters for dependencies) -->
+<script src="{% static 'form-management/js/workflow_manager.js' %}"></script>
+<script src="{% static 'user_dashboard/js/school-form-api.js' %}"></script>
+<script src="{% static 'user_dashboard/js/school-form-validation.js' %}"></script>
+<script src="{% static 'user_dashboard/js/school-form-offline.js' %}"></script>
+<script src="{% static 'user_dashboard/js/school-form-remarks.js' %}"></script>
+<script src="{% static 'user_dashboard/js/school-form-tree.js' %}"></script>
+<script src="{% static 'user_dashboard/js/school-form-questions.js' %}"></script>
+<script src="{% static 'user_dashboard/js/school-form-inputs.js' %}"></script>
+<script src="{% static 'user_dashboard/js/school-form-main.js' %}"></script>
 
-<!-- Fade Animations Component Scripts -->
-<script src="{% static 'components/animations/fade-animations.js' %}"></script>
-<script src="{% static 'components/animations/animation-integration.js' %}"></script>
-
-<!-- Modular form JavaScript files -->
-<script src="{% static 'form/js/tab-manager.js' %}"></script>
-<script src="{% static 'form/js/question-manager.js' %}"></script>
-<script src="{% static 'form/js/draft-manager.js' %}"></script>
-<script src="{% static 'form/js/ui-manager.js' %}"></script>
-<script type="module" src="{% static 'form/js/form.js' %}"></script>
-
-<!-- Form initialization script -->
+<!-- Initialize School Form System -->
 <script>
-  // Initialize the enhanced UI
-  document.addEventListener("DOMContentLoaded", function () {
-    // Initialize modern UI enhancements
-    if (typeof initModernUI === 'function') {
-      initModernUI();
-    }
-
-    // Add smooth scrolling for better UX
-    document.documentElement.style.scrollBehavior = "smooth";
-
-    // Add loading states to buttons
-    const buttons = document.querySelectorAll(".btn");
-    buttons.forEach((button) => {
-      button.addEventListener("click", function () {
-        if (
-          this.classList.contains("primary") ||
-          this.classList.contains("modern-btn")
-        ) {
-          this.style.transform = "scale(0.98)";
-          setTimeout(() => {
-            this.style.transform = "";
-          }, 150);
+  document.addEventListener('DOMContentLoaded', function() {
+    // Pass deadline status to JavaScript
+    window.formDeadlinePassed = {% if is_deadline_passed %}true{% else %}false{% endif %};
+    window.formDeadlineInfo = {
+      hasDeadline: {% if deadline.has_deadline %}true{% else %}false{% endif %},
+      isOverdue: {% if deadline.is_overdue %}true{% else %}false{% endif %},
+      daysRemaining: {{ deadline.days_remaining|default:0 }},
+      dueDate: '{% if deadline.due_date %}{{ deadline.due_date|date:"F j, Y" }}{% endif %}'
+    };
+    
+    // Initialize the school form system
+    if (typeof SchoolFormMain !== 'undefined') {
+      window.schoolFormApp = new SchoolFormMain();
+      window.schoolFormMain = window.schoolFormApp;
+      
+      // Expose remarks manager globally after initialization (async init)
+      setTimeout(() => {
+        if (window.schoolFormApp.remarks) {
+          window.schoolFormRemarksApp = window.schoolFormApp.remarks;
         }
-      });
-    });
-
-    // Add focus indicators for better accessibility
-    const focusableElements = document.querySelectorAll(
-      "input, select, button, textarea"
-    );
-    focusableElements.forEach((element) => {
-      // Do not apply the JS focus outline to question inputs/textareas;
-      // these are handled by CSS overrides to keep visual consistency.
-      if (
-        element.classList &&
-        element.classList.contains("question-text")
-      ) {
-        return;
+      }, 200);
+      
+      // Disable form if deadline has passed
+      if (window.formDeadlinePassed) {
+        window.schoolFormApp.disableForm();
       }
-      element.addEventListener("focus", function () {
-        this.style.outline = "2px solid var(--primary)";
-        this.style.outlineOffset = "2px";
-      });
-
-      element.addEventListener("blur", function () {
-        this.style.outline = "";
-        this.style.outlineOffset = "";
-      });
-    });
-
-    // Add hover effects to cards
-    const cards = document.querySelectorAll(
-      ".modern-card, .modern-section"
-    );
-    cards.forEach((card) => {
-      card.addEventListener("mouseenter", function () {
-        this.style.transform = "translateY(-2px)";
-      });
-
-      card.addEventListener("mouseleave", function () {
-        this.style.transform = "translateY(0)";
-      });
-    });
-
-    // Update context display when selections change
-    const categorySelect = document.getElementById("category");
-    const categoryDisplay = document.getElementById("category-display");
-
-    if (categorySelect && categoryDisplay) {
-      categorySelect.addEventListener("change", function () {
-        categoryDisplay.textContent = this.value || "Not selected";
-        categoryDisplay.style.color = this.value
-          ? "var(--primary)"
-          : "var(--accent)";
-      });
+    } else {
+      console.error('SchoolFormMain not found. Check if all scripts are loaded correctly.');
     }
-
-    // Move to next step: show questions section
-    document
-      .getElementById("next-to-questions")
-      ?.addEventListener("click", function () {
-        document.getElementById("topic-section").style.display = "none";
-        document.getElementById("questions-section").style.display =
-          "block";
-      });
-
-    // Back to topic
-    document
-      .getElementById("back-to-topic")
-      ?.addEventListener("click", function () {
-        document.getElementById("questions-section").style.display = "none";
-        document.getElementById("topic-section").style.display = "block";
-      });
-
-    // Finish topic -> show confirmation
-    document
-      .getElementById("finish-topic")
-      ?.addEventListener("click", function () {
-        document.getElementById("questions-section").style.display = "none";
-        document.getElementById("confirmation-section").style.display =
-          "block";
-      });
-
-    // Add another topic -> show topic section
-    document
-      .getElementById("add-another-topic")
-      ?.addEventListener("click", function () {
-        document.getElementById("confirmation-section").style.display =
-          "none";
-        document.getElementById("topic-section").style.display = "block";
-      });
-
-    // Finish process -> redirect
-    document
-      .getElementById("finish-process")
-      ?.addEventListener("click", function () {
-        // Redirect to dashboard or show completion state
-        window.location.href = "/user/dashboard/";
-      });
   });
-
-  function initModernUI() {
-    console.log("Modern UI initialized");
-    // Additional initialization can be added here
-  }
 </script>
 {% endblock %}
 
 {% block content %}
-<!-- Page Title -->
-<div class="page-header">
-  <h1>Form Management</h1>
-  <p>Manage your questionnaire categories, topics, and questions</p>
-</div>
+{% if is_deadline_passed %}
+<script>
+  document.body.classList.add('form-disabled');
+</script>
+{% endif %}
 
-<!-- Enhanced Drafted Questionnaires Section -->
-<div class="drafts-section modern-section">
-  <div class="section-header">
-    <div class="section-title">
-      <h3>Drafted Questionnaires</h3>
-      <p class="section-description">
-        Manage your existing questionnaire drafts and templates.
-      </p>
+<!-- Deadline Warning Banner -->
+{% if is_deadline_passed %}
+<div class="card mb-4" style="border-left: 4px solid var(--danger); border-radius: 8px;">
+  <div class="card-body" style="background-color: #ffebee; padding: 1rem 1.5rem;">
+    <div style="display: flex; align-items: center; gap: 12px;">
+      <i class="ph-bold ph-warning" style="font-size: 24px; color: var(--danger);"></i>
+      <div style="flex: 1;">
+        <h5 style="margin: 0 0 4px 0; font-weight: 600; color: #c62828;">Submission Deadline Has Passed</h5>
+        <p style="margin: 0; color: #c62828;">
+          The deadline for form submission was <strong>{{ deadline.due_date|date:"F j, Y" }}</strong>. 
+          The form is now locked and you can no longer make changes or submit answers.
+          {% if deadline.description %}
+          <br><small style="margin-top: 8px; display: block;">Note: {{ deadline.description }}</small>
+          {% endif %}
+        </p>
+      </div>
     </div>
   </div>
-  <div class="drafts-container modern-grid">
-    <!-- Categories will be added here -->
+</div>
+{% elif deadline.has_deadline and deadline.days_remaining <= 3 %}
+<div class="card mb-4" style="border-left: 4px solid var(--warning); border-radius: 8px;">
+  <div class="card-body" style="background-color: #fff3e0; padding: 1rem 1.5rem;">
+    <div style="display: flex; align-items: center; gap: 12px;">
+      <i class="ph-bold ph-clock" style="font-size: 24px; color: var(--warning);"></i>
+      <div style="flex: 1;">
+        <h5 style="margin: 0 0 4px 0; font-weight: 600; color: #e65100;">Deadline Approaching</h5>
+        <p style="margin: 0; color: #e65100;">
+          Submission deadline: <strong>{{ deadline.due_date|date:"F j, Y" }}</strong> 
+          ({{ deadline.label }}). Please complete and submit your form before the deadline.
+        </p>
+      </div>
+    </div>
   </div>
 </div>
+{% endif %}
+
+<!-- Page Title -->
+<div class="page-header mb-4">
+  <div class="page-header-content">
+    <h1>School Questionnaire</h1>
+    <p>Complete your school assessment by answering the questions below</p>
+  </div>
+  <div class="page-header-actions">
+    <button 
+      type="button" 
+      id="saveChangesBtn" 
+      class="btn-primary" 
+      {% if is_deadline_passed %}disabled{% else %}disabled{% endif %}
+      {% if is_deadline_passed %}title="Form is locked - deadline has passed"{% else %}title="Save your progress"{% endif %}
+    >
+      <i class="fas fa-save"></i>
+      <span>Save Changes</span>
+      <span id="offlineBadge" style="display: none;">0</span>
+    </button>
+    
+    <button 
+      type="button" 
+      id="exportFormBtn" 
+      class="btn-secondary" 
+      title="Export form data to Excel or PDF"
+    >
+      <i class="ph-bold ph-download"></i>
+      <span>Export</span>
+    </button>
+    
+    <button 
+      type="button" 
+      id="submitFormBtn" 
+      class="btn-success" 
+      {% if is_deadline_passed %}disabled{% else %}disabled{% endif %}
+      {% if is_deadline_passed %}title="Form is locked - deadline has passed"{% else %}title="Please answer all required questions to enable submission"{% endif %}
+    >
+      <i class="fas fa-paper-plane"></i>
+      <span>Submit Form</span>
+    </button>
+  </div>
+</div>
+
+<!-- Main Container -->
+<div class="container-fluid px-0" style="background-color: white;">
+  <div class="row g-3 g-xl-4">
+    <!-- Tree View Sidebar (Left Column) -->
+    <div class="col-12 col-md-4 col-lg-4 col-xl-4">
+      <div class="tree-view-sidebar">
+        <!-- Sidebar Header -->
+        <div class="sidebar-header">
+          <h3>Categories & Topics</h3>
+          <div class="offline-indicator" id="offlineIndicator">
+            <i class="fas fa-wifi"></i>
+            <span>Online</span>
+          </div>
+        </div>
+
+        <!-- Tree Content -->
+        <div class="tree-content" id="treeContent">
+          <div class="loading-state">
+            <i class="fas fa-spinner fa-spin"></i>
+            <p>Loading categories...</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Questions Display (Right Column) -->
+    <div class="col-12 col-md-8 col-lg-8 col-xl-8">
+      <div class="questions-container">
+        <!-- Questions Header -->
+        <div class="questions-header">
+          <h3 id="topicTitle">Select a topic to begin</h3>
+          <div class="progress-indicator" id="progressIndicator" style="display: none;">
+            <i class="fas fa-check-circle"></i>
+            <span id="progressText">0 of 0 answered</span>
+          </div>
+        </div>
+
+        <!-- Questions Controls (Search & Filter) -->
+        <div class="questions-controls" id="questionsControls" style="display: none;">
+          <div class="search-box">
+            <i class="fas fa-search"></i>
+            <input 
+              type="text" 
+              id="questionSearch" 
+              placeholder="Search questions..."
+              aria-label="Search questions"
+            />
+          </div>
+          <div class="filter-controls">
+            <select id="filterStatus" class="filter-select" aria-label="Filter by status">
+              <option value="all">All Questions</option>
+              <option value="answered">Answered</option>
+              <option value="unanswered">Unanswered</option>
+              <option value="required">Required Only</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Questions List -->
+        <div class="questions-list" id="questionsList">
+          <div class="empty-state">
+            <i class="fas fa-clipboard-list"></i>
+            <h3>No topic selected</h3>
+            <p>Please select a topic from the left sidebar to view questions</p>
+          </div>
+        </div>
+
+        <!-- Pagination Controls -->
+        <div class="pagination-controls" id="paginationControls" style="display: none;">
+          <div class="pagination-left">
+            <div class="pagination-info" id="paginationInfo">
+              Showing 0-0 of 0 questions
+            </div>
+            <div class="pagination-rows-selector">
+              <label for="rowsPerPage" class="rows-per-page-label">Rows per page:</label>
+              <select id="rowsPerPage" class="rows-per-page-select" aria-label="Rows per page">
+                <option value="20">20</option>
+                <option value="30">30</option>
+                <option value="50" selected>50</option>
+              </select>
+            </div>
+          </div>
+          <div class="pagination-buttons" id="paginationButtons">
+            <!-- Pagination buttons will be rendered here -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Notification Container (Fixed position for toast notifications) -->
+<div class="notification-container" id="notificationContainer"></div>
 {% endblock %}
 

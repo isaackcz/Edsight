@@ -1,0 +1,73 @@
+{% load static %}
+<!-- Header -->
+<div class="header">
+    <div class="header-left">
+        <button class="hamburger-btn" id="sidebar-toggle" aria-label="Toggle sidebar" title="Menu">
+            <i class="fas fa-bars"></i>
+        </button>
+        <div class="breadcrumb">
+            <span class="breadcrumb-item">Admin</span>
+            <i class="fas fa-chevron-right breadcrumb-separator"></i>
+            <span class="breadcrumb-current">{% block breadcrumb %}Dashboard{% endblock %}</span>
+        </div>
+    </div>
+    
+    <div class="header-actions">
+        <div class="notification" title="Notifications">
+            <i class="ph-bold ph-bell"></i>
+            <span class="notif-badge">0</span>
+            
+            <!-- Notifications panel -->
+            <div class="notifications-panel" aria-hidden="true">
+                <div class="panel-header">
+                    <div class="panel-title">Notifications</div>
+                    <button class="btn-icon" title="Notifications settings">
+                        <i class="ph-bold ph-gear"></i>
+                    </button>
+                </div>
+                <div class="panel-body">
+                    <div data-notifications-list></div>
+                    <div data-notifications-empty style="display: none; padding: 1rem; text-align: center; color: #666;">
+                        No notifications yet.
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Avatar / Profile -->
+        <div class="profile">
+            <button class="avatar-btn" aria-haspopup="true" aria-expanded="false" aria-label="Open profile menu">
+                <span class="avatar">
+                    <i class="ph-bold ph-user"></i>
+                </span>
+            </button>
+            <div class="profile-dropdown" role="menu" aria-label="Profile menu">
+                <div class="profile-header">
+                    <div class="avatar" style="width: 40px; height: 40px; flex: 0 0 auto">
+                        <i class="ph-bold ph-user"></i>
+                    </div>
+                    <div>
+                        <div class="name">
+                            {% if admin_scope.username %}{{ admin_scope.username }}{% else %}Admin User{% endif %}
+                        </div>
+                        <div class="subtext">
+                            {% if admin_scope.admin_level %}{{ admin_scope.admin_level|title }} Admin{% else %}Administrator{% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <a href="{% url 'admin-profile-page' %}"><i class="ph-bold ph-user-circle"></i>My Profile</a>
+                <a href="{% url 'settings-page' %}"><i class="ph-bold ph-gear"></i>Settings</a>
+                <div class="dropdown-logout">
+                    <form method="post" action="{% url 'logout' %}">
+                        {% csrf_token %}
+                        <button type="submit">
+                            <i class="ph-bold ph-sign-out"></i>Logout
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+

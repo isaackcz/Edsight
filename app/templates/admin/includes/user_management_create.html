@@ -1,0 +1,51 @@
+{% load static %}
+
+<!-- User Create Page -->
+<div id="userManagementCreatePage" style="display: none;">
+    <!-- Back Button -->
+    <div class="view-page-header">
+        <button class="btn-back" id="backToUserManagementFromCreate">
+            <i class="ph-bold ph-arrow-left"></i>
+            Back to User Management
+        </button>
+    </div>
+    
+    <!-- Create Page Title -->
+    <div class="page-title">
+        <div class="page-title-header">
+            <div class="page-title-content">
+                <h1>Create New User</h1>
+                <p class="page-subtitle">Add a new admin user to the system</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create User Form -->
+    <div class="row g-4">
+        <!-- Basic Information Section -->
+        {% include 'admin/includes/user_management_create/basic_info.html' %}
+        
+        <!-- Geographic Assignment Section -->
+        {% include 'admin/includes/user_management_create/geographic.html' %}
+        
+        <!-- Permissions Section -->
+        {% include 'admin/includes/user_management_create/permissions.html' %}
+    </div>
+    
+    <!-- Form Actions -->
+    <div class="row g-4 mt-3">
+        <div class="col-xl-12">
+            <div class="d-flex justify-content-end gap-3">
+                <button type="button" class="btn btn-secondary" id="cancelCreateUser">
+                    <i class="ph-bold ph-x"></i>
+                    Cancel
+                </button>
+                <button type="button" class="btn btn-primary" id="submitCreateUser">
+                    <i class="ph-bold ph-check"></i>
+                    Create User
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+

@@ -5,8 +5,14 @@
 
 /* Tablet & Medium Screens (768px - 1000px) */
 @media (max-width: 1000px) {
-    .page-title {
-        font-size: 28px;
+    /* Remove row padding on tablet */
+    .row {
+        padding-left: 0;
+        padding-right: 0;
+    }
+    
+    .dashboard-title h1 {
+        font-size: 24px;
     }
     
     .page-subtitle {
@@ -29,25 +35,26 @@
         justify-content: center;
     }
     
-    .charts-row {
-        grid-template-columns: 1fr;
-        gap: 20px;
-    }
-    
     .category-cards-grid {
         grid-template-columns: repeat(2, 1fr);
         gap: 16px;
     }
     
-    .chart-container {
-        height: 320px;
+    .chart-canvas {
+        height: 320px !important;
     }
 }
 
 /* Mobile Screens (520px - 767px) */
 @media (max-width: 767px) {
-    .page-title {
-        font-size: 24px;
+    /* Remove row padding on mobile */
+    .row {
+        padding-left: 0;
+        padding-right: 0;
+    }
+    
+    .dashboard-title h1 {
+        font-size: 22px;
     }
     
     .page-subtitle {
@@ -63,26 +70,13 @@
         font-size: 14px;
     }
     
-    .refresh-button {
-        padding: 10px 14px;
-        font-size: 18px;
-    }
-    
     .export-button {
         padding: 10px 20px;
         font-size: 14px;
     }
     
-    .chart-card {
-        padding: 20px;
-    }
-    
-    .chart-title {
-        font-size: 18px;
-    }
-    
-    .chart-container {
-        height: 280px;
+    .chart-canvas {
+        height: 280px !important;
     }
     
     .chart-legend {
@@ -91,17 +85,13 @@
         font-size: 12px;
     }
     
-    .section-title {
-        font-size: 20px;
-    }
-    
     .category-cards-grid {
         grid-template-columns: 1fr;
         gap: 16px;
     }
     
     .category-status-card {
-        padding: 20px;
+        padding: 16px;
     }
     
     .category-name {
@@ -120,26 +110,13 @@
         font-size: 11px;
     }
     
-    .data-table-card {
-        padding: 20px;
-    }
-    
-    .table-header {
-        flex-direction: column;
-        gap: 12px;
-        align-items: stretch;
-    }
-    
-    .table-title {
-        font-size: 18px;
-    }
-    
     .table-search {
         width: 100%;
+        min-width: 100%;
     }
     
     /* Make table responsive with horizontal scroll */
-    .data-table-card {
+    .table-responsive {
         overflow-x: auto;
     }
     
@@ -160,11 +137,13 @@
 
 /* Small Mobile Screens (360px - 519px) */
 @media (max-width: 519px) {
-    .page-header {
-        margin-bottom: 24px;
+    /* Remove row padding on small mobile */
+    .row {
+        padding-left: 0;
+        padding-right: 0;
     }
     
-    .page-title {
+    .dashboard-title h1 {
         font-size: 20px;
     }
     
@@ -190,37 +169,16 @@
         padding: 10px 16px;
     }
     
-    .chart-card {
-        padding: 16px;
-    }
-    
-    .chart-title {
-        font-size: 16px;
-    }
-    
-    .chart-container {
-        height: 240px;
-    }
-    
-    .section-title {
-        font-size: 18px;
-        margin-bottom: 16px;
+    .chart-canvas {
+        height: 240px !important;
     }
     
     .category-status-card {
-        padding: 16px;
+        padding: 14px;
     }
     
     .category-name {
         font-size: 15px;
-    }
-    
-    .data-table-card {
-        padding: 16px;
-    }
-    
-    .table-title {
-        font-size: 16px;
     }
     
     .table-search {
@@ -263,8 +221,8 @@
         width: 100%;
     }
     
-    .chart-container {
-        height: 220px;
+    .chart-canvas {
+        height: 220px !important;
     }
     
     .analytics-table {

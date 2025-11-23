@@ -1,0 +1,116 @@
+<!-- Data Table Section -->
+<div class="table-section">
+    <div class="table-card">
+        <div class="table-header">
+            <h3>
+                <i class="ph-bold ph-table"></i>
+                User Data Table
+            </h3>
+            
+            <!-- Search and Filters -->
+            <div class="table-controls">
+                <div class="search-box">
+                    <i class="ph-bold ph-magnifying-glass"></i>
+                    <input type="text" id="tableSearchInput" placeholder="Search users..." />
+                </div>
+                
+                <div class="filter-group">
+                    <select id="tableRoleFilter">
+                        <option value="">All Roles</option>
+                        <option value="central">Central Office</option>
+                        <option value="region">Region</option>
+                        <option value="division">Division</option>
+                        <option value="district">District</option>
+                        <option value="school">School</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <select id="tableStatusFilter">
+                        <option value="">All Status</option>
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive</option>
+                        <option value="suspended">Suspended</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        
+        <div class="table-wrapper">
+            <div class="table-responsive">
+                <table class="table table-hover" id="roleAnalyticsTable">
+                    <thead>
+                        <tr>
+                            <th class="sortable" data-sort="username">
+                                User
+                                <i class="ph-bold ph-arrows-down-up sort-icon"></i>
+                            </th>
+                            <th class="sortable" data-sort="admin_level">
+                                Role
+                                <i class="ph-bold ph-arrows-down-up sort-icon"></i>
+                            </th>
+                            <th class="sortable" data-sort="assignment">
+                                Geographic Assignment
+                                <i class="ph-bold ph-arrows-down-up sort-icon"></i>
+                            </th>
+                            <th>Permissions</th>
+                            <th class="sortable" data-sort="access_scope">
+                                Access Scope
+                                <i class="ph-bold ph-arrows-down-up sort-icon"></i>
+                            </th>
+                            <th class="sortable" data-sort="status">
+                                Status
+                                <i class="ph-bold ph-arrows-down-up sort-icon"></i>
+                            </th>
+                            <th class="sortable" data-sort="last_active">
+                                Last Active
+                                <i class="ph-bold ph-arrows-down-up sort-icon"></i>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody id="roleAnalyticsTableBody">
+                        <!-- Table rows will be loaded via JavaScript -->
+                        <tr>
+                            <td colspan="7" class="text-center">
+                                <div class="loading-spinner">
+                                    <i class="ph-bold ph-spinner ph-spin"></i>
+                                    Loading data...
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination -->
+            <div class="table-pagination">
+                <div class="pagination-info">
+                    <span id="paginationInfo">Loading...</span>
+                </div>
+                <div class="pagination-controls">
+                    <div class="pagination-row-selector">
+                        <label for="tablePageSize" class="pagination-label">Rows per page:</label>
+                        <select id="tablePageSize" class="pagination-select">
+                            <option value="10" selected>10</option>
+                            <option value="20">20</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>
+                        </select>
+                    </div>
+                    <button class="btn" id="prevPageBtn" disabled>
+                        <i class="ph-bold ph-caret-left"></i>
+                        Previous
+                    </button>
+                    <span class="pagination-page-info">
+                        Page <span id="currentPage">1</span> of <span id="totalPages">1</span>
+                    </span>
+                    <button class="btn" id="nextPageBtn" disabled>
+                        Next
+                        <i class="ph-bold ph-caret-right"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+

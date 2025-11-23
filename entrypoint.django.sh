@@ -20,6 +20,35 @@ warn() {
     echo -e "${YELLOW}[WARN]${NC} $1"
 }
 
+# Ensure database user exists
+ensure_db_user() {
+    log "Ensuring database user exists..."
+    python -c "
+import os
+try:
+    import MySQLdb
+    root_password = os.environ.get('MYSQL_ROOT_PASSWORD', '')
+    db_name = os.environ.get('DB_NAME', 'edsight_prod')
+    db_user = os.environ.get('DB_USER', 'edsight_prod')
+    db_password = os.environ.get('DB_PASSWORD', '')
+    db_host = os.environ.get('DB_HOST', 'mysql')
+    
+    if root_password:
+        conn = MySQLdb.connect(host=db_host, user='root', passwd=root_password)
+        cursor = conn.cursor()
+        cursor.execute(f\"CREATE DATABASE IF NOT EXISTS {db_name}\")
+        cursor.execute(f\"CREATE USER IF NOT EXISTS '{db_user}'@'%' IDENTIFIED BY '{db_password}'\")
+        cursor.execute(f\"GRANT ALL PRIVILEGES ON {db_name}.* TO '{db_user}'@'%'\")
+        cursor.execute('FLUSH PRIVILEGES')
+        conn.close()
+        print('Database user created/verified')
+except ImportError:
+    pass
+except Exception as e:
+    print(f'Could not create user (may already exist): {e}')
+" 2>/dev/null || true
+}
+
 # Wait for database to be ready
 wait_for_db() {
     log "Waiting for database to be ready..."
@@ -29,6 +58,7 @@ wait_for_db() {
     while [ $attempt -le $max_attempts ]; do
         if python manage.py check --database default 2>/dev/null; then
             log "Database is ready!"
+            ensure_db_user
             return 0
         fi
         warn "Database not ready yet. Attempt $attempt/$max_attempts..."
@@ -37,6 +67,7 @@ wait_for_db() {
     done
     
     error "Database connection failed after $max_attempts attempts"
+    ensure_db_user
     return 1
 }
 

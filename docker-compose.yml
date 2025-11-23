@@ -76,6 +76,7 @@ services:
       DB_NAME: ${DB_NAME:-edsight}
       DB_USER: ${DB_USER:-edsight}
       DB_PASSWORD: ${DB_PASSWORD:-edsight_pass}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-edsight_root}
       SECRET_KEY: ${SECRET_KEY:-change-me-in-production}
       DEBUG: ${DEBUG:-False}
       ALLOWED_HOSTS: ${ALLOWED_HOSTS:-*}

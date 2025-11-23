@@ -1,33 +1,19 @@
-# EdSight VPS Deployment - Copy and Paste These Commands
-
-# 1. SSH into VPS (already done if you're logged in)
-# ssh root@72.61.140.217
-
-# 2. Install Docker and Docker Compose FIRST
+ssh root@72.61.140.217
+cd /var/www
+rm -rf edsight
+git clone https://github.com/isaackcz/Edsight.git edsight
+cd edsight
 apt update && apt upgrade -y
 curl -fsSL https://get.docker.com -o get-docker.sh
 sh get-docker.sh
 rm get-docker.sh
-
-# Install Docker Compose (v2 - recommended)
 curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
 chmod +x /usr/local/bin/docker-compose
-
-# Verify installation
 docker --version
 docker-compose --version
-
-# 3. Clone repository
-cd /var/www
-git clone https://github.com/isaackcz/Edsight.git edsight
-cd edsight
-
-# 4. Generate secure passwords
 SECRET_KEY=$(python3 -c "import secrets; print(secrets.token_urlsafe(50))" 2>/dev/null || openssl rand -base64 50)
 DB_PASSWORD=$(openssl rand -base64 32 | head -c 32)
 MYSQL_ROOT_PASSWORD=$(openssl rand -base64 32 | head -c 32)
-
-# 5. Create .env.production file
 cat > .env.production << EOF
 SECRET_KEY=$SECRET_KEY
 DEBUG=False
@@ -58,18 +44,17 @@ SECURE_HSTS_SECONDS=31536000
 SECURE_HSTS_INCLUDE_SUBDOMAINS=True
 SECURE_HSTS_PRELOAD=True
 EOF
-
-# 6. Build Docker images (25-35 minutes)
-docker-compose -f docker-compose.yml -f docker-compose.prod.yml build
-
-# 7. Start services
-docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
-
-# 8. Check status
+chmod +x entrypoint.django.sh
+chmod +x entrypoint.fastapi.sh
+chmod +x entrypoint.celery.sh
+docker-compose -f docker-compose.yml -f docker-compose.prod.yml --env-file .env.production build
+docker-compose -f docker-compose.yml -f docker-compose.prod.yml --env-file .env.production up -d
+sleep 30
 docker-compose ps
-
-# 9. View logs
-docker-compose logs -f
-
-# Access your application at: http://72.61.140.217:8082
-
+docker-compose logs django
+docker-compose exec django python manage.py migrate --fake core 0018 || true
+docker-compose exec django python manage.py migrate
+docker-compose exec django python manage.py createsuperuser
+docker-compose exec django python manage.py collectstatic --noinput
+docker-compose ps
+curl http://localhost:8082

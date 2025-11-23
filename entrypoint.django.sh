@@ -55,11 +55,18 @@ wait_for_db() {
     local max_attempts=30
     local attempt=1
     
+    # First, try to create the user using root credentials BEFORE checking connection
+    log "Attempting to create database user if needed..."
+    ensure_db_user
+    
     while [ $attempt -le $max_attempts ]; do
         if python manage.py check --database default 2>/dev/null; then
             log "Database is ready!"
-            ensure_db_user
             return 0
+        fi
+        # Try creating user again every 5 attempts in case MySQL wasn't ready
+        if [ $((attempt % 5)) -eq 0 ]; then
+            ensure_db_user
         fi
         warn "Database not ready yet. Attempt $attempt/$max_attempts..."
         sleep 2
@@ -67,7 +74,6 @@ wait_for_db() {
     done
     
     error "Database connection failed after $max_attempts attempts"
-    ensure_db_user
     return 1
 }
 

@@ -68,12 +68,12 @@ COPY --from=base /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.
 COPY --from=base /usr/local/bin /usr/local/bin
 
 # Copy project files (optimize layer caching)
-COPY --chown=appuser:appuser . /app
+COPY . /app
 
-# Create necessary directories with proper permissions and set execute permissions on entrypoint scripts
+# Create necessary directories, set permissions, and make entrypoint scripts executable
 RUN mkdir -p /app/logs && \
-    chown -R appuser:appuser /app && \
-    chmod +x /app/entrypoint.fastapi.sh
+    chmod +x /app/entrypoint.fastapi.sh && \
+    chown -R appuser:appuser /app
 
 # Switch to non-root user
 USER appuser

@@ -70,12 +70,12 @@ COPY --from=base /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.
 COPY --from=base /usr/local/bin /usr/local/bin
 
 # Copy project files (optimize layer caching)
-COPY --chown=appuser:appuser . /app
+COPY . /app
 
-# Create necessary directories with proper permissions and set execute permissions on entrypoint scripts
+# Create necessary directories, set permissions, and make entrypoint scripts executable
 RUN mkdir -p /vol/static /app/logs && \
-    chown -R appuser:appuser /app /vol/static && \
-    chmod +x /app/entrypoint.django.sh
+    chmod +x /app/entrypoint.django.sh && \
+    chown -R appuser:appuser /app /vol/static
 
 # Switch to non-root user
 USER appuser

@@ -60,11 +60,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY --from=base /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
 COPY --from=base /usr/local/bin /usr/local/bin
 
-COPY --chown=appuser:appuser . /app
+COPY . /app
 
 RUN mkdir -p /app/logs && \
-    chown -R appuser:appuser /app && \
-    chmod +x /app/entrypoint.celery.sh
+    chmod +x /app/entrypoint.celery.sh && \
+    chown -R appuser:appuser /app
 
 USER appuser
 
